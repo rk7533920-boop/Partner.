@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lockdown_service_desc">Lets Partner see which app is open, so it can pause your phone when one of your lockdown rules is reached. It reads no screen content.</string>
+</resources>

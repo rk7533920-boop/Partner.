@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes"><title>Partner</title>
+<style>
+:root{--bg:#0a0a0a;--s1:#151515;--s2:#1c1c1c;--ln:#262626;--tx:#f2f2f2;--mu:#8a8a8a}
+@media(prefers-color-scheme:light){:root{--bg:#fafafa;--s1:#f0f0f0;--s2:#e6e6e6;--ln:#dcdcdc;--tx:#111;--mu:#6e6e6e}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+button,input,select,textarea{font:inherit;color:inherit}button{background:none;border:0;cursor:pointer}svg{display:block}
+#warn{display:none;background:var(--s2);padding:10px 18px;font-size:13px}
+#top{padding:18px 24px 0;display:flex;align-items:center;justify-content:space-between;min-height:8px}
+#main{flex:1;overflow-y:auto;padding:22px 24px 12px}
+.h{font:400 34px Georgia,serif;letter-spacing:-.5px;margin:0}.h2{font:400 26px Georgia,serif;margin:0}
+.g,small{color:var(--mu)}small{font-size:13px}
+.lab{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mu);margin:22px 0 8px}
+.ic{width:44px;height:44px;border-radius:50%;border:1px solid var(--ln);display:grid;place-items:center;flex:none}
+.u{align-self:flex-end;background:var(--s2);border-radius:20px;padding:12px 16px;max-width:80%}
+.a{max-width:90%;white-space:pre-wrap}.a small{display:block;margin-top:6px;font-size:12px}
+.ms{display:flex;flex-direction:column;gap:18px;margin-top:28px}
+#foot{padding:6px 0 0}
+.vb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 28px}
+#mic{width:78px;height:78px;border-radius:50%;background:var(--tx);color:var(--bg);display:grid;place-items:center}
+#mic.on{box-shadow:0 0 0 8px var(--ln)}
+.cap{text-align:center;font-size:12px;color:var(--mu);padding:8px 0 2px;min-height:24px}
+.tb{display:flex;gap:10px;padding:0 20px}
+.tb input{flex:1;height:46px;border-radius:23px;border:1px solid var(--ln);background:var(--s1);padding:0 16px;outline:0}
+.tabs{display:flex;border-top:1px solid var(--ln);padding:6px 0 calc(14px + env(safe-area-inset-bottom,0));margin-top:6px}
+.tabs button{flex:1;height:44px;font-size:14px;color:var(--mu)}.tabs .on{color:var(--tx);font-weight:600}
+.tiles{display:flex;gap:10px;margin-top:18px}.tile{flex:1;background:var(--s1);border-radius:18px;padding:14px}.tile b{display:block;font-size:21px;font-weight:400}
+.card{border:1px solid var(--ln);border-radius:20px;padding:16px;margin:16px 0 0;display:flex;justify-content:space-between;align-items:center}
+.pill{height:40px;padding:0 18px;border-radius:20px;border:1px solid var(--ln)}
+.ev{display:flex;gap:12px;padding:8px 0;align-items:flex-start}.ev .t{width:68px;font-size:13px;color:var(--mu);padding-top:2px;flex:none}
+.mk{width:9px;display:flex;justify-content:center;flex:none}.ev i.ln{width:5px;border-radius:3px;margin-top:3px}
+.ev i{width:9px;height:9px;border-radius:50%;margin-top:7px;flex:none}.ev small{display:block}
+.r{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:62px;border-bottom:1px solid var(--s2);text-align:left;padding:8px 0}
+.r b{display:block;font-weight:400;font-size:16px}.r i{font-style:normal;color:var(--mu)}
+.p{margin:0 0 8px}.pre{white-space:pre-wrap}.ck{display:flex;gap:12px;align-items:center;padding:7px 0}.ck input{width:18px;height:18px;margin:0;accent-color:var(--tx)}
+input.f,textarea.f,select.f{width:100%;height:46px;border:0;border-radius:14px;background:var(--s1);padding:0 14px;outline:0}textarea.f{height:130px;padding:12px}
+.pb{width:100%;height:50px;border-radius:25px;background:var(--tx);color:var(--bg);font-weight:600;margin-top:24px}.pb[disabled]{opacity:.5}
+.two{display:flex;gap:10px}.two>*{flex:1}.chip{height:42px;border-radius:21px;border:1px solid var(--ln)}.chip.on{background:var(--tx);color:var(--bg)}
+.bar{display:flex;height:18px;border-radius:9px;overflow:hidden;gap:2px}.bar i{display:block;min-width:2px}.lg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px;color:var(--mu)}.lg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.m{display:block;width:100%;text-align:left;padding:11px 0;border-bottom:1px solid var(--s2)}
+.trw{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--s2)}.tc{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--mu);display:grid;place-items:center;flex:none;margin-top:1px}.tc.on{background:var(--tx);color:var(--bg);border-color:var(--tx)}.dn{text-decoration:line-through;color:var(--mu)}.pbar{height:4px;border-radius:2px;background:var(--s2);margin-top:6px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--tx)}
+.sw{display:flex;justify-content:space-between;align-items:center;min-height:56px}
+.ev{cursor:pointer;align-items:stretch;padding:0}.ev .t{padding-top:10px}.ev i.ln{height:auto;border-radius:0;margin:0}.ev i.dt{margin-top:14px}.cx{flex:1;min-width:0;padding:8px 0}.cl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sheet .bd{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20}
+#sheet .sh{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--s1);border-radius:24px 24px 0 0;padding:20px 24px calc(20px + env(safe-area-inset-bottom,0));max-height:92%;overflow:auto}
+.sw2{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.cs{width:40px;height:40px;border-radius:50%;border:3px solid transparent}.cs.sel{border-color:var(--tx)}
+#sheet .bd{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(0,0,0,.4)}
+.fc{position:fixed;left:20px;right:20px;top:20%;z-index:21;display:flex;flex-direction:column;gap:12px;animation:fin .18s}@keyframes fin{from{opacity:0;transform:scale(.96)}}
+.fcard{background:var(--s1);border-radius:22px;padding:18px 20px;box-shadow:0 14px 44px rgba(0,0,0,.35)}.fcard .ft{font-size:19px;margin:8px 0 4px;line-height:1.35}
+.fh{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mu)}.fh i{width:10px;height:10px;border-radius:50%}
+.dl{background:#ff3b30!important;color:#fff!important}
+.tgs{display:flex;flex-wrap:wrap;gap:8px}.tg{height:36px;padding:0 14px;border-radius:18px;border:1.5px solid var(--c,var(--ln));display:inline-flex;align-items:center;gap:7px;font-size:14px}.tg i{width:8px;height:8px;border-radius:50%;background:var(--c)}.tg.sel{background:var(--c);color:#111;font-weight:600}.tg.sel i{background:#111}.tg.nw{border:1.5px dashed var(--mu);color:var(--mu)}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0));transform:translate(-50%,16px);max-width:88%;background:var(--tx);color:var(--bg);padding:12px 18px;border-radius:22px;font-size:14px;line-height:1.35;opacity:0;pointer-events:none;transition:.25s;z-index:40;display:flex;gap:14px;align-items:center}#toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}#toast button{font-weight:700;color:inherit;text-decoration:underline}
+.ev{overflow:hidden}.ev i.ln{width:6px;border-radius:3px;align-self:flex-start}.tabs button{font-size:12.5px;padding:0 1px}.ev.sm .t{padding-top:0;line-height:18px}.ev.sm .cx{padding:0;line-height:18px;font-size:14px}.ev.sm i.dt{margin-top:4px}
+.hg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.ht{background:var(--s1);border-radius:22px;padding:14px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.ht.add{align-items:center;justify-content:center;border:1.5px dashed var(--ln);background:none;color:var(--mu);gap:2px}.ht.add span{font-size:34px;line-height:1}
+.hrow{display:flex;gap:12px;align-items:center}.hn{font-size:15px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hr{position:relative;width:52px;height:52px;border-radius:50%;flex:none;display:grid;place-items:center;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;transition:transform .2s}
+.hr svg{position:absolute;inset:0}.hr .arc{transition:stroke-dashoffset .3s}.hr.holding{transform:scale(.93)}.hr.holding .arc{stroke-dashoffset:0;transition:stroke-dashoffset 3s linear}.hr.done{animation:pop .45s}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.hw{display:flex;gap:5px;margin-top:12px}.hw i{flex:1;height:8px;border-radius:4px;background:var(--s2)}.hw i.t{outline:1.5px solid var(--mu);outline-offset:1px}.hd{display:flex;gap:5px}.hd span{flex:1;text-align:center;font-size:10px;color:var(--mu);margin-top:4px}
+.hq{font:400 22px/1.3 Georgia,serif;margin:6px 0}.hi{margin:0 0 4px;color:var(--mu);font-style:italic}.hdl{display:grid;gap:12px;margin-top:18px}.hdl small{display:block}
+.hp{height:3px;border-radius:2px;background:var(--s2);margin:8px 0 18px;overflow:hidden}.hp i{display:block;height:100%;background:var(--tx);transition:width .3s}
+.burst{position:fixed;z-index:50;pointer-events:none}.burst i{position:absolute;width:7px;height:7px;border-radius:50%;animation:bs .8s ease-out forwards}@keyframes bs{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+.ub{background:none;border:0;color:var(--mu);font:inherit;font-size:13px;text-decoration:underline;padding:6px 0 0;min-height:0;display:block}
+.r2{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:62px;border-bottom:1px solid var(--s2);padding:8px 0}
+.r2 b{display:block;font-weight:400;font-size:16px}
+.tg{width:56px;height:44px;display:flex;align-items:center;justify-content:flex-end;flex:none;background:none;border:0;padding:0}
+.tg span{position:relative;display:block;width:48px;height:28px;border-radius:14px;background:var(--s2)}
+.tg span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--mu);transition:left .15s}
+.tg.on span{background:var(--tx)}
+.tg.on span::after{left:23px;background:var(--bg)}
+</style></head><body>
+<div id="warn"></div><div id="top"></div><main id="main"></main><div id="foot"></div><div id="sheet"></div><div id="toast"></div>
+<input type="file" id="file" accept="application/json" hidden>
+<script>
+const $=s=>document.querySelector(s),NP=(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())?Capacitor.Plugins:null;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0'),dayK=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const t12=t=>new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:true}).toUpperCase();
+const dur=m=>m>=60?Math.floor(m/60)+'h '+pad(m%60)+'m':(m||0)+'m';
+const D={set:{key:'',goal:'Gain 10 kg in 3 months',cal:3000,pro:120,tone:'gentle',notif:true,mute:0,rev:'22:00',lastBackup:0,revAsked:'',autoMic:false,lockBtn:false,hotword:false,effort:'high',maxTok:0,model:'claude-haiku-5-5'},mem:[],entries:[],sleep:[],usage:[],targets:[],chat:[],fu:[],ana:null,notes:[],tags:[],tl:[],habits:[],hlog:{},gym:[],wt:[],open:[],rx:[]};
+let S=JSON.parse(JSON.stringify(D)),db,busy=false,typing=false,V='diary',vd=0,ED='',memBusy=false,LIST=[],TREF=[],RREF=[],HREF=[],QK=false,QR='',FQ=false,PV='',stOpen=false,TG={open:false,off:0,t:'',n:'',u:''};
+const TONE={gentle:'warm, encouraging, never shaming',strict:'firm and direct, short sentences, expects discipline',brutal:'brutally honest, no sugar-coating, never insulting his worth'};
+const ICON={gym:'#c27ae0',meal:'#d4a85a',study:'#6fbf9b',phone:'#e5645f'},DONE=['done','meal','study','gym','phone','other'];
+const US=NP&&NP.UsageStats;
+const HW=NP&&NP.Hotword,HWS={st:null};
+const MN={'claude-haiku-5-5':'Haiku 5.5','claude-sonnet-5-5':'Sonnet 5.5','claude-opus-5-5':'Opus 5.5'},CM=()=>S.set.model||'claude-haiku-5-5',EFF=()=>['low','medium','high'].includes(S.set.effort)?S.set.effort:'high',MAXT=m=>{const cap=/haiku/.test(m||'')?64000:32000,v=+S.set.maxTok;return v>0?Math.min(v,cap):cap},partOfDay=()=>{const h=new Date().getHours();return h<5?'night, very late or very early':h<12?'morning':h<17?'afternoon':h<21?'evening':'night'};
+const isSt=b=>/ypt|yeolpumta/i.test((b.a||'')+' '+(b.p||'')),AC=b=>(S.set.appCol&&S.set.appCol[b.p])||(isSt(b)?BC.Study:BC.Phone);
+const DE=/(din|दिन)\s*(khatam|khtm|खत्म|खतम|poora|pura|पूरा|over|end)|good\s*night|गुड\s*नाइट|day\s*(over|end)/i;
+const DT=[['Sleep','#5e7ce2'],['Food','#ff9500'],['Study','#30d158'],['Work','#0a84ff'],['Household','#ffd60a'],['Exercise','#bf5af2'],['Phone','#ff3b30'],['Social','#ff2d92'],['Rest','#00c7be'],['Other','#a2845e']];
+const CP=['#64d2ff','#ff6482','#8e6bff','#ffb340','#63e6be','#d0a2f7','#ff8a5b','#a3e635','#f472b6','#94a3b8'],HC=['#ff9500','#30d158','#0a84ff','#bf5af2','#ff2d92','#00c7be','#ffd60a','#ff6482'];
+function ensureTags(){if(!S.tags.length){S.tags=DT.map(([n,c])=>({n,c}));put('tags')}}
+const TC=n=>n==='Unlogged'?'#6e6e6e':((S.tags.find(t=>t.n===n)||{}).c||'#8e8e93');
+function addTag(n,c){n=String(n||'').trim().slice(0,24);if(!n)return '';const f=S.tags.find(t=>t.n.toLowerCase()===n.toLowerCase());if(f)return f.n;const u=new Set(S.tags.map(t=>t.c));S.tags.push({n,c:c||CP.find(x=>!u.has(x))||CP[S.tags.length%CP.length]});put('tags');return n}
+const KT={meal:'Food',study:'Study',gym:'Exercise',phone:'Phone'},tagOf=e=>e.tag||KT[e.kind]||'Other';
+function learnTag(t,g){S.tl=S.tl.filter(z=>z.t!==String(t).slice(0,60)).concat([{t:String(t).slice(0,60),g}]).slice(-20);put('tl')}
+let UT=null;function toast(m,undo,ms){const t=$('#toast');t.innerHTML=esc(m)+(undo?'<button data-a="undo">Undo</button>':'');t.classList.add('on');clearTimeout(UT);UT=setTimeout(()=>t.classList.remove('on'),ms||(undo?6000:2800))}
+const exKey=n=>String(n||'').trim().toLowerCase(),setsStr=a=>(a||[]).map(x=>(x.w?x.w+' kg × ':'')+x.r+' reps'+((x.n||1)>1?' × '+x.n+' sets':'')).join(', '),ago=ts=>{const d=Math.floor((Date.now()-ts)/864e5);return d<1?'today':d===1?'yesterday':d+' days ago'};
+const lastWt=()=>[...S.wt].sort((a,b)=>a.ts-b.ts).pop();
+function exList(){const m={};S.gym.forEach(r=>{const k=exKey(r.ex);if(!m[k]||r.ts>m[k].ts)m[k]=r});return Object.values(m).sort((a,b)=>b.ts-a.ts)}
+function exPrompt(){const k=dayK(dayStart(Date.now())),m={};S.gym.forEach(r=>{(m[exKey(r.ex)]=m[exKey(r.ex)]||[]).push(r)});
+ return Object.values(m).sort((a,b)=>Math.max(...b.map(r=>r.ts))-Math.max(...a.map(r=>r.ts))).slice(0,15).map(L=>{L.sort((a,b)=>b.ts-a.ts);const td=L.find(r=>dayK(dayStart(r.ts))===k),pv=L.find(r=>dayK(dayStart(r.ts))!==k);return L[0].ex+': '+(pv?'last time '+setsStr(pv.sets)+' ('+ago(pv.ts)+')'+(pv.note?' | his note: '+pv.note:''):'no earlier session')+(td?' | today so far: '+setsStr(td.sets):'')}).join('\n')}
+function gymLog(g,ts){const ex=String(g.ex||'').trim().slice(0,40);if(!ex)return null;
+ const sets=(g.sets||[]).map(x=>({w:+x.w||0,r:+x.r||0,n:Math.max(1,Math.min(+x.n||1,20))})).filter(x=>x.r>0),note=String(g.note||'').trim().slice(0,200);
+ const mine=S.gym.filter(r=>exKey(r.ex)===exKey(ex)).sort((a,b)=>b.ts-a.ts),name=mine[0]?mine[0].ex:ex;
+ if(!sets.length){if(note&&mine[0]){mine[0].note=note;return mine[0]}return null}
+ const k=dayK(dayStart(ts));let rec=mine.find(r=>dayK(dayStart(r.ts))===k);
+ if(rec){rec.sets=rec.sets.concat(sets);if(note)rec.note=note}else{rec={id:'g'+ts+Math.random().toString(36).slice(2,5),ts,ex:name,sets,note};S.gym.push(rec)}
+ return rec}
+const DURK=['meal','study','gym','phone','done','other'];
+const CK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+const SECS=['Goals','What I want to become','Personal facts','Current habits','Preferences','How I talk','AI discovered patterns'];
+const BC={Sleep:'#7aa2d6',Eating:'#d4a85a',Phone:'#e5645f',Gym:'#c27ae0',Study:'#6fbf9b',Other:'#5fb7d4',Unlogged:'#6e6e6e'};
+const MIC='<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const KB='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>';
+const GEAR='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>';
+const BACK='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>';
+const UP='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+/* ---------- storage (IndexedDB) ---------- */
+const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('partner',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const dbGet=k=>new Promise((ok,no)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)});
+const dbPut=(k,v)=>new Promise((ok,no)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=ok;t.onerror=t.onabort=()=>no(t.error)});
+function warn(m){const w=$('#warn');w.textContent=m;w.style.display='block'}
+$('#warn').onclick=()=>$('#warn').style.display='none';
+async function put(k){if(QK)return;try{await dbPut(k,S[k])}catch(e){warn(e&&e.name==='QuotaExceededError'?'Storage is full, data was not saved. Export a backup from Settings > Backup and free up space.':'Could not save data: '+((e&&e.message)||e))}}
+async function migrate(){try{const o=JSON.parse(localStorage.getItem('saathi_v1')||'null');if(!o)return;
+ S.entries=(o.entries||[]).map(e=>({id:String(e.id),ts:e.ts,kind:e.kind==='sleep'?'other':e.kind,text:e.text,dur:0,cal:e.cal||0,p:e.p||0,c:e.c||0,f:e.f||0,why:e.why||''}));
+ S.notes=o.notes||[];if(o.set){S.set.key=o.set.key||'';S.set.goal=o.set.goal||S.set.goal;S.set.cal=+o.set.cal||3000;S.set.pro=+o.set.pro||120;S.set.tone=o.set.tone||'gentle'}
+ for(const k of['set','entries','notes'])await put(k)}catch(e){}}
+async function checkQuick(){if(!NP||!NP.Quick||!NP.Quick.consume)return;
+ try{const r=await NP.Quick.consume();if(r&&r.pending){FQ=true;if(V!=='chat'||typing){V='chat';typing=false;render()}if(!cv.on)startC()}}catch(e){}}
+async function inboxPush(it){return new Promise((ok,no)=>{const t=db.transaction('kv','readwrite'),st=t.objectStore('kv'),g=st.get('inbox');g.onsuccess=()=>{st.put((g.result||[]).concat([it]),'inbox')};t.oncomplete=ok;t.onerror=t.onabort=()=>no(t.error)})}
+async function mergeInbox(){if(QK||!db)return;
+ try{const inb=await new Promise((ok,no)=>{const t=db.transaction('kv','readwrite'),st=t.objectStore('kv'),g=st.get('inbox');g.onsuccess=()=>{st.put([],'inbox');ok(g.result||[])};t.onerror=t.onabort=()=>no(t.error)});
+  if(!inb.length)return;
+  inb.forEach(it=>{(it.ops||[]).forEach(applyOp);(it.rx||[]).forEach(addRx);S.entries.push(...(it.entries||[]));(it.sleep||[]).forEach(x=>{if(x[0]==='bed')bedAt(x[1]);else{wakeAt(x[1],x[2]);resolveFu('wake')}});(it.gym||[]).forEach(g=>{const i=S.gym.findIndex(x=>x.id===g.id);if(i>=0)S.gym[i]=g;else S.gym.push(g)});(it.wt||[]).forEach(w=>{if(!S.wt.some(x=>x.ts===w.ts))S.wt.push(w)});(it.hl||[]).forEach(([id,k,lv])=>{const m=S.hlog[id]=S.hlog[id]||{};if((m[k]||0)<lv)m[k]=lv});(it.targets||[]).forEach(t=>{if(!S.targets.some(x=>x.status==='open'&&x.date===t.date&&norm(x.text)===norm(t.text)))S.targets.push(t)})});
+  await Promise.all([put('entries'),put('sleep'),put('targets'),put('fu'),put('gym'),put('wt'),put('hlog'),put('open'),put('rx')]);for(const it of inb)if(it.said)await judgeFu(it.said,it.reply||'',0);syncN();render()}catch(e){}}
+async function boot(){
+ if(NP&&NP.Quick){try{QK=!!(await NP.Quick.mode()).quick}catch(e){}}
+ try{db=await idb();for(const k of Object.keys(D)){if(QK&&!['set','sleep','gym','wt','habits','hlog','tags','tl','open','rx'].includes(k))continue;const v=await dbGet(k);if(v!==undefined&&v!==null)S[k]=k==='set'?{...D.set,...v}:v}
+  if(QK)await replayOpen();else{const n0=S.open.length;S.open=S.open.filter(o=>Date.now()-o.ts<16*36e5);if(S.open.length!==n0)put('open')}
+  if(!QK&&!S.entries.length&&!S.chat.length)await migrate();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
+ catch(e){warn('Could not open storage. Data will be lost after this session. ('+((e&&e.message)||e)+')')}
+ if(QK){render();startC();return}
+ ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();render();autoStart();checkQuick();suInit();if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);lkSync();
+ if(!NP&&'serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+/* ---------- derived data ---------- */
+const isNight=x=>{if(!x.end)return false;if(x.night!==undefined)return !!x.night;const h=new Date(x.start||x.end).getHours();return x.start?(x.end-x.start>=144e5&&(h>=20||h<8)):h<11};
+const dayStart=ts=>{let b=0;for(const x of S.sleep)if(x.end&&x.end<=ts&&x.end>b&&isNight(x))b=x.end;if(b&&ts-b<30*36e5)return b;const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()};
+function bedAt(ts){const o=S.sleep.find(x=>!x.end);if(o&&Math.abs(o.start-ts)<36e5)return;S.sleep=S.sleep.filter(x=>x.end);S.sleep.push({id:'s'+ts,start:ts,end:null,wd:''})}
+function dayEndHit(x){const d=S.set.dayEndAt;if(d&&x.end>d&&x.end-d<72e5*10){x.night=true;S.set.dayEndAt=0;put('set')}}
+function wakeAt(ts,m){const o=S.sleep.find(x=>!x.end);
+ if(o){if(ts>o.start){o.end=ts;o.wd=dayK(ts);dayEndHit(o)}return}
+ const l=S.sleep.filter(x=>x.end).sort((a,b)=>b.end-a.end)[0];if(l&&ts-l.end<108e5)return;
+ {const n={id:'s'+ts,start:m?ts-m*6e4:null,end:ts,wd:dayK(ts)};dayEndHit(n);S.sleep.push(n)}}
+function migSleep(){const x=S.entries.filter(e=>e.kind==='bed'||e.kind==='wake').sort((a,b)=>a.ts-b.ts);if(!x.length)return;
+ x.forEach(e=>e.kind==='bed'?bedAt(e.ts):wakeAt(e.ts,0));S.entries=S.entries.filter(e=>e.kind!=='bed'&&e.kind!=='wake');put('sleep');put('entries')}
+/* ---- data hygiene: sleep entries become sleep records, same back-to-back entries become one ---- */
+const MG=3e5,MGK=['other','done','study','gym','phone'];
+function normSleep(){let ch=false;
+ S.entries.filter(e=>e.dur>0&&['other','done'].includes(e.kind)&&tagOf(e)==='Sleep').forEach(e=>{const en=e.ts,st=en-e.dur*6e4;
+  const r=S.sleep.find(x=>x.end&&Math.abs(x.end-en)<=9e5&&(!x.start||Math.abs(x.start-st)<=9e5));
+  if(r){if(!r.start){r.start=st;r.end=en}}else if(!S.sleep.some(x=>x.start&&x.end&&x.start<en&&x.end>st))S.sleep.push({id:'s'+en+'e',start:st,end:en,wd:dayK(en)});
+  S.entries=S.entries.filter(x=>x!==e);ch=true});
+ if(ch){put('sleep');put('entries')}return ch}
+function mergeAdj(){const ok=e=>MGK.includes(e.kind)&&!(e.cal>0)&&!(e.p>0),dead=new Set();let p=null;
+ S.entries.filter(e=>e.dur>0&&DONE.includes(e.kind)).sort((a,b)=>(a.ts-a.dur*6e4)-(b.ts-b.dur*6e4)).forEach(e=>{const es=e.ts-e.dur*6e4;
+  if(p&&ok(p)&&ok(e)&&norm(p.text)===norm(e.text)&&tagOf(p)===tagOf(e)&&es-p.ts<=MG){const ps=p.ts-p.dur*6e4;p.ts=Math.max(p.ts,e.ts);p.dur=Math.min(1440,Math.round((p.ts-Math.min(ps,es))/6e4));dead.add(e);return}
+  if(!p||e.ts>=p.ts)p=e});
+ if(dead.size){S.entries=S.entries.filter(e=>!dead.has(e));put('entries');return true}return false}
+function fixData(){const a=normSleep(),b=mergeAdj();return a||b}
+function diaryText(cut){const rows=[],lbl=ts=>new Date(dayStart(ts)).toLocaleDateString('en-IN',{day:'numeric',month:'short'}),uds=new Set(S.usage.filter(b=>b.s>cut).map(b=>lbl(b.s)));
+ S.entries.filter(e=>e.ts>cut&&!(e.kind==='phone'&&uds.has(lbl(e.ts)))).forEach(e=>rows.push([e.ts-(e.dur||0)*6e4,e.ts,'['+e.kind+'] '+e.text+(e.dur?' | '+e.dur+' min':'')+' | tag: '+tagOf(e)+(e.cal?' | '+e.cal+' kcal P'+e.p:'')+(e.why?' | why: '+e.why:'')]));
+ const ut={},tg={};S.entries.filter(e=>e.ts>cut&&e.dur>0).forEach(e=>{const k=lbl(e.ts),o=tg[k]=tg[k]||{};o[tagOf(e)]=(o[tagOf(e)]||0)+e.dur});
+ S.usage.filter(b=>b.s>cut).forEach(b=>{const k=lbl(b.s);(ut[k]=ut[k]||[]).push(b);if(b.e-b.s>=6e5)rows.push([b.s,b.s,'['+(isSt(b)?'study':'phone')+'] '+b.a+' | '+Math.round((b.e-b.s)/6e4)+' min'])});
+ S.sleep.filter(x=>(x.end||x.start)>cut).forEach(x=>rows.push([x.start||x.end,x.start||x.end,'[sleep] '+(x.start?t12(x.start):'?')+' to '+(x.end?t12(x.end):'ongoing')+(x.start&&x.end?' | '+dur(Math.round((x.end-x.start)/6e4)):'')+(x.end?' | woke '+new Date(x.end).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'')]));
+ S.targets.forEach(t=>{const ts=new Date(t.date+'T12:00:00').getTime();if(ts>cut)rows.push([ts,ts,'[target] '+t.text+' | '+(t.status==='done'?'done':t.status==='dropped'?'dropped':t.date<dayK(dayStart(Date.now()))?'not done':'open')+(t.goal?' | '+t.done+'/'+t.goal+' '+(t.unit||''):t.pct?' | '+t.pct+'%':'')+(t.why?' | why not: '+t.why:'')])});
+ Object.entries(S.hlog).forEach(([id,m])=>{const h=S.habits.find(x=>x.id===id);if(!h)return;Object.entries(m).forEach(([d,v])=>{const ts=new Date(d+'T12:00:00').getTime();if(ts>cut&&v>0)rows.push([ts,ts,'[habit] '+h.name+' | '+(v>1?'completed':'only the smallest step')])})});
+ S.gym.forEach(r=>{if(r.ts>cut)rows.push([r.ts,r.ts,'[gym] '+r.ex+': '+setsStr(r.sets)+(r.note?' | note: '+r.note:'')])});S.wt.forEach(w=>{if(w.ts>cut)rows.push([w.ts,w.ts,'[weight] '+w.kg+' kg'])});
+ rows.sort((a,b)=>a[0]-b[0]);let out='',last='';
+ rows.forEach(r=>{const k=new Date(dayStart(r[1])).toLocaleDateString('en-IN',{day:'numeric',month:'short'});if(k!==last){const q=ut[k]?usageSum(ut[k]):null;out+=(out?'\n\n':'')+'## Day starting '+k+(q?' | screen time '+dur(q.t)+' (top: '+q.top.map(a=>a[0]+' '+dur(a[1])).join(', ')+')':'')+(tg[k]?' | by tag: '+Object.entries(tg[k]).sort((a,b)=>b[1]-a[1]).map(a=>a[0]+' '+dur(a[1])).join(', '):'')+'\n';last=k}out+=t12(r[0])+' '+r[2]+'\n'});
+ return out.trim()}
+const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9\u0900-\u097f]/g,'');
+function addMem(sec,t,ai){t=String(t||'').trim().slice(0,300);if(!t)return false;sec=SECS.includes(sec)?sec:'Personal facts';const k=norm(t);
+ if(S.mem.some(m=>{const o=norm(m.t);return o===k||(k.length>12&&o.length>12&&(o.includes(k)||k.includes(o)))}))return false;
+ S.mem.push({id:'m'+Date.now()+Math.random().toString(36).slice(2,5),t,sec,ai:!!ai,ts:Date.now()});
+ const same=S.mem.filter(m=>m.ai&&m.sec===sec);if(same.length>12)S.mem=S.mem.filter(m=>m!==same[0]);return true}
+function memText(){let out='';SECS.forEach(sec=>{const it=S.mem.filter(m=>(m.sec||'Personal facts')===sec).slice(-8);if(it.length)out+=sec+': '+it.map(m=>m.t).join('; ')+'\n'});return out.slice(0,2500).trim()||'(none)'}
+async function classify(t){
+ const j=pj(await ask(`Split the note into separate short facts about the user and assign each to exactly one section: ${SECS.join(' | ')}. Keep his wording style (Roman Hinglish or English), never Devanagari. Write each fact in plain third person, like "Wants to gain 10 kg in 3 months". Output ONLY JSON {"items":[{"sec":"","t":""}]}.`,[{role:'user',content:t}],'claude-haiku-5-5',800));
+ let n=0;(j.items||[]).forEach(x=>{if(addMem(x.sec,x.t,false))n++});if(!n)throw new Error('Already in memory, or could not understand it.')}
+const usageIn=(st,en)=>S.usage.filter(b=>b.e>st&&b.s<en).map(b=>({...b,s:Math.max(b.s,st),e:Math.min(b.e,en)}));
+function usageSum(bl,n){const m={};let t=0;bl.forEach(b=>{const d=(b.e-b.s)/6e4;t+=d;m[b.a]=(m[b.a]||0)+d});return{t:Math.round(t),top:Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n||5).map(([a,d])=>[a,Math.round(d)])}}
+async function syncUsage(full){if(!US)return;
+ try{const g=await US.hasAccess();S.set.usAccess=g.granted;if(!g.granted)return;
+  const now=Date.now(),w7=now-7*864e5,all=full===true||!S.set.usV2||!S.set.usSync,from=all?w7:Math.max(S.set.usSync-30*6e4,w7),raw=[];
+  /* ask day by day so a big range can never be cut short; the first sync and "Sync now" pull the whole last 7 days (Android keeps about that much) */
+  for(let a=from;a<now;a+=864e5){const b=Math.min(a+864e5,now);try{const r=await US.getSessions({start:a,end:b});(r.sessions||[]).forEach(x=>raw.push(x))}catch(e){if(a===from)throw e}}
+  const ss=raw.filter(x=>!/launcher|systemui|com\.partner\.diary/i.test(x.p)).sort((a,b)=>a.s-b.s),bl=[];
+  ss.forEach(x=>{const l=bl[bl.length-1];if(l&&l.p===x.p&&x.s-l.e<=12e4)l.e=Math.max(l.e,x.e);else bl.push({p:x.p,a:x.a,s:x.s,e:x.e})});
+  S.usage=S.usage.filter(b=>b.e<=from).concat(bl.filter(b=>b.e-b.s>=6e4)).filter(b=>b.e>now-30*864e5);
+  S.set.usSync=now;S.set.usV2=1;await put('usage');await put('set');if(V==='diary')render()}
+ catch(e){warn('Screen time sync failed: '+((e&&e.message)||e))}}
+async function usCheck(){const el=$('#usst');if(!el)return;
+ if(!US){el.textContent='This works only in the APK. A browser cannot read phone screen time.';return}
+ try{const g=await US.hasAccess();S.set.usAccess=g.granted;el.textContent=g.granted?'Access granted. Last sync: '+(S.set.usSync?new Date(S.set.usSync).toLocaleString('en-IN'):'never')+(S.usage.length?'. History from '+new Date(Math.min(...S.usage.map(b=>b.s))).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):''):'Access not granted yet.';
+  $('#usbtn').style.display=g.granted?'none':'block';$('#ussync').style.display=g.granted?'block':'none'}catch(e){el.textContent='Could not check: '+((e&&e.message)||e)}}
+function resolveFu(kind){S.fu.forEach(f=>{if(!f.done&&f.kind===kind&&f.at>Date.now())f.done=true})}
+const trr=t=>t.status==='done'?1:t.goal?Math.min(1,t.done/t.goal):t.pct?t.pct/100:0;
+const tp=t=>t.goal?' ('+t.done+'/'+t.goal+(t.unit?' '+t.unit:'')+')':t.pct?' ('+t.pct+'%)':'';
+const isD=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||'');
+function usual(){const m={};S.entries.forEach(e=>{if(e.dur>0&&e.dur<=720&&DURK.includes(e.kind)){const k=['meal','study','gym','phone'].includes(e.kind)?e.kind:norm(e.text).slice(0,24);(m[k]=m[k]||{a:[],l:['done','other'].includes(e.kind)?e.text:e.kind}).a.push(e.dur)}});
+ return Object.values(m).filter(x=>x.a.length>=2).map(x=>{const a=x.a.sort((p,q)=>p-q);return x.l+' ~'+a[Math.floor(a.length/2)]+' min (n='+a.length+')'}).slice(0,10).join('; ')}
+function applyT(a){if(!a)return false;const now=Date.now();
+ if(a.act==='add'){if(!a.text||!isD(a.date))return false;if(S.targets.some(t=>t.status==='open'&&t.date===a.date&&norm(t.text)===norm(a.text)))return false;
+  S.targets.push({id:'t'+now+Math.random().toString(36).slice(2,5),text:String(a.text).slice(0,120),date:a.date,goal:+a.goal>0?+a.goal:0,unit:a.unit?String(a.unit).slice(0,16):'',done:0,pct:0,status:'open',why:'',ts:now});return true}
+ const r=a.ref?TREF[a.ref-1]:null;if(!r)return false;
+ if(a.act==='progress'){if(r.goal&&+a.amount>0){r.done=Math.min(r.goal,r.done+(+a.amount));if(r.done>=r.goal){r.status='done';r.doneTs=now}}else if(+a.pct>0){r.pct=Math.min(100,+a.pct);if(r.pct>=100){r.status='done';r.doneTs=now}}else return false;return true}
+ if(a.act==='done'){r.status='done';r.doneTs=now;if(r.goal)r.done=r.goal;r.pct=100;return true}
+ if(a.act==='drop'){r.status='dropped';return true}
+ if(a.act==='miss'){r.why=String(a.why||'').slice(0,200);return !!r.why}
+ if(a.act==='edit'){if(a.text)r.text=String(a.text).slice(0,120);if(isD(a.date))r.date=a.date;if(+a.goal>0)r.goal=+a.goal;if(a.unit)r.unit=String(a.unit).slice(0,16);return true}
+ return false}
+const muted=()=>S.set.mute>Date.now();
+
+/* ---------- AI ---------- */
+async function ask(system,messages,model,max,tools){
+ if(!S.set.key)throw new Error('Add your Claude key in Settings > API key.');
+ if(!navigator.onLine)throw new Error('No internet connection.');
+ const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),150000);let r;
+ try{r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:ac.signal,headers:{'content-type':'application/json','x-api-key':S.set.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model,max_tokens:MAXT(model),system,messages,output_config:{effort:EFF()},...(tools?{tools,tool_choice:{type:'auto'}}:{})})})}
+ catch(e){throw new Error(e.name==='AbortError'?'The reply took more than 2 minutes. Please try again.':'Connection failed. Check your internet.')}finally{clearTimeout(tm)}
+ let j;try{j=await r.json()}catch(e){throw new Error('Could not read the server response.')}
+ if(!r.ok){const m=(j.error&&j.error.message)||'';throw new Error(r.status===401?'The API key is wrong.':/credit/i.test(m)?'Claude credit has run out. Top up at console.anthropic.com.':r.status===429?'Too many requests. Try again in a while.':r.status>=500?'Claude server is busy right now.':'Error: '+m)}
+ ask.stop=j.stop_reason;if(tools)return j.content||[];return(j.content||[]).map(c=>c.text||'').join('')}
+function fixJ(s){let o='',q=false;for(let i=0;i<s.length;i++){const c=s[i];
+ if(q){if(c==='\\'){o+=c+(s[++i]||'');continue}
+  if(c==='"'){let j=i+1;while(/\s/.test(s[j]||''))j++;if(!s[j]||',:}]'.includes(s[j])){q=false;o+=c}else o+='\\"';continue}
+  if(c==='\n'){o+='\\n';continue}if(c==='\r'||c==='\t'){o+=' ';continue}o+=c}
+ else{if(c==='"')q=true;o+=c}}return o}
+const pj=raw=>{raw=String(raw||'');const a=raw.indexOf('{'),b=raw.lastIndexOf('}');if(a<0||b<a)throw new Error('empty');const t=raw.slice(a,b+1);try{return JSON.parse(t)}catch(e){return JSON.parse(fixJ(t))}};
+async function askJ(sy,ms,md,mx){let raw='';
+ for(let k=0;k<2;k++){try{raw=await ask(k?sy+'\nIMPORTANT: output exactly ONE valid JSON object and nothing else. Escape every double quote inside strings with a backslash. Keep each string on one line.':sy,ms,md,k?mx+2000:mx);return pj(raw)}catch(e){if(!(e instanceof SyntaxError)&&e.message!=='empty')throw e}}
+ const m=/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(raw||'');if(m){try{return{reply:JSON.parse('"'+m[1]+'"')}}catch(e){}}
+ throw new Error(raw?'The reply came back incomplete ('+(ask.stop||'?')+'). Please say it again.':'Claude sent an empty reply ('+(ask.stop||'?')+'). Please say it again.')}
+function usualWake(){const w=S.sleep.filter(isNight).slice(-7).map(x=>{const d=new Date(x.end);return d.getHours()*60+d.getMinutes()});if(w.length<2)return '';const a=Math.round(w.reduce((p,c)=>p+c,0)/w.length);return t12(new Date().setHours(Math.floor(a/60),a%60,0,0))}
+let OREF=[],CALTXT='';
+function sys(rv){
+ const st=dayStart(Date.now());LIST=S.entries.filter(e=>e.ts>=st).sort((a,b)=>a.ts-b.ts).slice(-30);
+ const es=LIST.map((e,i)=>'['+(i+1)+'] '+(e.dur?t12(e.ts-e.dur*6e4)+'-':'')+t12(e.ts)+' '+e.kind+': '+e.text+(e.cal?' ('+e.cal+' kcal)':'')+(e.dur?' ('+e.dur+' min)':DURK.includes(e.kind)?' (duration not told)':'')+(e.kind==='meal'&&!e.cal?' (food not told)':'')).join('\n')||'(kuch nahi)';
+ const ub=usageIn(st,Date.now()),us=ub.length?(()=>{const q=usageSum(ub);return 'Screen time since waking: '+dur(q.t)+' (top: '+q.top.slice(0,4).map(a=>a[0]+' '+dur(a[1])).join(', ')+'). Recent: '+ub.filter(b=>b.e-b.s>=3e5).slice(-5).map(b=>t12(b.s)+'-'+t12(b.e)+' '+b.a).join('; ')+'. YPT app time is his study timer, count it as study. '})():'';
+ const ls=S.sleep.find(x=>x.end===st),op=S.sleep.find(x=>!x.end),eat=S.entries.filter(e=>e.ts>=st&&e.kind==='meal').reduce((a,e)=>a+(e.cal||0),0);
+ const slp=(ls&&ls.start?'Last night he slept '+dur(Math.round((ls.end-ls.start)/6e4))+' ('+t12(ls.start)+' to '+t12(ls.end)+'). ':'')+(usualWake()?'His usual wake-up time is '+usualWake()+'. ':'')+(op?'Open sleep session since '+t12(op.start)+' ('+dur(Math.max(1,Math.round((Date.now()-op.start)/6e4)))+' ago, wake not logged yet). ':'');
+ OREF=S.open.slice(-8);const ol=OREF.map((o,i)=>'O'+(i+1)+' '+o.kind+': '+o.text+' since '+t12(o.ts)+' ('+dur(Math.max(1,Math.round((Date.now()-o.ts)/6e4)))+' ago)').join('\n')||'(none)';
+ const tk=dayK(st),wd=new Date(st).toLocaleDateString('en-IN',{weekday:'long'});
+ TREF=S.targets.filter(t=>t.status==='open'&&t.date<=dayK(st+7*864e5)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).slice(0,20);
+ RREF=S.fu.filter(f=>!f.done&&f.at>Date.now()).sort((a,b)=>a.at-b.at).slice(0,10);
+ const rl=RREF.map((f,i)=>'R'+(i+1)+' ['+t12(f.at)+'] '+f.q+(f.kind?' ('+f.kind+')':'')).join('\n')||'(none)';
+ const tl=TREF.map((t,i)=>'T'+(i+1)+' ['+t.date+'] '+t.text+tp(t)+(t.why?' (reason noted)':'')).join('\n')||'(none)',td=S.targets.filter(t=>t.status==='done'&&t.date===tk).map(t=>t.text).join('; ')||'(none)';
+ const mem=memText(),n=S.notes.length?'\nLatest review notes: '+S.notes[S.notes.length-1].text.slice(0,800):'';
+ return `You are Partner: his personal secretary, mentor, guide and discipline in charge. He is a bright student who struggles with discipline, late nights and wasted mornings, and wants to gain weight. Hold him accountable, keep track of his targets, and push him toward his goals without nagging. Tone: ${TONE[S.set.tone]}.${S.set.custom?' His own instructions on how you must act (always follow them): '+S.set.custom.slice(0,800)+'.':''} Habits compound; only the present moment matters.
+Reply in Hinglish using Roman letters only (never Devanagari), 1-3 short sentences, at most one question.
+Now: ${new Date().toString().slice(0,24)} (${partOfDay()}). Targets: ${S.set.cal} kcal, ${S.set.pro} g protein per day.
+Memory about him:
+${mem}${n}
+His day started when he woke up at ${t12(st)} (days run wake to wake, not midnight). ${slp}${us}Eaten so far: ${eat} kcal.
+Diary of this day:
+${es}
+Running now (started, not finished yet; refer by O number):
+${ol}
+Calendar, next 24 hours:
+${CALTXT||'(not available)'}
+${rv?'Full diary of today for the review (every entry, phone and YPT usage, sleep):\n'+diaryText(st-1)+'\n':''}Current date (his day starts when he wakes): ${tk}, ${wd}. Open targets (refer by T number):
+${tl}
+Targets done today: ${td}
+Pending reminders (he will get a notification at that time): ${rl}
+His usual durations (reference only): ${usual()||'(not enough data)'}
+Respond ONLY by calling tools, never plain text. Call every tool that applies (several together is fine) and call the reply tool last. In this prompt: entries = log_entry, followup = set_reminder, cancel = cancel_reminders, targets = set_target, habits = habit_done, gym = log_exercise, weight = log_weight, learn = remember, updates = update_entry.
+Running activities: things that take time have a start and an end. When he says he is starting or going to do something now (ja raha hu, khane ja raha hu, baith gaya, shuru kiya, laga raha hu, ab X karta hu) call start_activity (kind meal|study|gym|phone|other, short English text, tag, time only if he said a time). When he says he finished or is back (aa gaya, khake aa gaya, ho gaya, kha liya, khatam, wapas aa gaya) call end_activity with ref = the O number of the matching activity under Running now. The end is logged IMMEDIATELY with its time, even if details are missing: missing details never block logging and you never ask before logging. If he did not say what he ate, give no cal; after logging ask ONE short question about it, and when he answers call update_entry with that diary [n] to fill cal, protein, carbs, fat or text. The app computes the duration itself, so never ask how long when the activity was running. If nothing is running for it, call log_entry (dur only if he told you) and ask how long it took. Plans for a later time (gym at 4 PM) = log_entry kind plan; kind plan is an intention only, no time spent. Tiredness or mood = kind feeling. Skipped things = kind skip with the reason in why.
+log_entry: time = when it ended or happened (HH:MM) or null for now. Food he describes eating = kind meal with realistic Indian estimates (cal, protein, carbs, fat). "so raha hu" = kind bed, time = when he went to sleep. "uth gaya" = kind wake, time = when he woke; "soke uth gaya" or "so ke uth gaya" means he slept and has now woken up (kind wake), it does not mean he is going to bed; if he says how long he slept and no bed was logged, put minutes slept in dur. If an open sleep session exists and he is clearly awake now, ask when he woke up.
+reply tool: reply = Hinglish in Roman letters; speak = the same in Devanagari Hindi for text-to-speech, English words may stay, no symbols; said = if his message contains Devanagari (Hindi script) write the same message in Roman Hinglish letters word for word, never translate, do not add or drop words, otherwise null; plan = one short English line on what he means and what you touched.
+learn_phrase: when he uses a NEW short way of saying he started or finished something that a simple phrase match could miss (for example "chai pee ke aata hu"), call learn_phrase with a 2-4 word Roman phrase, act start or end and its kind, so the app understands it by itself next time. At most one per message, only if genuinely new.
+Phone tools: set_alarm when he asks for an alarm or to wake him (time HH:MM in 24 hour form, days only for a repeating alarm). add_event when he asks to put something in his calendar (date YYYY-MM-DD worked out from today, time HH:MM, minutes default 60). These are real actions on his phone, so only do them when he clearly asks, and say plainly what you set. start_lockdown ONLY when he explicitly asks to lock the phone right now (minutes 5 to 180); never suggest it yourself, and never call it for a lockdown rule he already set up, the app handles those. If the calendar below is available, use it to answer questions about his plans.
+Targets: a target is something he intends to do on a particular day (aaj chai banani hai, kal 10 pages padhne hain, parso kachra fekna hai). Work out the date from the current date above when he says aaj, kal, parso, a weekday or a date. If he states no day, do not add it, ask which day. add = text and date, plus goal and unit only if he gave a number. progress = ref and amount he did now (it is added), or pct if he gives a share like half. done = fully finished. drop = cancelled. miss = only to record a reason (why). edit = change date, text or goal. He may say several things at once, output every action. If he reports finishing something that is also a target, output the target action AND the diary entry.
+Never assume or invent any time, duration, quantity or date he did not state. If something needed is missing, ask one short question. Duration from the diary: when he reports finishing an activity (study, gym, meal, phone, anything) and an earlier entry of this diary shows when he started or sat down for that same activity, set from to that entry's [n] and keep dur 0. The app subtracts the two times itself, so never ask how long in that case, and this is not inventing a time. Only if the diary has no start for it: for a finished activity whose duration he did not tell, keep dur 0 and ask how long it took, mentioning his usual duration from the list only as a reference. Never record the usual duration unless he confirms it. When he tells you how long an earlier diary entry took, use updates with its [n]. Do not ask the same question twice. When he logs waking up, add one short line reminding him of today's open targets.
+If he plans something at a time (e.g. gym at 4 PM), set followup one hour later asking if it happened. If he says he is doing or starting something right now (ab, abhi, shuru kar raha hu, starting me hi), never set a followup sooner than 60 minutes ahead and make it ask how it went (e.g. kitne questions hue), never whether he started. Before you answer, read Pending reminders: every R that asks about something he has just said he is doing, started, finished or is about to do must go in cancel, even if its wording or kind differs from what he said. Never ask him to confirm something he has already told you. Never set a reminder for something he has just told you he already did. If he has already done or reported what a pending reminder asks about, or no longer needs it, put its R number in cancel so he is not asked again. If he says he did not do something, add kind skip and ask why if no reason is given; put the reason in why.
+If the message is exactly "Daily review": compare today's plans, open or partly done targets and the whole diary (every logged activity, phone and YPT usage, sleep) with what was done, and say what he actually did from the diary, ask the reason for the first missed item, one at a time, and record each reason (for a target use act miss with why); if nothing is missed, give a 2 line summary of the day.
+Tags: give every diary entry one tag in its tag field. Existing tags: ${S.tags.map(t=>t.n).join(', ')}. Use an existing tag whenever one fits; invent a new short tag (1-2 words, Title Case) only for a recurring kind of activity that clearly fits none.${S.tl.length?' His own tag corrections (follow these patterns): '+S.tl.slice(-12).map(z=>'"'+z.t+'" = '+z.g).join('; ')+'.':''}
+${S.set.idNow?'Who he is now: '+S.set.idNow.slice(0,300)+'. ':''}${S.set.idWant?'Who he wants to become: '+S.set.idWant.slice(0,300)+'. ':''}${(HREF=S.habits.slice(0,12),HREF.length)?'Habits he is building (refer by H number; each one done is a vote for his identity):\n'+HREF.map((h,i)=>'H'+(i+1)+' '+h.name+' | cue: '+(whenText(h)||'none')+(h.step?' | smallest step: '+h.step:'')+(h.mins?' | '+h.mins+' min':'')+(h.where?' | where: '+h.where:'')+(h.reward?' | reward: '+h.reward:'')+' | '+(hl(h.id,tk)>1?'done today':hl(h.id,tk)===1?'tiny step today':'not yet today')).join('\n')+'\nHabit rules: when he logs or says something that is the cue of a habit not done yet (for example he woke up and a habit starts after I wake up), react in one short phrase (if it is waking up and he is at or before his usual wake-up time, praise him for being on time, otherwise welcome him warmly and never scold), then, only if it still fits the time of day (a morning routine only in the morning), tell him to start that habit now with its smallest step, and set a followup 10 to 15 minutes later asking if he did it; this followup is an exception to the 60 minute rule. If he says he did a habit, put it in habits with lv 2 if fully done or 1 if only the smallest step. Celebrate small wins and never make him feel guilty about a missed habit.':''}
+Gym: when he talks about gym, workouts, exercises, body weight or diet, act like his gym trainer and gym bro: hype him up, stay short, at most one form cue, push progressive overload. Log a diary entry of kind gym only for the whole workout (with its duration), never one per exercise. Log each exercise in gym: {"ex":"Deadlift","sets":[{"w":kg or 0 for bodyweight,"r":reps,"n":number of identical sets}],"note":"only if he gives a note about form, pain or what to try next time"}; 2 sets of 10 reps at 50 kg is {"w":50,"r":10,"n":2}. If he states his body weight, put the number in weight (kg).${lastWt()?' Last weigh-in: '+lastWt().kg+' kg ('+ago(lastWt().ts)+').':' He has not logged his weight yet.'}${S.set.goalWt?' Goal weight: '+S.set.goalWt+' kg.':''} Gym goal: ${S.set.gymDays||4} days a week. If the last weigh-in is over 7 days old, remind him once to weigh in.${S.gym.length?'\nGym history per exercise:\n'+exPrompt()+'\nWhen he is about to do or has just done an exercise that is in this history, tell him in one short line what he did last time (weight, reps, his note) and suggest a small step up (about +2.5 kg or +1 to 2 reps) if he finished all reps. Reuse the exact exercise name from the history.':''}
+Day rule: sleeping in the daytime (a nap) never starts a new day. The app starts a new day only after he says din khatam and then wakes up; never ask about it. Think before you answer: compare what he says with the Now time, the open sleep session and the diary. If it does not add up (for example a 19 hour sleep, or going to bed at noon and waking at 7 the next morning), do not accept it or plan around it, ask one short question about what really happened. Routines and habits belong to a time of day: never tell him to start a morning routine in the afternoon, evening or night, say what fits that time of day instead.
+Learning: in learn put at most 2 NEW durable things you discovered about him as {"sec":one of ${SECS.join(' | ')},"t":"short note"}: a goal, personal fact, habit, preference, a recurring pattern, or HOW HE TALKS (shorthand, repeated phrases, how he states plans or reports things) so you understand him better next time. Only if genuinely new and not already in Memory. One-off events belong in entries, not in learn. Usually learn is [].${us?'\nThe screen-time data above is real phone usage, so never log phone entries from his words. If a long phone block has no explanation in the diary, you may ask once what he was doing then.':''}${QK?'\nThe phone is locked, so it may not be him. Log only what he says now and answer in one short sentence. Never reveal, summarise or read out anything stored or from earlier, such as memory, diary, targets, goals, reviews or screen time. If asked, tell him to open the full app.':''}`}
+const JUDGE='You manage reminders for a personal mentor app. A reminder is a notification that will later ask him whether something happened. Decide which pending reminders are now pointless: he already did, started, reported, skipped or called off the thing it asks about (his wording may differ from the reminder, he writes Roman Hinglish), or it duplicates another pending reminder, or a NEW reminder was set too soon to be useful (for example it asks if he started a few minutes after he said he is starting). Use the recent chat and diary for context. A reminder about a different activity must stay. If unsure, keep it. Output ONLY JSON {"cancel":[R numbers]}.';
+async function judgeFu(text,reply,t0){
+ try{
+  const pend=S.fu.filter(f=>!f.done&&f.at>Date.now()).sort((a,b)=>a.at-b.at).slice(0,10);
+  if(!pend.length||!S.set.key)return;
+  const chat=S.chat.slice(-7).filter(m=>!String(m.id).endsWith('e')).map(m=>(m.role==='user'?'He: ':'Partner: ')+String(m.c).slice(0,300)).join('\n');
+  const dia=S.entries.filter(e=>e.ts>Date.now()-216e5).sort((a,b)=>a.ts-b.ts).slice(-15).map(e=>t12(e.ts)+' '+e.kind+': '+e.text).join('\n')||'(none)';
+  const rl=pend.map((f,i)=>'R'+(i+1)+' ['+t12(f.at)+'] '+f.q+(t0&&f.id==='f'+t0?' (NEW, just set)':'')).join('\n');
+  const out=pj(await ask(JUDGE,[{role:'user',content:'Now: '+new Date().toString().slice(0,24)+'\nRecent chat:\n'+chat+'\nHe just said: '+text+'\nPartner replied: '+reply+'\nDiary, last 6 hours:\n'+dia+'\nPending reminders:\n'+rl}],'claude-haiku-5-5',3000));
+  let ch=false;(out.cancel||[]).forEach(n=>{const f=pend[(+n)-1];if(f&&!f.done){f.done=true;ch=true}});
+  if(ch){await put('fu');syncN()}
+ }catch(e){}
+}
+
+// ---- running activities, backup rules, tools ----
+const KS=['meal','study','gym','phone','other'],cap1=x=>x?x[0].toUpperCase()+x.slice(1):'';
+const rxn=x=>String(x||'').toLowerCase().replace(/[^a-z0-9\u0900-\u097f ]+/g,' ').replace(/\s+/g,' ').trim();
+const START=/(\bja\s*(raha|rha|rahi|rhi)\b|\bjaa\s*(raha|rha|rahi|rhi)\b|\bjata\s*hu\b|\bjaunga\b|\bjaungi\b|\bshuru\b|\bstart\b|\bbaith\s*(gaya|gya|gyi|gayi)\b|\bbaitha\b|\blaga\s*(raha|rha)\b|जा रहा|जा रही|शुरू|बैठ गया)/;
+const END=/(\baa\s*(gaya|gya|gyi|gayi)\b|\bho\s*(gaya|gya|gyi|gayi)\b|\bkha\s*(liya|li)\b|\bkar\s*(liya|li)\b|\bkhatam\b|\bpura\b|\bfinish(ed)?\b|\bdone\b|\bkhake\b|\bnipta\b|\bwapas\b|आ गया|हो गया|खा लिया|कर लिया|खत्म)/;
+const KW=[[/khana|khane|lunch|dinner|breakfast|nashta|nasta|chai|\btea\b|coffee|snack|\beat\b|\bfood\b|खाना|नाश्ता|चाय/,'meal','Meal','Food'],[/padh|study|padai|padhai|\bypt\b|polity|revision|पढ़|पढ/,'study','Study','Study'],[/\bgym\b|workout|exercise|जिम/,'gym','Gym','Exercise'],[/reels|scroll|gaming|youtube|instagram|\bgame\b/,'phone','Phone','Phone']];
+function rxItem(act,seg,lk,lp){const q=KW.find(x=>x[0].test(seg)),kind=lk&&lk!=='other'?lk:q?q[1]:'other',weak=!q&&!lp&&!(lk&&lk!=='other');
+ const text=q?q[2]:lp?cap1(lp):seg.replace(START,'').replace(END,'').trim().slice(0,40)||'Activity';return{act,kind,text,tag:q&&kind===q[1]?q[3]:'',time:null,weak}}
+function rxScan(text){const t=rxn(text);if(t.length<3)return[];let s0=START.exec(t),e0=END.exec(t),ks=null,ke=null,ps='',pe='';
+ S.rx.forEach(x=>{const i=t.indexOf(x.p);if(i<0)return;x.n=(x.n||0)+1;const m={index:i,0:x.p};if(x.act==='start'&&!s0){s0=m;ks=x.kind;ps=x.p}if(x.act==='end'&&!e0){e0=m;ke=x.kind;pe=x.p}});
+ if(!s0&&!e0)return[];const o=[];let a=t,b=t;if(s0&&e0&&s0.index>e0.index){a=t.slice(0,e0.index+e0[0].length);b=t.slice(e0.index+e0[0].length)}
+ if(e0)o.push(rxItem('end',a,ke,pe));if(s0)o.push(rxItem('start',b,ks,ps));return o}
+const rxFor=t=>rxScan(t).filter(x=>!x.weak||(x.act==='end'&&S.open.length));
+function addRx(l){const p=rxn(l&&(l.phrase||l.p));if(!p||p.length<4||p.split(' ').length>5||!['start','end'].includes(l.act))return null;const r0=S.rx.find(x=>x.p===p&&x.act===l.act);if(r0){r0.n=(r0.n||0)+1;return null}
+ const r={p,act:l.act,kind:KS.includes(l.kind)?l.kind:'other',n:1};S.rx.push(r);if(S.rx.length>80){S.rx.sort((a,b)=>(b.n||0)-(a.n||0));S.rx.length=80}return r}
+function applyOp(x){if(x.t==='o'){if(!S.open.some(y=>y.id===x.o.id))S.open.push(x.o)}else S.open=S.open.filter(y=>y.id!==x.id)}
+async function replayOpen(){try{const inb=(await dbGet('inbox'))||[];inb.forEach(it=>{(it.ops||[]).forEach(applyOp);(it.rx||[]).forEach(addRx)})}catch(e){}}
+function tsAt(time,t0,fut){if(time&&/^\d{1,2}:\d{2}$/.test(time)){const [h,m]=time.split(':'),d=new Date(t0);d.setHours(+h,+m,0,0);if(!fut&&d.getTime()>t0+6e4)d.setDate(d.getDate()-1);return d.getTime()}return t0}
+function closeOpen(o,endTs,e,t0){S.open=S.open.filter(x=>x.id!==o.id);const ts=Math.max(endTs,o.ts),d=Math.max(0,Math.min(Math.round((ts-o.ts)/6e4),720));
+ return{id:t0+'-'+Math.random().toString(36).slice(2,6),ts,kind:o.kind,text:(e&&e.text)||o.text,dur:d,cal:+(e&&e.cal)||0,p:+(e&&e.protein)||0,c:+(e&&e.carbs)||0,f:+(e&&e.fat)||0,why:'',tag:(e&&e.tag)?addTag(e.tag):(o.tag||'')}}
+function runBlock(){if(!S.open.length)return'';return '<p class="lab" style="margin-top:24px">Running now</p>'+S.open.map(o=>`<div class="card"><div>${esc(o.text)}<br><small>since ${t12(o.ts)}  ·  ${dur(Math.max(1,Math.round((Date.now()-o.ts)/6e4)))}</small></div><div style="display:flex;gap:8px;align-items:center"><button class="pill" data-a="odone" data-v="${o.id}">Done</button><button class="ic" data-a="ocancel" data-v="${o.id}" aria-label="Discard">×</button></div></div>`).join('')}
+function openDone(id){const o=S.open.find(x=>x.id===id);if(!o)return;const t=Date.now();S.entries.push(closeOpen(o,t,null,t));put('entries');put('open');syncN();render()}
+function openCancel(id){S.open=S.open.filter(x=>x.id!==id);put('open');render()}
+function doUndo(id){const m=S.chat.find(x=>x.id===id);if(!m||!m.undo)return;const u=m.undo;S.entries=S.entries.filter(e=>!u.a.includes(e.id));S.open=S.open.filter(o=>!u.o.includes(o.id));(u.c||[]).forEach(o=>{if(!S.open.some(x=>x.id===o.id))S.open.push(o)});(u.ev||[]).forEach(id=>{if(PH)PH.deleteEvent({id}).catch(()=>{})});m.undo=null;m.lg='Undone';put('entries');put('open');put('chat');syncN();render()}
+const sT={type:'string'},nT={type:'number'},iT={type:'integer'},tmT={type:['string','null'],description:'HH:MM only if he said a time, else null'};
+const mkT=(name,description,properties,required)=>({name,description,input_schema:{type:'object',properties,required:required||[]}});
+const TL=[
+ mkT('reply','Your answer to him. Always call this last.',{reply:sT,speak:sT,said:{type:['string','null']},plan:sT},['reply','speak']),
+ mkT('start_activity','He started or is going to do something that takes time (khane ja raha hu, baith gaya, shuru kiya). Opens a running activity.',{kind:{type:'string',enum:KS},text:sT,tag:sT,time:tmT},['kind','text']),
+ mkT('end_activity','He finished or is back from a running activity (khake aa gaya, ho gaya). Logged immediately, details may be missing.',{ref:{type:'integer',description:'O number of the running activity'},kind:{type:'string',enum:KS},text:sT,tag:sT,time:tmT,cal:nT,protein:nT,carbs:nT,fat:nT},['kind']),
+ mkT('log_entry','Log one finished thing that had no running activity, a plan for later, mood, a skipped thing, sleep or wake.',{kind:{type:'string',enum:['plan','done','meal','study','gym','phone','wake','bed','skip','feeling','other']},text:sT,tag:sT,time:tmT,dur:{type:'number',description:'minutes, only if he told you'},from:{type:'integer',description:'diary number where it started, if known'},cal:nT,protein:nT,carbs:nT,fat:nT,why:sT},['kind','text']),
+ mkT('update_entry','Fill in or correct an earlier diary entry by its number.',{n:iT,dur:nT,cal:nT,protein:nT,carbs:nT,fat:nT,text:sT},['n']),
+ mkT('set_target','Add or change a target.',{act:{type:'string',enum:['add','progress','done','drop','miss','edit']},ref:iT,text:sT,date:sT,goal:nT,unit:sT,amount:nT,pct:nT,why:sT},['act']),
+ mkT('habit_done','He did a habit. lv 2 = fully, 1 = only the smallest step.',{ref:iT,lv:{type:'integer',enum:[1,2]}},['ref','lv']),
+ mkT('log_exercise','Log one exercise with its sets.',{ex:sT,sets:{type:'array',items:{type:'object',properties:{w:nT,r:nT,n:nT},required:['w','r','n']}},note:sT},['ex','sets']),
+ mkT('log_weight','He stated his body weight in kg.',{kg:nT},['kg']),
+ mkT('set_reminder','Notify him later with a question.',{time:sT,q:sT,sp:sT,kind:{type:'string',enum:['wake','meal','study','gym','other']}},['time','q']),
+ mkT('cancel_reminders','Cancel pending reminders by R number.',{refs:{type:'array',items:iT}},['refs']),
+ mkT('remember','A NEW durable thing about him.',{sec:sT,t:sT},['sec','t']),
+ mkT('learn_phrase','He used a new short phrase meaning he started or finished something. The app learns it as a backup rule.',{phrase:sT,act:{type:'string',enum:['start','end']},kind:{type:'string',enum:KS}},['phrase','act']),
+ mkT('set_alarm','Set a phone alarm. Rings at the next time it is that clock time. Days only for a repeating alarm.',{time:{type:'string',description:'HH:MM 24 hour'},days:{type:'array',items:{type:'string',enum:['sun','mon','tue','wed','thu','fri','sat']}},label:sT},['time']),
+ mkT('add_event','Add an event to his phone calendar.',{title:sT,date:{type:'string',description:'YYYY-MM-DD'},time:{type:'string',description:'HH:MM 24 hour'},minutes:{type:'number',description:'length, default 60'},location:sT,notes:sT,remind:{type:'number',description:'minutes before, default 10'}},['title','date','time']),
+ mkT('start_lockdown','Lock his phone now (only calls work). Only when he clearly asks for it.',{minutes:{type:'integer',description:'5 to 180'},reason:sT},['minutes'])];
+function emptyOut(){return{reply:'',speak:'',said:null,plan:'',starts:[],ends:[],entries:[],updates:[],targets:[],habits:[],gym:[],cancel:[],learn:[],weight:0,followup:null,lp:null,alarms:[],events:[],lock:null}}
+function fromTools(c){const o=emptyOut();(c||[]).forEach(b=>{if(b.type!=='tool_use')return;const i=b.input||{};switch(b.name){case'reply':o.reply=i.reply||'';o.speak=i.speak||'';o.said=i.said||null;o.plan=i.plan||'';break;case'start_activity':o.starts.push(i);break;case'end_activity':o.ends.push(i);break;case'log_entry':o.entries.push(i);break;case'update_entry':o.updates.push(i);break;case'set_target':o.targets.push(i);break;case'habit_done':o.habits.push(i);break;case'log_exercise':o.gym.push(i);break;case'log_weight':o.weight=+i.kg||0;break;case'set_reminder':o.followup=i;break;case'cancel_reminders':o.cancel.push(...(i.refs||[]));break;case'remember':o.learn.push(i);break;case'learn_phrase':o.lp=i;break;case'set_alarm':o.alarms.push(i);break;case'add_event':o.events.push(i);break;case'start_lockdown':o.lock=i}});return o}
+async function askTools(sy,ms,md,mx){let m=ms;for(let k=0;k<2;k++){try{const c=await ask(sy,m,md,mx,TL);if(!c.some(b=>b.type==='tool_use')){const t=c.filter(b=>b.type==='text').map(b=>b.text||'').join(' ').trim();m=[...ms,{role:'assistant',content:t||'(no tool call)'},{role:'user',content:'Please answer now by calling the tools, the reply tool last.'}];throw new Error('empty')}return fromTools(c)}catch(e){if(e.message!=='empty')throw e}}throw new Error('Claude did not answer properly. Please say it again.')}
+
+// ---- phone access and lockdown ----
+const LK=NP&&NP.Lockdown,PH=NP&&NP.Phone,LKD={st:null,apps:null,q:'',ed:'',min:30,map:{}};
+const paS=()=>S.set.pa||(S.set.pa={alarm:true,cal:false});
+const lkd=()=>{const l=S.set.lk||(S.set.lk={on:false,rules:[],protect:true,exit:true,delay:true,pend:null,pendAt:0});if(!l.rules)l.rules=[];return l};
+const lkCfg=l=>({on:!!l.on,rules:l.rules||[],protect:l.protect!==false,exit:l.exit!==false,delay:l.delay!==false});
+const lkView=()=>{const l=lkd();return l.pend||lkCfg(l)};
+const rw=(t,d,r)=>`<div class="r2"><span><b>${t}</b><small>${d}</small></span>${r}</div>`;
+const tgb=(a,on,lab)=>`<button class="tg${on?' on':''}" role="switch" aria-checked="${on?'true':'false'}" aria-label="${lab}" data-a="${a}"><span></span></button>`;
+function lkWeaker(a,b){if(a.on&&!b.on)return true;if(a.protect&&!b.protect)return true;if(!a.exit&&b.exit)return true;if(a.delay&&!b.delay)return true;
+ for(const r of a.rules){const q=b.rules.find(x=>x.id===r.id);if(!q)return true;if(q.min>r.min||q.lock<r.lock)return true}return false}
+async function lkPush(){if(!LK)return;const l=lkd();try{await LK.setConfig({cfg:JSON.stringify(lkCfg(l)),pend:l.pend?JSON.stringify(l.pend):'',pendAt:l.pendAt||0})}catch(e){warn('Could not save lockdown settings: '+((e&&e.message)||e))}}
+async function lkSync(){if(!LK)return;try{const o=await LK.status();LKD.st=o;const l=lkd();if(o&&o.cfg){Object.assign(l,JSON.parse(o.cfg));l.pend=o.pend?JSON.parse(o.pend):null;l.pendAt=+o.pendAt||0;put('set')}else if(l.on||l.rules.length)lkPush()}catch(e){}}
+async function lkEdit(fn){const l=lkd();if(LKD.st&&LKD.st.locked){warn('Lockdown is active. Settings are locked until it ends.');return}
+ const base=l.pend||lkCfg(l),nw=fn(JSON.parse(JSON.stringify(base))),cur=lkCfg(l);
+ if(l.delay!==false&&lkWeaker(cur,nw)){l.pend=nw;l.pendAt=Date.now()+864e5}else{Object.assign(l,nw);l.pend=null;l.pendAt=0}
+ put('set');await lkPush();render()}
+async function lkStart(min,reason){if(!LK){warn('Lockdown needs the APK.');return false}await lkSync();if(!(LKD.st&&LKD.st.accessibility)){warn('Turn on the accessibility service first (Settings, Lockdown, Setup).');return false}
+ try{await LK.start({minutes:min,reason:reason||'Lockdown'});await lkSync();return true}catch(e){warn('Could not start lockdown: '+((e&&e.message)||e));return false}}
+const PRESET=[['com.snapchat.android','Snapchat'],['com.instagram.android','Instagram'],['com.google.android.youtube','YouTube'],['com.facebook.katana','Facebook'],['com.twitter.android','X'],['com.reddit.frontpage','Reddit'],['com.whatsapp','WhatsApp'],['org.telegram.messenger','Telegram']];
+PRESET.forEach(([p,n])=>LKD.map[p]=n);
+function appsHtml(){const q=LKD.q.toLowerCase(),src=LKD.apps&&LKD.apps.length?LKD.apps:PRESET.map(([pkg,name])=>({pkg,name}));
+ return src.filter(a=>!q||a.name.toLowerCase().includes(q)).slice(0,80).map(a=>`<button class="r" data-a="lkpick" data-v="${esc(a.pkg)}"><span><b>${esc(a.name)}</b></span><i>+</i></button>`).join('')||'<small>No apps found.</small>'}
+function appsRender(){const el=$('#lkl');if(el)el.innerHTML=appsHtml()}
+async function loadApps(){if(!LK||LKD.apps)return;try{const r=await LK.apps();LKD.apps=(r&&r.apps)||[];LKD.apps.forEach(a=>LKD.map[a.pkg]=a.name);if(V==='s-apps')appsRender()}catch(e){}}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='lkq'){LKD.q=e.target.value;appsRender()}});
+async function calText(){if(!PH||!paS().cal)return'';try{const h=await PH.hasCalendar();if(!(h&&h.granted))return'';const n=Date.now(),r=await PH.events({from:n,to:n+864e5}),ev=((r&&r.events)||[]).sort((a,b)=>a.start-b.start).slice(0,8);
+ return ev.map(x=>(x.allDay?'All day':t12(x.start)+(x.end?' to '+t12(x.end):''))+'  '+String(x.title||'').slice(0,60)).join('\n')||'(nothing planned)'}catch(e){return''}}
+async function send(text,via){
+ const t0=Date.now();text=(text||'').trim();if(!text||busy)return;if(!via&&cv.on)stopC();
+ busy=true;S.chat.push({id:t0+'u',role:'user',c:/[\u0900-\u097F]/.test(text)?'…':text,ts:t0});render();
+ try{
+  const hist=S.chat.slice(-7,-1).filter(m=>!String(m.id).endsWith('e')).map(m=>({role:m.role,content:m.c.slice(0,600)}));while(hist.length&&hist[0].role!=='user')hist.shift();
+  CALTXT=await calText();let out,apiErr=null;try{out=await askTools(sys(text==='Daily review'),[...hist,{role:'user',content:text}],CM(),12000)}catch(e){apiErr=e;const h=text==='Daily review'?[]:rxFor(text);if(!h.length)throw e;out=emptyOut();out.reply='Claude se jawab nahi aaya ('+(e.message||'error')+'), par maine ise backup rule se log kar diya.';h.forEach(x=>(x.act==='end'?out.ends:out.starts).push(x))}
+  if(typeof out.said==='string'&&out.said.trim()&&!/[\u0900-\u097F]/.test(out.said))text=out.said.trim();
+  {const um=S.chat.find(m=>m.id===t0+'u');if(um)um.c=text}
+  if(DE.test(text)){S.set.dayEndAt=t0;put('set')}
+  const added=[],inb={sleep:[],targets:[],gym:[],wt:[],hl:[]};let sl='',slts=t0;
+  (out.entries||[]).forEach(e=>{let ts=t0;if(e.time&&/^\d{1,2}:\d{2}$/.test(e.time)){const [h,m]=e.time.split(':'),d=new Date(t0);d.setHours(+h,+m,0,0);if(d.getTime()>t0+6e4&&e.kind!=='plan')d.setDate(d.getDate()-1);ts=d.getTime()}
+   let du=+e.dur||0;if(!du&&e.from&&e.kind!=='plan'){const s0=LIST[(+e.from)-1];if(s0&&ts>s0.ts)du=Math.round((ts-s0.ts)/6e4)}
+   if(e.kind==='bed'){bedAt(ts);inb.sleep.push(['bed',ts,0]);sl=1;slts=ts;return}if(e.kind==='wake'){wakeAt(ts,+e.dur||0);resolveFu('wake');inb.sleep.push(['wake',ts,+e.dur||0]);sl=1;slts=ts;return}
+   added.push({id:t0+'-'+Math.random().toString(36).slice(2,6),ts,kind:e.kind||'other',text:e.text||text,dur:e.kind==='plan'?0:Math.max(0,Math.min(du,720)),cal:+e.cal||0,p:+e.protein||0,c:+e.carbs||0,f:+e.fat||0,why:e.why||'',tag:e.tag?addTag(e.tag):''})});
+  const OP={o:[],c:[],ops:[]},RXN=[],FB=[];let viaRx=!!apiErr;
+  if(!viaRx&&text!=='Daily review'&&!(out.starts.length||out.ends.length||out.entries.length||out.targets.length||out.gym.length||sl)&&!/\b(kal|parso|tomorrow)\b/.test(rxn(text))){const h=rxFor(text);if(h.length){viaRx=true;h.forEach(x=>(x.act==='end'?out.ends:out.starts).push(x))}}
+  out.ends.forEach(e=>{let o=OREF[(+e.ref)-1];if(!o||!S.open.some(x=>x.id===o.id))o=[...S.open].reverse().find(x=>x.kind===e.kind)||(S.open.length===1?S.open[0]:null);const ets=tsAt(e.time,t0);
+   if(o){const snap={...o},en=closeOpen(o,ets,e,t0);added.push(en);OP.c.push(snap);OP.ops.push({t:'c',id:o.id});FB.push('Ended  ·  '+t12(en.ts)+'  ·  '+(en.tag||cap1(en.kind))+(en.dur?'  ·  '+dur(en.dur):''))}
+   else{if(e.weak)return;const en={id:t0+'-'+Math.random().toString(36).slice(2,6),ts:ets,kind:KS.includes(e.kind)?e.kind:'other',text:e.text||text,dur:0,cal:+e.cal||0,p:+e.protein||0,c:+e.carbs||0,f:+e.fat||0,why:'',tag:e.tag?addTag(e.tag):''};added.push(en);FB.push('Logged  ·  '+t12(ets)+'  ·  '+(en.tag||cap1(en.kind)))}});
+  out.starts.forEach(e=>{if(e.weak)return;const kind=KS.includes(e.kind)?e.kind:'other',o={id:'o'+t0+Math.random().toString(36).slice(2,5),kind,text:String(e.text||text).slice(0,60),tag:e.tag?addTag(e.tag):'',ts:tsAt(e.time,t0,true)};if(S.open.some(x=>x.kind===kind&&norm(x.text)===norm(o.text)&&Math.abs(x.ts-o.ts)<6e5))return;S.open.push(o);OP.o.push(o);OP.ops.push({t:'o',o});FB.push('Started  ·  '+t12(o.ts)+'  ·  '+(o.tag||cap1(kind)))});
+  if(viaRx&&FB.length)FB.push('Backup rule');
+  if(out.lp&&out.lp.phrase){const x=addRx(out.lp);if(x)RXN.push(x)}
+  const EVI=[];
+  for(const a of (out.alarms||[])){const m=/^(\d{1,2}):(\d{2})$/.exec(String(a.time||''));if(!m)continue;
+   if(!paS().alarm){FB.push('Alarms are off in Settings');continue}
+   if(!PH){FB.push('Alarms need the APK');continue}
+   try{const DM={sun:1,mon:2,tue:3,wed:4,thu:5,fri:6,sat:7},days=(a.days||[]).map(x=>DM[String(x).toLowerCase().slice(0,3)]).filter(Boolean);
+    await PH.setAlarm({hour:+m[1],minute:+m[2],label:String(a.label||'Partner').slice(0,40),days});
+    const nx=new Date(t0);nx.setHours(+m[1],+m[2],0,0);if(nx.getTime()<=t0)nx.setDate(nx.getDate()+1);
+    FB.push('Alarm  ·  '+(days.length?'Repeats':nx.toLocaleDateString('en-IN',{weekday:'short'}))+' '+t12(nx.getTime()))}catch(e){FB.push('Alarm failed: '+((e&&e.message)||e))}}
+  for(const v of (out.events||[])){const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v.date||'')),tm=/^(\d{1,2}):(\d{2})$/.exec(String(v.time||''));if(!dm||!tm||!v.title)continue;
+   if(!paS().cal){FB.push('Calendar is off in Settings');continue}
+   if(!PH){FB.push('Calendar needs the APK');continue}
+   try{const st=new Date(+dm[1],+dm[2]-1,+dm[3],+tm[1],+tm[2]).getTime(),en=st+Math.max(5,Math.min(+v.minutes||60,1440))*6e4;
+    const r=await PH.addEvent({title:String(v.title).slice(0,100),start:st,end:en,location:v.location||'',notes:v.notes||'',remind:v.remind==null?10:+v.remind});
+    if(r&&r.id!=null)EVI.push(r.id);FB.push('Calendar  ·  '+new Date(st).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' '+t12(st))}catch(e){FB.push('Calendar failed: '+((e&&e.message)||e))}}
+  if(out.lock&&!QK){const mn=Math.max(5,Math.min(+out.lock.minutes||0,180));if(mn>=5){const ok=await lkStart(mn,out.lock.reason);FB.push(ok?'Lockdown  ·  until '+t12(Date.now()+mn*6e4):'Lockdown could not start')}}
+  const UN={a:added.map(x=>x.id),o:OP.o.map(x=>x.id),c:OP.c,ev:EVI};
+  S.entries.push(...added);fixData();added.forEach(a=>{if(['gym','study','meal'].includes(a.kind))resolveFu(a.kind)});(out.cancel||[]).forEach(n=>{const f=RREF[(+n)-1];if(f)f.done=true});let ln=0;(out.learn||[]).slice(0,2).forEach(l=>{if(l&&addMem(l.sec,l.t,true))ln++});
+  let hn=0;(out.habits||[]).forEach(a=>{const h=HREF[(+a.ref)-1];if(h&&(+a.lv===1||+a.lv===2)){const m=S.hlog[h.id]=S.hlog[h.id]||{},k=hk();if((m[k]||0)<+a.lv){m[k]=+a.lv;hn++;inb.hl.push([h.id,k,+a.lv])}}});
+  let gn=0,wn=0;(out.gym||[]).forEach(g=>{const r=gymLog(g,t0);if(r){gn++;if(QK)inb.gym.push({...r,sets:r.sets.map(x=>({...x}))})}});const wv=+out.weight;if(wv>20&&wv<400){const w={ts:t0,kg:Math.round(wv*10)/10};S.wt.push(w);inb.wt.push(w);wn=1}
+   (out.updates||[]).forEach(u=>{const e=LIST[(+u.n)-1];if(!e)return;if(+u.dur>0)e.dur=Math.max(1,Math.min(+u.dur,720));if(+u.cal>0){e.cal=+u.cal;e.p=+u.protein||e.p||0;e.c=+u.carbs||e.c||0;e.f=+u.fat||e.f||0}if(u.text&&String(u.text).trim())e.text=String(u.text).trim().slice(0,120)});
+  let tn=0;(out.targets||[]).forEach(a=>{if(QK){if(a&&a.act==='add'&&applyT(a))inb.targets.push(S.targets[S.targets.length-1])}else if(applyT(a))tn++});S.targets=S.targets.filter(t=>t.status==='open'||t.ts>Date.now()-90*864e5);
+  const f=out.followup;if(f&&f.time&&/^\d{1,2}:\d{2}$/.test(f.time)&&S.set.notif){const [h,m]=f.time.split(':'),d=new Date(t0);d.setHours(+h,+m,0,0);if(d.getTime()>t0)S.fu.push({id:'f'+t0,at:d.getTime(),q:f.q||'Done?',sp:f.sp||'',kind:['wake','meal','study','gym','other'].includes(f.kind)?f.kind:'',done:false})}
+  S.fu=S.fu.filter(x=>!x.done||x.at>t0-864e5).slice(-40);
+  const a=added.find(x=>x.kind!=='plan'&&x.kind!=='feeling'&&x.kind!=='skip'),lg=a?'Logged  ·  '+t12(a.ts)+'  ·  '+a.kind[0].toUpperCase()+a.kind.slice(1)+(a.cal?'  ·  '+a.cal+' kcal':''):sl?'Logged  ·  '+t12(slts)+'  ·  Sleep':'';
+  S.chat.push({id:t0+'a',role:'assistant',c:out.reply||'Noted.',ts:Date.now(),undo:(UN.a.length||UN.o.length||UN.c.length||UN.ev.length)?UN:null,lg:[FB.length?FB.join('  ·  '):lg,ln?'Memory updated':'',tn?'Targets updated':'',hn?'Habit logged':'',gn?'Workout logged':'',wn?'Weight logged':'',DE.test(text)?'Day ended':''].filter(Boolean).join('  ·  ')});
+  if(S.chat.length>200)S.chat=S.chat.slice(-200);
+  await Promise.all([put('entries'),put('sleep'),put('mem'),put('targets'),put('chat'),put('fu'),put('hlog'),put('gym'),put('wt'),put('open'),put('rx')]);syncN();
+  if(QK)await inboxPush({ops:OP.ops,rx:RXN,entries:added,sleep:inb.sleep,targets:inb.targets,gym:inb.gym,wt:inb.wt,hl:inb.hl,said:text,reply:out.reply||''});
+  QR=out.reply||'';busy=false;render();
+  if(!QK)judgeFu(text,out.reply||'',t0);
+  if(via==='voice'){speak(out.speak||out.reply,()=>{if(cv.on)listen()})}
+ }catch(e){{const um=S.chat.find(m=>m.id===t0+'u');if(um&&um.c==='…')um.c=text}QR=e.message||'';busy=false;S.chat.push({id:t0+'e',role:'assistant',c:e.message||'Something went wrong.',ts:Date.now()});put('chat');render();stopC()}
+}
+
+/* ---------- reminders ---------- */
+function checkDue(){
+ if(!S.set.notif||muted())return;let ch=false,fr=0,fq=0;const n=Date.now(),say=[];
+ S.fu.forEach(f=>{if(!f.done&&f.at<=n){f.done=true;S.chat.push({id:'d'+f.id,role:'assistant',c:f.q,ts:n});ch=true;if(f.at>n-6e5){say.push(f.sp||f.q);fq=1;if(f.at>n-2e4)fr=1}}});
+ const [h,m]=S.set.rev.split(':'),rt=new Date();rt.setHours(+h,+m,0,0);
+ if(n>=rt.getTime()&&S.set.revAsked!==dayK(n)){S.set.revAsked=dayK(n);S.chat.push({id:'r'+n,role:'assistant',c:'Time for your daily review. Shall we go through today? Tap Start now in the Today tab.',ts:n});put('set');ch=true;if(n-rt.getTime()<6e5)say.push('डेली रिव्यू का टाइम। आज का दिन देखें?')}
+ if(ch){put('chat');put('fu');if(V==='chat')render()}
+ if(say.length&&S.set.nspeak!==false&&!(NP&&NP.Speaker&&NP.Speaker.schedule)&&!cv.on&&!busy)speak(say.join('. '),()=>{if(fq)askListen(300)});else if(fq&&NP&&NP.Speaker&&NP.Speaker.schedule)askListen(fr?9000:800)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){checkQuick();if(V==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});mergeInbox();checkDue();syncN().then(keepBtn);syncUsage();{const b4=JSON.stringify(LKD.st);lkSync().then(()=>{if((V==='s-lock'||V==='s-setup')&&JSON.stringify(LKD.st)!==b4)render()})}if(V==='s-us')usCheck();if(SU.on&&SU.wait){SU.wait=null;suRun()}else if(V==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})}});
+async function hwSync(){if(!HW)return;try{HWS.st=await HW.status()}catch(e){}}
+function hwKeep(){if(S.set.hotword&&HW&&HW.setEnabled)HW.setEnabled({enabled:true}).catch(()=>{})}
+function hwOpen(f){if(!HW){warn('This works only in the APK.');return}HW[f]().catch(e=>warn('Could not open the Android page: '+((e&&e.message)||e)))}
+const SENSN=['Careful','Balanced','Easy'],SENSD=['Fewest mistakes. Waits while a video or music is playing. Say it on its own, then pause.','Also listens while a video or music is playing.','Hears more accents and voices, but may wake by mistake.'];
+function hwBlock(s){
+ if(!HW)return '';
+ const st=HWS.st||{};
+ let msg='Say "Hey Partner" with the phone locked or on the table, and Partner opens and starts listening. The wake word is checked on the phone, no audio is sent anywhere.';
+ if(s.hotword){
+  if(st.model===false)msg='This build has no wake-word model. Run Build APK again.';
+  else if(st.running)msg=st.state==='paused'?'On. Waiting while Partner is open, it listens again when you leave.':'On. Listening for "Hey Partner".';
+  else msg='Not running'+(st.error?': '+st.error:'. Open Partner once and it starts again.');
+  if(st.heard)msg+=' Last heard: '+st.heard+'.'}
+ const r=(a,t,d,v)=>`<button class="r" data-a="${a}"><span><b>${t}</b><small>${esc(d)}</small></span><i>${v}</i></button>`;
+ return `<p class="lab">Hands-free</p><div class="sw" style="margin-top:14px"><span>Hey Partner</span><button class="pill" data-a="hotword">${s.hotword?'On':'Off'}</button></div><small style="display:block">${esc(msg)}</small>`
+  +(s.hotword?r('hwoverlay','Show over other apps','Lets Partner open right away while you are using the phone.',st.overlay?'On':'Allow ›')+r('hwsens','Sensitivity',SENSD[st.sens||0],SENSN[st.sens||0]+' ›')+r('hwbatt','Keep running in background','Stops Android from putting the listener to sleep.',st.battery?'On':'Allow ›')+(st.fsi===false?r('hwfsi','Full-screen alerts','Needed to wake the screen when the phone is locked.','Allow ›'):''):'')
+  +r('hwassist','Digital assistant app','Opens the Android page where Partner is chosen as the assistant.',st.assistant?'Selected':'Choose ›')}
+function keepBtn(){hwKeep();if(S.set.lockBtn&&NP&&NP.Quick&&NP.Quick.setEnabled)NP.Quick.setEnabled({enabled:true}).catch(()=>{})}
+const habitMsg=h=>'Habit time: '+h.name+'.'+(h.step?' Start small: '+h.step+'.':'');
+const nextAt=(hm,after)=>{const [h,m]=hm.split(':'),d=new Date(after);d.setHours(+h,+m,0,0);if(d.getTime()<=after)d.setDate(d.getDate()+1);return d};
+let syncQ=Promise.resolve();
+function syncN(){syncQ=syncQ.then(syncNow).catch(()=>{});return syncQ}
+async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&NP.Speaker.schedule?NP.Speaker:null;if((!LN&&!SP)||QK)return;
+ try{if(LN){const p=await LN.getPending();if(p.notifications.length)await LN.cancel({notifications:p.notifications})}
+  if(SP)await SP.schedule({items:[]});
+  if(!S.set.notif)return;if(LN)await LN.requestPermissions();
+  const base=Math.max(Date.now(),S.set.mute||0);
+  if(SP&&S.set.nspeak!==false){
+   const hi=t=>/[\u0900-\u097F]/.test(t)?'hi-IN':'en-IN';
+   const items=[{id:1,at:nextAt(S.set.rev,base).getTime(),title:'Partner',body:'Time for your daily review. Shall we go through today?',text:'डेली रिव्यू का टाइम। आज का दिन देखें?',lang:'hi-IN',repeat:true}];
+   S.fu.filter(f=>!f.done&&f.at>base).slice(0,20).forEach((f,i)=>items.push({id:100+i,at:f.at,title:'Partner',body:f.q,text:f.sp||f.q,lang:hi(f.sp||f.q)}));
+   S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>items.push({id:300+i,at:nextAt(h.anchor,base).getTime(),title:'Partner',body:habitMsg(h),text:habitMsg(h),lang:'en-IN',repeat:true}));
+    await ensureAudio(SP,items);
+    await SP.schedule({items});
+   try{const c=await SP.canExact();if(!c.value&&!S.set.exactAsked){S.set.exactAsked=true;put('set');await SP.requestExact()}}catch(e){}
+   return}
+  if(!LN)return;
+  const list=[{id:1,title:'Partner',body:'Time for your daily review. Shall we go through today?',schedule:{at:nextAt(S.set.rev,base),repeats:true,every:'day',allowWhileIdle:true}}];
+  S.fu.filter(f=>!f.done&&f.at>base).slice(0,20).forEach((f,i)=>list.push({id:100+i,title:'Partner',body:f.q,schedule:{at:new Date(f.at),allowWhileIdle:true}}));
+  S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>list.push({id:300+i,title:'Partner',body:habitMsg(h),schedule:{at:nextAt(h.anchor,base),repeats:true,every:'day',allowWhileIdle:true}}));
+   await LN.schedule({notifications:list})}catch(e){warn('Could not set the notification: '+((e&&e.message)||e))}}
+
+/* ---------- voice ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;const cv={on:false,n:0,l:false};
+let ELA=null;
+const hsh=x=>{let h=5381;for(const c of x)h=((h<<5)+h+c.charCodeAt(0))|0;return (h>>>0).toString(36)+x.length};
+const b64=b=>new Promise((ok,no)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]);f.onerror=no;f.readAsDataURL(b)});
+const natP=()=>{const q=S.set,g=!!(q.ggKey&&String(q.ggKey).trim()),e=!!(q.evKey&&q.evVoice);return q.vp==='ph'?'':q.vp==='gg'?(g?'gg':''):q.vp==='el'?(e?'el':''):(e?'el':g?'gg':'')};
+const ggVoiceName=()=>{let n=String(S.set.ggVoice||'').trim()||'Aoede';return n.includes('-')?n:'hi-IN-Chirp3-HD-'+n};
+const natId=()=>natP()==='gg'?'gg:'+ggVoiceName():S.set.evVoice;
+async function apiErrMsg(r){try{const j=await r.json(),d=j.detail||j.error||j;return typeof d==='string'?d:(d&&(d.message||d.status))||''}catch(e){return ''}}
+async function ggBlob(t){const nm=ggVoiceName(),lc=nm.split('-').slice(0,2).join('-');
+ const r=await fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key='+encodeURIComponent(String(S.set.ggKey).trim()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:{text:t},voice:{languageCode:lc,name:nm},audioConfig:{audioEncoding:'MP3'}})});
+ if(!r.ok){const m=await apiErrMsg(r);throw new Error('Google voice error '+r.status+(m?': '+m:''))}
+ const j=await r.json(),bin=atob(j.audioContent||''),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:'audio/mpeg'})}
+const natBlob=t=>natP()==='gg'?ggBlob(t):elBlob(t);
+async function elBlob(t){const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(String(S.set.evVoice).trim())+'?output_format=mp3_44100_64',{method:'POST',headers:{'xi-api-key':String(S.set.evKey).trim(),'Content-Type':'application/json'},body:JSON.stringify({text:t,model_id:'eleven_flash_v2_5'})});if(!r.ok){const m=await apiErrMsg(r);throw new Error('ElevenLabs error '+r.status+(m?': '+m:''))}return r.blob()}
+async function speakEL(t,cb){try{const b=await natBlob(t);if(NP&&NP.Speaker&&NP.Speaker.play){await NP.Speaker.play({audio:await b64(b)});cb();return}const u=URL.createObjectURL(b);ELA=new Audio(u);ELA.onended=ELA.onerror=()=>{URL.revokeObjectURL(u);ELA=null;cb()};await ELA.play()}catch(e){warn('Natural voice failed, using the phone voice. '+((e&&e.message)||''));speakSys(t,cb)}}
+async function ensureAudio(SP,items){if(!(natP()&&SP.hasAudio))return;try{items.forEach(it=>{it.ak=hsh(natId()+'|'+(it.text||it.body||''))});const keys=[...new Set(items.map(i=>i.ak))],have=new Set(((await SP.hasAudio({keys})).have)||[]);let n=0;for(const it of items){if(have.has(it.ak)||n>=8)continue;have.add(it.ak);n++;try{it.audio=await b64(await natBlob(it.text||it.body))}catch(e){delete it.ak}}}catch(e){}}
+function speak(t,cb){cb=cb||(()=>{});if(!t){cb();return}if(natP()){speakEL(t,cb);return}speakSys(t,cb)}
+function speakSys(t,cb){const lang=/[\u0900-\u097F]/.test(t)?'hi-IN':'en-IN';
+ if(NP&&NP.TextToSpeech){NP.TextToSpeech.speak({text:t,lang,rate:1,pitch:1,volume:1,category:'ambient'}).then(()=>cb()).catch(e=>{warn('Could not play the voice: '+((e&&e.message)||e));cb()});return}
+ if(!window.speechSynthesis){cb();return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=lang;u.onend=u.onerror=()=>cb();speechSynthesis.speak(u)}
+const isEnd=t=>t.trim().split(/\s+/).length<=4&&(/(^|\s)(bye|stop|ruk|ruko|bas|band|chup|quit)(\s|$)/i.test(t)||/(बस|रुक|बंद|बाय|स्टॉप|चुप)/.test(t));
+function askListen(d){if(QK||busy||cv.on||document.hidden)return;setTimeout(async()=>{if(QK||busy||cv.on||document.hidden)return;if(V!=='chat'){V='chat';render()}await startC();cv.t=setTimeout(()=>{if(cv.on&&cv.l)stopC()},12000)},d||0)}
+function uiMic(){const b=$('#mic');if(b)b.classList.toggle('on',cv.on);const c=$('#cap');if(c)c.textContent=cv.on?(cv.l?'Listening...':'Tap to stop'):'Tap to talk'}
+function stopC(){cv.on=false;cv.l=false;clearTimeout(cv.t);try{if(ELA){ELA.pause();ELA=null}if(NP&&NP.Speaker&&NP.Speaker.stopPlay)Promise.resolve(NP.Speaker.stopPlay()).catch(()=>{})}catch(e){}try{speechSynthesis.cancel()}catch(e){}try{NP&&NP.TextToSpeech&&NP.TextToSpeech.stop()}catch(e){}try{rec&&rec.abort()}catch(e){}try{NP&&NP.SpeechRecognition&&NP.SpeechRecognition.stop()}catch(e){}rec=null;uiMic()}
+async function startC(){if(!NP&&!SR){warn('Voice is not supported in this browser. Use Chrome.');return}
+ if(NP&&NP.SpeechRecognition){try{await NP.SpeechRecognition.requestPermissions()}catch(e){}}cv.on=true;cv.n=0;listen()}
+function heard(t){cv.l=false;clearTimeout(cv.t);if(isEnd(t)){stopC();speak('ठीक है, बाद में बात करते हैं।',FQ?()=>A.qclose():undefined);return}if(++cv.n>15){stopC();return}uiMic();send(t,'voice')}
+function listen(){if(!cv.on||cv.l)return;cv.l=true;uiMic();
+ if(NP&&NP.SpeechRecognition){(async()=>{try{const x=await NP.SpeechRecognition.start({language:'hi-IN',maxResults:1,popup:false,partialResults:false});if(!cv.on)return;const t=x&&x.matches&&x.matches[0];t?heard(t):stopC()}catch(e){stopC()}})();return}
+ rec=new SR();rec.lang='hi-IN';let got=false;rec.onresult=e=>{got=true;heard(e.results[0][0].transcript)};rec.onend=()=>{rec=null;cv.l=false;if(!got&&cv.on)stopC()};rec.onerror=()=>{};rec.start()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cv.on)stopC()});
+let hiddenAt=0;
+function autoStart(){}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(hiddenAt&&Date.now()-hiddenAt>=30000)autoStart()});
+
+/* ---------- views ---------- */
+const greet=()=>{const h=new Date().getHours();return h<5?'It is very late.':h<12?'Good morning.':h<17?'Good afternoon.':h<22?'Good evening.':'Good night.'};
+const row=(a,b,v)=>`<button class="r" data-a="go" data-v="${v}"><span><b>${a}</b><small>${esc(b)}</small></span><i>›</i></button>`;
+const SUB={'s-us':'Screen time','s-medit':'Edit note','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions'};
+function topBar(){
+ if(V==='s-setup'&&!S.set.setupDone)return '<div></div><div></div>';
+ if(V==='chat')return `<div><div style="font-size:19px;font-weight:600">Partner</div><small>Claude ${MN[CM()]||CM()}</small></div><button class="ic" data-a="go" data-v="settings" aria-label="Settings">${GEAR}</button>`;
+ if(V==='settings'||SUB[V])return `<div style="display:flex;align-items:center;gap:6px"><button class="ic" style="border:0" data-a="go" data-v="${V==='settings'?(PV||'diary'):V==='s-medit'?'s-mem':(V==='s-rule'||V==='s-apps')?'s-lock':'settings'}" aria-label="Back">${BACK}</button><h1 class="h2">${V==='settings'?'Settings':SUB[V]}</h1></div>`;return `<div></div><button class="ic" data-a="go" data-v="settings" aria-label="Settings">${GEAR}</button>`}
+function dayView(){
+ fixData();const s=S.set,now=Date.now(),ds=[...new Set([...S.entries.map(e=>dayStart(e.ts)),...S.sleep.filter(isNight).map(x=>x.end),dayStart(now)])].sort((a,b)=>a-b);
+ vd=Math.max(0,Math.min(vd,ds.length-1));const i=ds.length-1-vd,st=ds[i],en=i<ds.length-1?ds[i+1]:now;
+ const es=S.entries.filter(e=>e.ts>=st&&(i<ds.length-1?e.ts<en:true));es.forEach(e=>{if(e.tag&&!S.tags.some(t=>t.n===e.tag))addTag(e.tag)});let cal=0,p=0,study=0;
+ es.forEach(e=>{if(e.kind==='meal'){cal+=e.cal||0;p+=e.p||0}});
+ const ub=usageIn(st,en),hasU=ub.length>0;const MS=es.filter(e=>tagOf(e)==='Study'&&e.dur>0),SI=MS.map(e=>[e.ts-e.dur*6e4,e.ts]);ub.forEach(b=>{if(isSt(b))SI.push([b.s,b.e])});SI.sort((a,b)=>a[0]-b[0]);{let ms=0,ce=0;SI.forEach(([a,b])=>{a=Math.max(a,ce);if(b>a){ms+=b-a;ce=b}});study=Math.round(ms/6e4)}
+ const ls=S.sleep.find(x=>x.end===st),lm=ls&&ls.start?Math.round((ls.end-ls.start)/6e4):0;
+ const it=es.filter(e=>DONE.includes(e.kind)&&!(hasU&&e.kind==='phone')).map(e=>{const t0=Math.max(st,e.ts-(e.dur||0)*6e4);return{t:t0,x:e.text,s:[tagOf(e),e.dur?dur(e.dur):'',e.cal?e.cal+' kcal':''].filter(Boolean).join('  ·  '),c:TC(tagOf(e)),d:e.dur?Math.max(1,Math.round((e.ts-t0)/6e4)):0,k:'e',id:e.id}});
+ const TI=[...es.filter(e=>DONE.includes(e.kind)&&e.dur>0&&!(hasU&&e.kind==='phone')).map(e=>[e.ts-e.dur*6e4,e.ts]),...S.sleep.filter(x=>x.start&&x.start<en&&(x.end||now)>st).map(x=>[x.start,x.end||now])],ovl=b=>{let o=0;TI.forEach(([a,z])=>{o+=Math.max(0,Math.min(z,b.e)-Math.max(a,b.s))});return o>=(b.e-b.s)*.5};
+ ub.filter(b=>b.e-b.s>=6e5&&!(isSt(b)&&MS.some(e=>e.ts>b.s&&e.ts-e.dur*6e4<b.e))&&!ovl(b)).forEach(b=>it.push({t:b.s,x:b.a,s:(isSt(b)?'Study':'Phone')+'  ·  '+dur(Math.round((b.e-b.s)/6e4)),c:TC(isSt(b)?'Study':'Phone'),k:'u',id:b.p,d:Math.round((b.e-b.s)/6e4)}));
+ if(ls)it.push({t:st,x:'Woke up',s:'',c:TC('Sleep'),k:'s',id:ls.id,d:0});
+ S.sleep.filter(x=>x.start>=st&&(i<ds.length-1?x.start<en:x.start<=en)).forEach(x=>it.push({t:x.start,x:x.end&&!isNight(x)?'Nap':'Went to bed',k:'s',id:x.id,s:x.end?'Slept '+dur(Math.round((x.end-x.start)/6e4)):'Sleeping now',c:TC('Sleep'),d:x.end?Math.round((x.end-x.start)/6e4):0}));
+ it.sort((a,b)=>a.t-b.t||(a.d||0)-(b.d||0));
+ const sg=[];ub.forEach(b=>sg.push({a:b.s,b:b.e,k:isSt(b)?'Study':'Phone'}));
+ es.filter(e=>DONE.includes(e.kind)&&e.dur>0&&!(hasU&&e.kind==='phone')).forEach(e=>sg.push({a:e.ts-e.dur*6e4,b:e.ts,k:tagOf(e)}));
+ S.sleep.forEach(x=>{if(x.start>=st&&(i<ds.length-1?x.start<en:x.start<=en))sg.push({a:x.start,b:Math.min(x.end||now,en),k:'Sleep'})});
+ sg.sort((a,b)=>a.a-b.a);const seg=[];let cur=st;
+ sg.forEach(x=>{const a=Math.max(x.a,cur),b=Math.min(x.b,en);if(b<=a)return;if(a>cur)seg.push({k:'Unlogged',m:(a-cur)/6e4});seg.push({k:x.k,m:(b-a)/6e4});cur=b});
+ if(en>cur)seg.push({k:'Unlogged',m:(en-cur)/6e4});
+ const tot={};seg.forEach(x=>tot[x.k]=(tot[x.k]||0)+x.m);const slt=Math.round(tot.Sleep||0);
+ const lab=new Date(st).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+ return `<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1 class="h">${vd?new Date(st).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'Today'}</h1><small style="font-size:14px">${lab}</small></div><div style="display:flex;gap:8px"><button class="ic" data-a="pday" data-v="1" ${i?'':'disabled style="opacity:.3"'} aria-label="Previous day">‹</button><button class="ic" data-a="pday" data-v="-1" ${vd?'':'disabled style="opacity:.3"'} aria-label="Next day">›</button></div></div>
+<div class="tiles"><div class="tile"><b>${cal}</b><small>of ${s.cal} kcal<br>${Math.round(p)} g protein</small></div><div class="tile"><b>${study?dur(study):'0h'}</b><small>study</small></div><div class="tile"><b>${slt?dur(slt):'-'}</b><small>${slt?'slept':'sleep'}</small></div></div>
+<p class="lab">Where your day went</p>${en-st>3e5?`<div class="bar">${Object.entries(tot).filter(([k,m])=>m>0).sort((a,b)=>b[1]-a[1]).map(([k,m])=>`<i style="flex:${m} 1 0;background:${TC(k)}" title="${esc(k)}"></i>`).join('')}</div><div class="lg">${Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([k,m])=>`<span><i style="background:${TC(k)}"></i>${esc(k)} ${dur(Math.round(m))}</span>`).join('')}</div>`:'<p class="g">The day has just started.</p>'}
+${hasU?(()=>{const q=usageSum(ub,8);return `<button class="r" data-a="stog" style="min-height:52px;margin-top:8px"><span>Screen time</span><span class="g">${dur(q.t)}  <i style="display:inline-block;font-style:normal;transform:rotate(${stOpen?90:0}deg)">›</i></span></button>`+(stOpen?q.top.map(([a,m])=>`<div class="sw" style="min-height:38px"><span>${esc(a)}</span><small>${dur(m)}</small></div>`).join(''):'')})():''}
+
+${vd?'':runBlock()}${tasksBlock(dayK(st))}<p class="lab" style="margin-top:24px">Diary</p>${it.length?diaryRows(it,st,en):'<p class="g">Nothing logged yet.</p>'}${vd?'':`<div class="card"><div><p class="lab" style="margin:0 0 4px">Daily review</p>Today at ${t12(new Date().setHours(...s.rev.split(':').map(Number),0,0))}</div><button class="pill" data-a="review">Start now</button></div>`}`}
+function diaryRows(it,st,en){const G=3e5,PPM=(S.set.cmpx||63)/60,MIN=20,out=[],tail=Math.min(en,Date.now()),cap=(d,h)=>Math.max(5,Math.min(h,d*PPM)-3);let cur=st;
+ /* PPM: Android WebView css px are 1/160 inch, so 63 px = 1 cm; 60 min = 1 cm */
+ it.forEach(e=>{const f=e.t+(e.d||0)*6e4;if(e.t-cur>G)out.push({g:1,a:cur,b:e.t});e.m=e.d>0?Math.max(0,(f-Math.max(e.t,cur))/6e4):0;out.push(e);if(f>cur)cur=f});
+ if(tail-cur>G)out.push({g:1,a:cur,b:tail});
+ return out.map(e=>{
+  if(e.g){const m=Math.round((e.b-e.a)/6e4),h=Math.max(MIN,Math.round(m*PPM));return `<div class="ev ${h<50?'sm':''}" style="height:${h}px" data-a="efocus" data-v="g|${e.a}|${e.b}"><span class="t">${t12(e.a)}</span><span class="mk"><i class="ln" style="background:#6e6e6e;height:${cap(m,h)}px;margin-top:2px"></i></span><div class="cx g" style="font-size:13px">Unlogged  ·  ${dur(m)}</div></div>`}
+  const k=e.k+'|'+encodeURIComponent(e.id||'')+'|'+e.t,line=e.m>=1,h=line?Math.max(MIN,Math.round(e.m*PPM)):28,two=h>=50;
+  return `<div class="ev ${two?'':'sm'}" style="height:${h}px" data-a="efocus" data-v="${k}"><span class="t">${t12(e.t)}</span><span class="mk">${line?`<i class="ln" style="background:${e.c};height:${cap(e.m,h)}px;margin-top:2px"></i>`:`<i class="dt" style="background:${e.c}"></i>`}</span><div class="cx">${two?`<div class="cl">${esc(e.x)}</div>${e.s?`<small class="cl">${esc(e.s)}</small>`:''}`:`<div class="cl">${esc(e.x)}${e.s?`<span class="g">  ·  ${esc(e.s)}</span>`:''}</div>`}</div></div>`}).join('')}
+const fdd=d=>new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+const tRow=(t,late)=>{const r=trr(t),on=t.status==='done';return `<div class="trw"><button class="tc ${on?'on':''}" data-a="ttog" data-v="${t.id}" aria-label="Toggle done">${on?CK:''}</button><div style="flex:1;min-width:0"><div class="${on?'dn':''}">${esc(t.text)}</div><small>${[late?'Pending since '+fdd(t.date):'',t.goal?t.done+' / '+t.goal+(t.unit?' '+t.unit:''):(t.pct&&!on?t.pct+'%':''),t.why?'Reason: '+t.why:''].filter(Boolean).map(esc).join('  ·  ')}</small>${r>0&&r<1?`<div class="pbar"><i style="width:${Math.round(r*100)}%"></i></div>`:''}</div><button class="g" style="font-size:20px;width:36px;height:36px" data-a="tdel" data-v="${t.id}" aria-label="Remove">×</button></div>`};
+function tasksBlock(k){const T=S.targets.filter(t=>t.date===k&&t.status!=='dropped'),pend=T.filter(t=>t.status==='open').length,od=vd?[]:S.targets.filter(t=>t.date<k&&t.status==='open');
+ return `<button class="r" data-a="ttopen" style="min-height:52px;margin-top:8px"><span>Tasks</span><span class="g">${pend} pending  <i style="display:inline-block;font-style:normal;transform:rotate(${ttOpen?90:0}deg)">›</i></span></button>`+(ttOpen?(od.length?`<p class="lab">Pending from earlier</p>${od.map(t=>tRow(t,1)).join('')}`:'')+(T.length?T.map(t=>tRow(t)).join(''):'<p class="g" style="margin:10px 0">No tasks for this day.</p>')+tgForm():'')}
+const hk=()=>dayK(dayStart(Date.now())),hl=(id,k)=>((S.hlog[id]||{})[k])||0,votes=id=>Object.values(S.hlog[id]||{}).filter(v=>v>0).length;
+function weekKeys(){const t=new Date(hk()+'T00:00:00'),d=(t.getDay()+6)%7;return Array.from({length:7},(_,i)=>{const x=new Date(t);x.setDate(t.getDate()-d+i);return dayK(x)})}
+const whenText=h=>h.mode==='time'?(h.anchor?'At '+t12(new Date().setHours(...h.anchor.split(':').map(Number),0,0)):''):h.anchor?(h.mode==='before'?'Before ':'After ')+h.anchor:'';
+function habitTile(h){const k=hk(),lv=hl(h.id,k),wk=weekKeys(),n=wk.filter(d=>hl(h.id,d)>0).length;
+ const off=lv>1?0:lv===1?60:119.4;
+ return `<div class="ht"><div class="hrow"><button class="hr ${lv>1?'done':''}" ${lv>1?'':`data-hold="${h.id}"`} data-a="hhint" data-v="${h.id}" aria-label="Hold to complete"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="none" stroke="var(--s2)" stroke-width="3.5"/><circle class="arc" cx="22" cy="22" r="19" fill="none" stroke="${h.c}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="${off}" transform="rotate(-90 22 22)"/></svg>${lv>1?`<svg style="position:relative;color:${h.c}" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`:''}</button><div style="flex:1;min-width:0" data-a="hopen" data-v="${h.id}"><div class="hn">${esc(h.name)}</div></div></div><div data-a="hopen" data-v="${h.id}"><div class="hw">${wk.map(d=>`<i class="${d===k?'t':''}" style="${hl(h.id,d)>1?'background:'+h.c:hl(h.id,d)===1?'background:'+h.c+';opacity:.5':''}"></i>`).join('')}</div><small style="display:block;margin-top:8px">${n} day${n===1?'':'s'} this week</small></div></div>`}
+function habitsView(){const k=hk(),H=[...S.habits].sort((a,b)=>(a.mode==='time'&&a.anchor?a.anchor:'99:99')<(b.mode==='time'&&b.anchor?b.anchor:'99:99')?-1:1);
+ const sc=H.reduce((a,h)=>a+(hl(h.id,k)>1?1:hl(h.id,k)===1?.5:0),0),pc=H.length?Math.round(sc/H.length*100):0,msg=!H.length?'Start with one tiny habit.':pc>=100?'All done. You showed up for yourself today.':pc>0?'Nice. Every small step counts.':'A fresh page. One tiny step is enough.';
+ return `<h1 class="h">Habits</h1><small style="font-size:14px">Every small step is a vote for who you are becoming.</small>
+<div class="card" style="display:block"><div class="sw" style="min-height:30px"><span>Today</span><span>${Math.floor(sc)}/${H.length}</span></div><div class="pbar" style="height:8px;margin-top:8px"><i style="width:${pc}%;transition:width .5s"></i></div><small style="display:block;margin-top:8px">${msg}</small></div>
+<div class="hg">${H.map(habitTile).join('')}<button class="ht add" data-a="hnew"><span>+</span><small>New habit</small></button></div>`}
+function sparkline(v,w,h,c){if(v.length<2)return '';const mn=Math.min(...v),mx=Math.max(...v),r=(mx-mn)||1;return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="margin:8px 0"><polyline points="${v.map((x,i)=>(i/(v.length-1)*(w-8)+4).toFixed(1)+','+(h-6-((x-mn)/r)*(h-12)).toFixed(1)).join(' ')}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`}
+const MQ=()=>{const s=S.set,cal=s.cal||3000,p=s.pro||120,f=Math.round(cal*.25/9);return{cal,p,f:s.fat||f,c:s.carb||Math.max(0,Math.round((cal-p*4-f*9)/4)),df:f,dc:Math.max(0,Math.round((cal-p*4-f*9)/4))}};
+function healthView(){const s=S.set,W=[...S.wt].sort((a,b)=>a.ts-b.ts),lw=W[W.length-1],pw=W[W.length-2],due=!lw||Date.now()-lw.ts>6*864e5,gdays=s.gymDays||4;
+ const days=Array.from({length:7},(_,i)=>{const t=new Date(hk()+'T00:00:00');t.setDate(t.getDate()-6+i);return dayK(t)}),kc={},pr={};
+ S.entries.forEach(e=>{if(e.kind==='meal'){const k=dayK(dayStart(e.ts));kc[k]=(kc[k]||0)+(e.cal||0);pr[k]=(pr[k]||0)+(e.p||0)}});
+ const lg=days.filter(k=>kc[k]>0),avg=o=>lg.length?Math.round(lg.reduce((a,k)=>a+(o[k]||0),0)/lg.length):0,mx=Math.max(s.cal||1,...days.map(k=>kc[k]||0));
+ const wk=weekKeys(),gd=new Set([...S.gym.map(r=>dayK(dayStart(r.ts))),...S.entries.filter(e=>e.kind==='gym').map(e=>dayK(dayStart(e.ts)))].filter(k=>wk.includes(k)));
+ const dl=lw&&pw?Math.round((lw.kg-pw.kg)*10)/10:0,goal=(l,k,u)=>`<div class="sw" style="min-height:48px"><span>${l}</span><input class="f" type="number" inputmode="decimal" style="width:96px;text-align:right;margin:0" data-f="${k}" value="${s[k]||''}" placeholder="${u}"></div>`;
+ return `<h1 class="h">Health</h1><small style="font-size:14px">Lift, eat, recover. Small weeks add up.</small>
+${(()=>{const tk=hk(),tm={cal:0,p:0,c:0,f:0};S.entries.forEach(e=>{if(e.kind==='meal'&&dayK(dayStart(e.ts))===tk){tm.cal+=e.cal||0;tm.p+=e.p||0;tm.c+=e.c||0;tm.f+=e.f||0}});
+ const rq=MQ(),mt=(l,v,r,u,c)=>`<div class="tile" style="padding:12px 8px 10px;min-width:0;text-align:center"><small>${l}</small><b style="font-size:20px;margin-top:2px">${Math.round(v)}</b><small style="font-size:11px;display:block;white-space:nowrap">of ${r}${u}</small><div class="pbar" style="margin-top:7px"><i style="width:${Math.min(100,Math.round(v/(r||1)*100))}%;background:${c}"></i></div></div>`;
+ return `<div class="tiles" style="gap:8px">${mt('Calories',tm.cal,rq.cal,'','#ff9500')}${mt('Protein',tm.p,rq.p,' g','#bf5af2')}${mt('Carbs',tm.c,rq.c,' g','#0a84ff')}${mt('Fat',tm.f,rq.f,' g','#ffd60a')}</div>`})()}
+<div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Diet, last 7 days</span><span class="g">${lg.length?avg(kc)+' kcal avg':''}</span></div><div style="display:flex;gap:6px;align-items:flex-end;height:84px;margin-top:10px">${days.map(k=>`<div style="flex:1;text-align:center"><div style="height:${Math.round((kc[k]||0)/mx*64)}px;min-height:4px;border-radius:4px;background:${kc[k]>=(s.cal||1)*.9?'#30d158':kc[k]?'#ff9500':'var(--s2)'}"></div><small style="font-size:10px">${'SMTWTFS'[new Date(k+'T00:00:00').getDay()]}</small></div>`).join('')}</div><small style="display:block;margin-top:8px">${lg.length?'Avg '+avg(kc)+' of '+s.cal+' kcal  ·  '+avg(pr)+' of '+s.pro+' g protein':'Log meals in the chat and they show up here.'}</small></div>
+<div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Gym this week</span><span>${gd.size}/${gdays}</span></div><div class="pbar" style="height:8px;margin-top:8px"><i style="width:${Math.min(100,Math.round(gd.size/gdays*100))}%"></i></div>${exList().slice(0,12).map(r=>`<button class="r" data-a="gopen" data-v="${esc(exKey(r.ex))}" style="min-height:56px"><span style="min-width:0;text-align:left"><div>${esc(r.ex)}</div><small>${esc(setsStr(r.sets)||'Note only')}</small></span><span class="g">${ago(r.ts)}</span></button>`).join('')}<div style="display:flex;gap:10px;margin-top:12px"><input class="f" id="gi" placeholder="e.g. deadlift 50 kg, 2 sets of 10" style="flex:1;margin:0"><button class="pb" style="margin:0;width:90px" data-a="glog">Log</button></div></div>
+<p class="lab">Goals</p>${goal('Target weight (kg)','goalWt','kg')}${goal('Gym days per week','gymDays','4')}${goal('Calories per day','cal','kcal')}${goal('Protein per day (g)','pro','g')}${goal('Carbs per day (g)','carb',String(MQ().dc))}${goal('Fat per day (g)','fat',String(MQ().df))}<p class="lab">Weight</p><div class="sw" style="min-height:48px;gap:10px"><span style="min-width:0"><b style="font-weight:400">${lw?lw.kg+' kg':'Not logged yet'}</b><small style="display:block">${lw?(pw?(dl>0?'+':'')+dl+' kg since last  ·  ':'')+ago(lw.ts):'Once a week is enough'}${s.goalWt?'  ·  goal '+s.goalWt+' kg':''}</small></span><span style="display:flex;gap:8px;align-items:center;flex:none"><input class="f" id="wi" type="number" step="0.1" inputmode="decimal" placeholder="kg" style="width:78px;height:38px;margin:0;text-align:right;padding:0 12px"><button class="pill" style="height:38px;padding:0 16px" data-a="wadd">Log</button></span></div>${due?'<small>Weekly weigh-in is due.</small>':''}`}
+function identityView(){const s=S.set;
+ return `<h1 class="h">Identity</h1><small style="font-size:14px">Every small step is a vote for who you are becoming.</small>
+<p class="lab">Who I am now</p><textarea class="f" data-f="idNow" placeholder="Describe yourself honestly, without judgement.">${esc(s.idNow||'')}</textarea>
+<p class="lab">Who I want to become</p><textarea class="f" data-f="idWant" placeholder="Describe the person you are working to become.">${esc(s.idWant||'')}</textarea>
+${S.habits.length?`<p class="lab">Votes cast</p>${S.habits.map(h=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${h.ident?'I am someone who '+esc(h.ident):esc(h.name)}</span><b style="font-weight:400;color:${h.c}">${votes(h.id)}</b></div>`).join('')}`:''}`}
+function main(){
+ const s=S.set;
+ if(V==='s-setup')return setupView();
+ if(V==='chat')return `<h1 class="h">${greet()}</h1><small style="font-size:15px;display:block;margin-top:6px">Speak or type. Partner is listening.</small><div class="ms">${S.chat.slice(-40).map(m=>m.role==='user'?`<div class="u">${esc(m.c)}</div>`:`<div class="a">${esc(m.c)}${m.lg?`<small>${esc(m.lg)}</small>`:''}${m.undo&&!QK?`<button class="ub" data-a="undo" data-v="${m.id}">Undo</button>`:''}</div>`).join('')}${busy?'<div class="a g">...</div>':''}</div>`;
+ if(V==='diary')return dayView();
+ if(V==='habits')return habitsView();if(V==='health')return healthView();if(V==='identity')return identityView();
+ if(V==='patterns'){const a=S.ana,n=S.notes[S.notes.length-1],sec=(t,arr,ck)=>arr&&arr.length?`<p class="lab">${t}</p>`+arr.map(x=>ck?`<label class="ck"><input type="checkbox">${esc(x)}</label>`:`<p class="p">${esc(x)}</p>`).join(''):'';
+  return `<h1 class="h">Patterns</h1><small style="font-size:14px">${a?'Updated '+new Date(a.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'No analysis yet'}</small>${a?sec('Patterns',a.patterns)+sec('What went wrong',a.wrong)+sec('Recommendations',a.recs)+sec('Actionable steps',a.steps,1):'<p class="g" style="margin-top:18px">Fill the diary for a few days, then analyse.</p>'}${n?`<p class="lab">From Claude app</p><p class="p pre">${esc(n.text)}</p>`:''}<button class="pb" id="an" data-a="analyse">Analyse this week</button>`}
+ if(V==='settings')return row('Permissions',NP?'Notifications, mic, calendar, usage, lockdown':'APK only','s-setup')+row('Memory',S.mem.length+' notes','s-mem')+row('Mentor',{gentle:'Gentle',strict:'Strict',brutal:'Brutally honest'}[s.tone],'s-tone')+row('Screen time',US?(s.usAccess?'On':'Off'):'APK only','s-us')+row('Notifications',!s.notif?'Off':muted()?'Muted until '+t12(s.mute):'On','s-notif')+row('Voice',natP()==='gg'?'Google voice':natP()==='el'?'ElevenLabs voice':'Phone voice','s-voice')+row('Phone access',PH?(paS().alarm?'Alarms on':'Alarms off')+'  ·  '+(paS().cal?'Calendar on':'Calendar off'):'APK only','s-acc')+row('Lockdown',LK?(lkd().on?'On  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Off'):'APK only','s-lock')+row('API key',s.key?'Claude  ·  '+(MN[CM()]||''):'Not set','s-key')+row('Claude analysis','Copy report, save analysis','s-ana')+row('Backup',s.lastBackup?'Last: '+new Date(s.lastBackup).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'Not yet','s-bak');
+ if(V==='s-mem'){const sec=SECS.map(k=>{const it=S.mem.filter(m=>(m.sec||'Personal facts')===k);return it.length?`<p class="lab">${k}</p>`+it.map(m=>`<button class="m" data-a="medit" data-v="${m.id}">${esc(m.t)}${m.ai?'<small>  ·  learned</small>':''}</button>`).join(''):''}).join('');
+  return `<div class="two" style="gap:10px"><input class="f" id="mn" placeholder="Write anything, AI will sort it"><button class="ic" id="ma" style="flex:none;background:var(--tx);color:var(--bg);font-size:24px" data-a="addmem" aria-label="Add">+</button></div>${sec||'<p class="g" style="margin-top:18px">No notes yet. Write anything about yourself.</p>'}<p class="lab">Daily targets</p><div class="two"><div><small>Calories</small><input class="f" type="number" data-f="cal" value="${s.cal}"></div><div><small>Protein (g)</small><input class="f" type="number" data-f="pro" value="${s.pro}"></div></div>`}
+ if(V==='s-medit'){const m=S.mem.find(x=>x.id===ED)||{t:'',sec:'Personal facts',id:''};return `<textarea class="f" id="met">${esc(m.t)}</textarea><p class="lab">Section</p><select class="f" id="mse">${SECS.map(k=>`<option ${k===(m.sec||'Personal facts')?'selected':''}>${k}</option>`).join('')}</select><button class="pb" data-a="msave">Save</button><button class="pb" style="background:var(--s2);color:var(--tx)" data-a="mdel" data-v="${m.id}">Delete</button>`}
+ if(V==='s-us')return `<p class="g" style="margin-top:0">Partner can see when, for how long and in which app you used your phone. The data stays on this phone. During analysis, app names and times are sent to Claude.</p><p id="usst" class="g"></p><button class="pb" id="usbtn" data-a="usopen">Allow usage access</button><button class="pb" id="ussync" data-a="ussync" style="display:none">Sync last 7 days</button><small style="display:block;margin-top:14px">In Android settings, choose Partner and turn on usage access, then come back.</small>`;
+ if(V==='s-tone')return Object.entries({gentle:'Gentle',strict:'Strict',brutal:'Brutally honest'}).map(([k,v])=>`<button class="r" data-a="tone" data-v="${k}"><b>${v}</b><i>${s.tone===k?'●':''}</i></button>`).join('')+`<p class="lab">Your own instructions</p><textarea class="f" data-f="custom" placeholder="How should Partner act? e.g. Call me bhai, be strict about mornings, keep replies very short">${esc(s.custom||'')}</textarea><small style="display:block;margin-top:6px">Partner follows this in every chat.</small><p class="lab">Lock screen</p><div class="sw" style="margin-top:14px"><span>Lock screen button</span><button class="pill" data-a="lockbtn">${s.lockBtn?'On':'Off'}</button></div><small style="display:block">${NP?'A Tap to talk notification stays on the lock screen. Tapping it opens the full app without a password and starts listening. For the side button: Settings, Apps, Choose default apps, Digital assistant app, choose Partner.':'This works only in the APK.'}</small>${hwBlock(s)}`;
+ if(V==='s-notif')return `<div class="sw"><span>Notifications</span><button class="pill" data-a="ntog">${s.notif?'On':'Off'}</button></div><div class="sw"><span>Speak reminders aloud</span><button class="pill" data-a="nsp">${s.nspeak===false?'Off':'On'}</button></div>${NP?'':'<small>In a browser, reminders only arrive while the app is open. Use the APK to get them when the app is closed.</small>'}
+<p class="lab">Mute for</p><div class="two">${[1,2,4,8,24].map(h=>`<button class="chip" data-a="mute" data-v="${h}">${h}h</button>`).join('')}</div>${muted()?`<p class="g">Muted until ${t12(s.mute)}</p><button class="pill" style="width:100%" data-a="mute" data-v="0">Unmute</button>`:''}
+<p class="lab">Daily review time</p><input class="f" type="time" data-f="rev" value="${s.rev}">`;
+ if(V==='s-key')return `<p class="lab" style="margin-top:0">Claude API key</p><input class="f" type="password" data-f="key" value="${esc(s.key)}" placeholder="sk-ant-..."><p class="lab">Chat model</p>${Object.entries(MN).map(([k,v])=>`<button class="r" data-a="model" data-v="${k}"><b>${v}</b><i>${CM()===k?'●':''}</i></button>`).join('')}<small style="display:block;margin-top:8px">Sonnet and Opus are smarter but cost more. Weekly analysis always uses Sonnet.</small><p class="lab">Thinking effort</p>${[['low','Low','Fastest. May miss things like the time of day or how long you slept.'],['medium','Medium','Balanced.'],['high','High','Thinks the most, a few seconds slower. Best for sleep, time and plans.']].map(([k,v,d])=>`<button class="r" data-a="effort" data-v="${k}"><span><b>${v}</b><small>${d}</small></span><i>${EFF()===k?'●':''}</i></button>`).join('')}<p class="lab">Reply length limit</p>${[[0,'No limit','Default. It thinks and writes for as long as it needs.'],[16000,'Long','Up to 16,000 tokens.'],[8000,'Medium','Up to 8,000 tokens.'],[4000,'Short','Up to 4,000 tokens. Long thinking can get cut off.']].map(([k,v,d])=>`<button class="r" data-a="maxtok" data-v="${k}"><span><b>${v}</b><small>${d}</small></span><i>${(+S.set.maxTok>0?+S.set.maxTok:0)===k?'●':''}</i></button>`).join('')}<small style="display:block;margin-top:8px">No limit still sends the biggest number that is safe (64,000 tokens on Haiku). You are only charged for what it actually writes.</small><small style="display:block;margin-top:14px">The key stays only on this phone.</small>`;
+ if(V==='s-acc'){const p=paS();return `<p class="g" style="margin-top:0">Let Partner act on your phone when you ask in chat. Reminders stay inside Partner (see Notifications).</p>${rw('Alarms','“Wake me at 7” sets the alarm in your Clock app',tgb('atog',p.alarm,'Alarms'))}${rw('Calendar and reminders','Add events and read what is planned today',tgb('ctog',p.cal,'Calendar'))}${PH?'':'<small style="display:block;margin-top:14px">These need the APK. In a browser they do nothing.</small>'}`}
+ if(V==='s-lock'){const l=lkd(),v=lkView(),st=LKD.st||{};const pend=l.pend?`<div class="card"><div>Change pending<br><small>Applies ${new Date(l.pendAt).toLocaleString('en-IN',{weekday:'short',hour:'numeric',minute:'2-digit'})}</small></div><button class="pill" data-a="lkcancel">Cancel</button></div>`:'';
+  return `${LK?'':'<p class="g" style="margin-top:0">Lockdown needs the APK.</p>'}${st.locked?`<div class="card"><div>Lockdown active<br><small>until ${t12(st.until)}</small></div></div>`:''}${pend}${rw('Lockdown mode','Pauses the phone when a rule is hit',tgb('lkon',v.on,'Lockdown mode'))}<p class="lab">Rules</p>${v.rules.map(r=>`<button class="r" data-a="lkrule" data-v="${r.id}"><span><b>${esc(r.name)} for ${r.min} min</b><small>Then locks for ${r.lock} min</small></span><i>›</i></button>`).join('')}<button class="r" data-a="lkadd"><span><b>Add rule</b></span><i>+</i></button><p class="lab">While locked</p>${rw('Always allowed','Calls and emergency calls','<i style="font-style:normal;color:var(--mu)">Fixed</i>')}${rw('Protection','Closes the power menu and keeps Partner installed',tgb('lkprot',v.protect,'Protection'))}${rw('Emergency exit','Unlocks after a 10 min wait',tgb('lkexit',v.exit,'Emergency exit'))}${rw('Changes apply after','24 hours, so you cannot undo it on impulse',tgb('lkdelay',v.delay,'Delay changes'))}<p class="lab">Setup</p>${rw('Accessibility service',st.accessibility?'On':'Needed to watch apps and cover the screen',st.accessibility?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="lkacc">Set up</button>')}${rw('Prevent uninstall',st.admin?'On':esc(LKD.adminErr||'Device admin keeps Partner installed'),st.admin?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="lkadmin">Set up</button>')}<p class="lab">Start now</p><div class="two">${[15,30,60,120].map(m=>`<button class="chip${(LKD.min||30)===m?' on':''}" data-a="lkmin" data-v="${m}">${m} min</button>`).join('')}</div><button class="pb" data-a="lkstart">Start lockdown</button><small style="display:block;margin-top:14px">Holding the phone’s buttons to force a restart cannot be blocked by any app. The lockdown continues after the phone starts again.</small>`}
+ if(V==='s-rule'){const r=lkView().rules.find(x=>x.id===LKD.ed);if(!r)return '<p class="g" style="margin-top:0">Rule not found.</p>';return `<h2 class="h2" style="font-size:22px">${esc(r.name)}</h2><p class="lab">After using it for</p><div class="two" style="flex-wrap:wrap">${[15,30,45,60,90].map(m=>`<button class="chip${r.min===m?' on':''}" data-a="lkmins" data-v="${m}">${m} min</button>`).join('')}</div><p class="lab">Lock the phone for</p><div class="two" style="flex-wrap:wrap">${[10,20,30,60].map(m=>`<button class="chip${r.lock===m?' on':''}" data-a="lklock" data-v="${m}">${m} min</button>`).join('')}</div><button class="pb" style="background:none;color:var(--tx);border:1px solid var(--ln)" data-a="lkdel">Remove rule</button>`}
+ if(V==='s-apps')return `<input class="f" id="lkq" placeholder="Search apps" value="${esc(LKD.q)}"><div id="lkl" style="margin-top:8px">${appsHtml()}</div>`;
+ if(V==='s-voice')return `<p class="g" style="margin-top:0">The phone's built-in voice sounds robotic. Pick a natural voice below.</p><p class="lab">Voice to use</p>${[['gg','Google voice'],['el','ElevenLabs'],['ph','Phone voice']].map(([k,n])=>`<button class="r" data-a="vprov" data-v="${k}"><b>${n}</b><i>${(s.vp||natP()||'ph')===k?'●':''}</i></button>`).join('')}<p class="lab">Google API key</p><input class="f" type="password" data-f="ggKey" value="${esc(s.ggKey||'')}" placeholder="AIza..."><p class="lab">Google voice name</p><input class="f" data-f="ggVoice" value="${esc(s.ggVoice||'')}" placeholder="Aoede"><p class="lab">ElevenLabs API key</p><input class="f" type="password" data-f="evKey" value="${esc(s.evKey||'')}" placeholder="sk_..."><p class="lab">ElevenLabs voice ID</p><input class="f" data-f="evVoice" value="${esc(s.evVoice||'')}" placeholder="Paste the voice ID"><button class="pb" data-a="vtest">Test voice</button><small style="display:block;margin-top:14px">Google: 1. In console.cloud.google.com create a project and turn on billing (a free monthly quota applies). 2. Enable the Cloud Text-to-Speech API. 3. Create an API key and limit it to that API. 4. Paste it above. Voice name: Aoede or Kore (female), Charon or Puck (male), or a full name like hi-IN-Chirp3-HD-Aoede. Leave it empty for Aoede.</small><small style="display:block;margin-top:10px">ElevenLabs: free plans can only use premade voices, library voices need a paid plan. Pick Phone voice to go back to the phone's own voice. Reminders are prepared in the chosen voice while the app is open and are played even when the phone is locked. If one could not be prepared, the phone voice is used. The text of each reply is sent to the voice service you choose.</small>`;
+ if(V==='s-ana')return `<p class="lab" style="margin-top:0">Step 1  ·  Copy the report and paste it into a Claude chat</p><select class="f" id="rd"><option value="1" selected>Today</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select><div class="two" style="margin-top:10px"><button class="pb" style="margin:0" data-a="copyrep">Copy</button><button class="pb" style="margin:0;background:var(--s2);color:var(--tx)" data-a="sharerep">Share</button></div><small id="rm" style="display:block;margin-top:8px"></small>
+<p class="lab">Step 2  ·  Save the analysis from Claude</p><textarea class="f" id="pn" placeholder="Paste the reply from Claude"></textarea><button class="pb" data-a="savenote">Save analysis</button>`;
+ if(V==='s-bak')return `<small>${s.lastBackup?'Last backup: '+new Date(s.lastBackup).toLocaleString('en-IN'):'No backup taken yet.'}</small><button class="pb" data-a="exp">Export backup</button><button class="pb" style="background:var(--s2);color:var(--tx)" data-a="imp">Import backup</button>`;
+ return''}
+function foot(){
+ if(V==='chat')return(typing?`<div class="tb"><input id="in" placeholder="Type..." autocomplete="off"><button class="ic" style="background:var(--tx);color:var(--bg)" data-a="sendt" aria-label="Send">${UP}</button></div><div class="cap"><button data-a="voice" style="color:var(--mu);font-size:13px">Back to voice</button></div>`:`<div class="vb"><div></div><button id="mic" data-a="mic" aria-label="Tap to talk">${MIC}</button><div style="justify-self:end"><button class="ic" data-a="type" aria-label="Type">${KB}</button></div></div><div class="cap" id="cap">Tap to talk</div>`)+tabs();
+ return V==='diary'||V==='patterns'||V==='habits'||V==='health'||V==='identity'?tabs():''}
+const tabs=()=>`<nav class="tabs">${[['chat','Mentor'],['diary','Today'],['habits','Habits'],['health','Health'],['identity','Identity'],['patterns','Patterns']].map(([k,n])=>`<button class="${V===k?'on':''}" data-a="tab" data-v="${k}">${n}</button>`).join('')}</nav>`;
+function renderQuick(){$('#top').innerHTML='';$('#foot').innerHTML='';
+ $('#main').innerHTML=`<div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:22px;padding:0 8px"><div style="font-size:19px;font-weight:600">Partner</div><div style="font-size:18px;line-height:1.5;min-height:56px;max-width:300px">${esc(busy?'...':QR)}</div><button id="mic" data-a="mic" aria-label="Tap to talk">${MIC}</button><div class="cap" id="cap"></div><div style="display:flex;gap:10px"><button class="pill" data-a="qopen">Open full app</button><button class="pill" data-a="qclose">Close</button></div><small>The phone is locked, so saved information is not shown here.</small></div>`;uiMic()}
+function render(){if(QK)return renderQuick();const keep=typing&&$('#in')?$('#in').value:'';$('#top').innerHTML=topBar();$('#main').innerHTML=main();$('#foot').innerHTML=foot();
+ if(V==='chat'){$('#main').scrollTop=1e9;if(typing&&$('#in')){$('#in').value=keep;$('#in').focus()}uiMic()}if(V==='s-us')usCheck()}
+
+/* ---------- permissions: one guided flow ---------- */
+const SU={on:false,wait:null,st:{},err:'',tried:new Set()};
+const SUS=[['notif','Notifications','Reminders and the lock screen button',()=>NP.LocalNotifications.requestPermissions()],
+ ['mic','Microphone','Talk to Partner by voice',()=>NP.SpeechRecognition.requestPermissions()],
+ ['cal','Calendar and alarms','Add events and alarms when you ask',async()=>{const r=await PH.requestCalendar();if(r&&r.granted){paS().cal=true;paS().alarm=true;put('set')}}],
+ ['us','Screen time','Usage access, opens an Android page',()=>US.openSettings(),1],
+ ['acc','Accessibility','For lockdown, opens an Android page',()=>LK.openAccessibility(),1],
+ ['adm','Prevent uninstall','Device admin, opens an Android page',()=>LK.requestAdmin(),1]];
+async function suStatus(){const st={},LN=NP&&NP.LocalNotifications,SR=NP&&NP.SpeechRecognition;
+ try{if(LN&&LN.checkPermissions)st.notif=(await LN.checkPermissions()).display==='granted'}catch(e){}
+ try{if(SR&&SR.checkPermissions)st.mic=(await SR.checkPermissions()).speechRecognition==='granted'}catch(e){}
+ try{if(PH&&PH.hasCalendar)st.cal=!!(await PH.hasCalendar()).granted}catch(e){}
+ try{if(US)st.us=!!(await US.hasAccess()).granted}catch(e){}
+ try{if(LK){const o=await LK.status();LKD.st=o;st.acc=!!(o&&o.accessibility);st.adm=!!(o&&o.admin)}}catch(e){}
+ SU.st=st;return st}
+async function suOne(k){const x=SUS.find(y=>y[0]===k);if(!x)return;
+ if(x[4]){SU.wait=k;setTimeout(()=>{if(SU.on&&SU.wait===k&&!document.hidden){SU.err=x[1]+': the Android page did not open. '+(k==='adm'?'Open Settings, Security, Device admin apps, Partner.':'');SU.wait=null;suRun()}},15000);
+  try{await x[3]()}catch(e){SU.err=x[1]+': '+((e&&e.message)||e);if(k==='adm')SU.err+='. Open Settings, Security, Device admin apps, Partner, and activate it.';if(SU.wait===k){SU.wait=null;if(SU.on)suRun()}}
+  return}
+ try{await x[3]()}catch(e){SU.err=x[1]+': '+((e&&e.message)||e)}}
+async function suRun(){
+ while(SU.on){const st=await suStatus();if(V==='s-setup')render();
+  const nx=SUS.find(x=>st[x[0]]===false&&!SU.tried.has(x[0]));
+  if(!nx){SU.on=false;SU.wait=null;const miss=SUS.filter(x=>st[x[0]]===false).map(x=>x[1]);
+   if(!miss.length){S.set.setupDone=true;put('set');SU.err='';if(V==='s-setup'&&SU.first){V='diary'}toast('All set. Partner has every permission it needs.',0,3200)}
+   else if(!SU.err&&!SU.one)SU.err=miss.join(', ')+' still off. Tap Allow next to it to try again.';
+   SU.one=false;render();return}
+  SU.tried.add(nx[0]);await suOne(nx[0]);if(nx[4])return}}
+async function suInit(){if(!NP||QK||S.set.setupDone)return;const st=await suStatus();
+ if(Object.values(st).every(v=>v!==false)){S.set.setupDone=true;put('set');return}
+ SU.first=true;if(V==='diary'||V==='chat'){V='s-setup';render()}}
+function setupView(){const st=SU.st||{},first=!S.set.setupDone,R=SUS.filter(r=>st[r[0]]!==undefined),miss=R.filter(r=>st[r[0]]===false).length;
+ return `${first?'<h1 class="h">Set up Partner</h1>':''}<p class="g" style="margin:${first?'8px':'0'} 0 14px">${first?'Allow everything once, here, so you never have to hunt through Android settings later.':miss?miss+(miss===1?' permission is':' permissions are')+' still off.':'Everything is on.'}</p>${R.map(([k,t,d])=>rw(t,d,st[k]?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="sustep" data-v="${k}">Allow</button>`)).join('')||'<p class="g">Open the APK to set permissions.</p>'}${SU.err?`<p style="color:#e5645f;font-size:14px;margin:14px 0 0">${esc(SU.err)}</p>`:''}${miss?`<button class="pb" data-a="suall" ${SU.on?'disabled':''}>${SU.on?'Working...':'Allow all'}</button>`:''}${first?`<button class="pb" style="background:none;color:var(--tx);border:1px solid var(--ln)" data-a="suskip">${miss?'Skip for now':'Continue'}</button>`:''}<small style="display:block;margin-top:14px">Notifications, microphone and calendar come as pop-ups. Screen time, accessibility and prevent uninstall can only be switched on by you inside Android: Partner opens each page directly, turn Partner on, press back, and it moves to the next one.</small>`}
+/* ---------- actions ---------- */
+function buildReport(d){const now=Date.now(),cut=d===1?dayStart(now)-1:now-d*864e5,data=diaryText(cut)||'(no entries)',lb=d===1?'today (my current day, from waking up until now)':'the last '+d+' days';
+ const n=S.notes.length?'\nMy previous review summary (check whether I followed it):\n'+S.notes[S.notes.length-1].text+'\n':'';
+ const hab=S.habits.length?S.habits.map(h=>'- '+h.name+(h.ident?' (identity: I am someone who '+h.ident+')':'')+'; cue: '+(whenText(h)||'none')+(h.step?'; smallest step: '+h.step:'')+'; done on '+weekKeys().filter(k=>hl(h.id,k)>0).length+' of 7 days this week').join('\n'):'(none yet)';
+ return `# Context (this message is self-contained, you need no earlier chat)
+I use a personal diary app called Partner. Below is my diary data exported from it. Act as my mentor and accountability partner and analyse ${lb}.
+Reply in Hinglish (Roman Hindi), warm but honest, never guilt-tripping. Do not ask me questions first: analyse what is there and say what is missing.
+
+# About me
+Goal: ${S.set.goal}. Daily targets: ${S.set.cal} kcal and ${S.set.pro} g protein.
+${S.set.idNow?'Who I am now: '+S.set.idNow+'\n':''}${S.set.idWant?'Who I want to become: '+S.set.idWant+'\n':''}Tone I prefer: ${TONE[S.set.tone]}.${S.set.custom?'\nMy own instructions: '+S.set.custom:''}
+What the app knows about me:
+${memText()||'(nothing yet)'}
+Habits I am building (atomic-habits style: no streaks, small steps count):
+${hab}
+${n}
+# How to read the data
+- My day runs from waking up to the next waking up, not midnight. Each "## Day starting" header is one such day, with screen time and time by tag.
+- Lines look like: TIME [kind] description | duration | tag. Kinds: done, meal, study, gym, phone, other, sleep, target, habit.
+- [phone] and [study] lines that name an app are real phone usage (study = the YPT study timer app). [sleep] lines are sleep sessions and belong to the day they started.
+- [target] lines are my tasks: done, not done (with the reason after "why not"), or open. [habit] lines are habits I completed that day. [gym] lines are exercises with weight, reps and sets, [weight] lines are body-weight check-ins.
+- Time with no entry is unlogged: treat it as unknown, not as wasted.
+- Tags are the activity categories I chose (Study, Work, Food, Sleep and so on).
+
+# What I want from you
+1) Sleep, wake-up time and morning pattern. 2) Calories and protein versus target. 3) Study, work and gym time, and the real reasons behind skipped tasks. 4) My habits and how I am moving toward the identity I want. 5) The 3 clearest patterns, each with evidence from the data. 6) What went wrong, without blame. 7) ONE or TWO concrete changes for tomorrow. 8) One honest closing sentence.
+Finish with a summary of at most 120 words between ===SAVE=== and ===END=== so I can paste it back into my app.
+
+# DIARY (${d===1?'today':'last '+d+' days'})
+${data}`}
+async function copyT(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(x){}a.remove();return ok}}
+async function analyse(){const b=$('#an');b.disabled=true;b.textContent='Soch raha hu...';
+ try{const cut=Date.now()-7*864e5,data=diaryText(cut);
+  if(!data)throw new Error('There is no data for the last 7 days.');
+  const j=pj(await ask(`You are Partner, a mentor. Tone: ${TONE[S.set.tone]}. ${S.set.cal} kcal/day. About him: ${memText()}. Analyse the diary. Hinglish in Roman letters only. Output ONLY JSON {"patterns":[3 short items],"wrong":[up to 3 short items],"recs":[up to 3],"steps":[1 or 2 concrete steps]}.`,[{role:'user',content:data}],'claude-sonnet-5-5',2000));
+  S.ana={ts:Date.now(),patterns:j.patterns||[],wrong:j.wrong||[],recs:j.recs||[],steps:j.steps||[]};await put('ana');S.ana.patterns.slice(0,3).forEach(p=>addMem('AI discovered patterns',p,true));await put('mem')}catch(e){warn(e.message)}render()}
+async function doExport(){const txt=JSON.stringify({app:'partner',v:2,at:Date.now(),set:{...S.set,key:'',evKey:'',ggKey:''},mem:S.mem,entries:S.entries,sleep:S.sleep,targets:S.targets,notes:S.notes,chat:S.chat.slice(-100),tags:S.tags,tl:S.tl,habits:S.habits,hlog:S.hlog,gym:S.gym,wt:S.wt,open:S.open,rx:S.rx}),name='partner-backup-'+dayK(Date.now())+'.json';
+ try{if(NP&&NP.Filesystem&&NP.Share){const w=await NP.Filesystem.writeFile({path:name,data:txt,directory:'CACHE',encoding:'utf8'});await NP.Share.share({title:'Partner backup',url:w.uri})}
+  else{const f=new File([txt],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;a.click()}}}catch(e){return}
+ S.set.lastBackup=Date.now();put('set');render()}
+const A={
+ go:v=>{if(cv.on&&v!=='chat')stopC();if(v==='diary')vd=0;if(v==='settings'&&V!=='settings'&&!SUB[V])PV=V;V=v;render();if(v==='s-lock')lkSync().then(()=>{if(V==='s-lock')render()});if(v==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});if(v==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})},tab:v=>{A.go(v);if(v==='chat'&&!typing&&!cv.on)startC()},stog:()=>{stOpen=!stOpen;render()},tgopen:()=>{tgSync();TG.open=!TG.open;render()},tgday:o=>{tgSync();TG.off=+o;render()},tgadd:()=>{tgSync();const t=TG.t.trim();if(!t)return;const b=new Date(dayStart(Date.now()));b.setDate(b.getDate()+TG.off);if(!applyT({act:'add',text:t,date:dayK(b),goal:+TG.n||0,unit:TG.u.trim()})){warn('This target already exists.');return}put('targets');TG={open:false,off:0,t:'',n:'',u:''};render()},usopen:()=>{US&&US.openSettings()},ussync:async()=>{$('#usst').textContent='Syncing the last 7 days...';await syncUsage(true);usCheck()},ttog:id=>{const t=S.targets.find(x=>x.id===id);if(!t)return;if(t.status==='done'){t.status='open';t.done=0;t.pct=0}else{t.status='done';t.doneTs=Date.now();if(t.goal)t.done=t.goal;t.pct=100}put('targets');render()},tdel:id=>{S.targets=S.targets.filter(x=>x.id!==id);put('targets');render()},lockbtn:async()=>{if(!NP||!NP.Quick){warn('This works only in the APK.');return}S.set.lockBtn=!S.set.lockBtn;try{if(S.set.lockBtn&&NP.LocalNotifications)await NP.LocalNotifications.requestPermissions();await NP.Quick.setEnabled({enabled:S.set.lockBtn})}catch(e){warn('Could not set the lock screen button: '+((e&&e.message)||e))}put('set');render()},hotword:async()=>{if(!HW){warn('This works only in the APK.');return}const on=!S.set.hotword;
+  if(on){try{if(NP.SpeechRecognition)await NP.SpeechRecognition.requestPermissions()}catch(e){}try{if(NP.LocalNotifications)await NP.LocalNotifications.requestPermissions()}catch(e){}}
+  try{await HW.setEnabled({enabled:on});S.set.hotword=on}catch(e){S.set.hotword=false;HW.setEnabled({enabled:false}).catch(()=>{});warn('Could not turn on Hey Partner: '+((e&&e.message)||e))}
+  put('set');await hwSync();render()},hwsens:async()=>{if(!HW)return;const n=(((HWS.st&&HWS.st.sens)||0)+1)%3;try{await HW.setSensitivity({level:n})}catch(e){}await hwSync();render()},hwoverlay:()=>hwOpen('requestOverlay'),hwbatt:()=>hwOpen('requestBattery'),hwfsi:()=>hwOpen('requestFullScreen'),hwassist:()=>hwOpen('openAssistantSettings'),
+ qopen:()=>{NP&&NP.Quick&&NP.Quick.openMain()},qclose:()=>{FQ=false;NP&&NP.Quick&&NP.Quick.close()},amic:()=>{S.set.autoMic=!S.set.autoMic;put('set');render()},tvoice:()=>{V='chat';render();startC()},pday:d=>{vd+=+d;render()},
+ mic:()=>cv.on?stopC():startC(),undo:doUndo,odone:openDone,ocancel:openCancel,type:()=>{typing=true;render()},voice:()=>{typing=false;render()},
+ sendt:()=>{const i=$('#in'),t=i.value;i.value='';send(t)},
+ review:()=>{V='chat';render();copyT(buildReport(1)).then(ok=>{if(ok)toast("Today's report is copied. Paste it into your Claude chat for the full analysis.",0,5200)});send('Daily review')},analyse,
+ addmem:async()=>{const i=$('#mn'),t=i.value.trim();if(!t||memBusy)return;memBusy=true;$('#ma').textContent='...';
+  try{await classify(t)}catch(e){if(addMem('Personal facts',t,false))warn((e.message||'Could not sort it.')+' Added under Personal facts. Tap it to change the section.')}
+  memBusy=false;await put('mem');render()},
+ medit:id=>{ED=id;V='s-medit';render()},
+ msave:()=>{const m=S.mem.find(x=>x.id===ED),t=$('#met').value.trim();if(m&&t){m.t=t;m.sec=$('#mse').value;m.ai=false;put('mem')}V='s-mem';render()},
+ mdel:id=>{S.mem=S.mem.filter(m=>m.id!==id);put('mem');V='s-mem';render()},
+ tone:k=>{S.set.tone=k;put('set');render()},
+ ntog:()=>{S.set.notif=!S.set.notif;put('set');syncN();render()},
+ nsp:()=>{S.set.nspeak=S.set.nspeak===false;put('set');syncN();render()},
+ mute:h=>{S.set.mute=+h?Date.now()+h*36e5:0;put('set');syncN();render()},
+ copyrep:async()=>{const ok=await copyT(buildReport(+$('#rd').value));$('#rm').textContent=ok?'Copied. Now paste it in the Claude app.':'Copy failed. Try Share.'},
+ sharerep:async()=>{try{const t=buildReport(+$('#rd').value);NP&&NP.Share?await NP.Share.share({text:t}):await navigator.share({text:t})}catch(e){}},
+ savenote:()=>{const r=$('#pn').value.trim();if(!r)return;const m=r.match(/===SAVE===([\s\S]*?)===END===/);S.notes.push({ts:Date.now(),text:(m?m[1]:r).trim().slice(0,2000)});put('notes');V='patterns';render()},
+ exp:doExport,imp:()=>$('#file').click()};
+const dtl=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
+let EDT=null,FC=null,HS=null,GS=null,UNDO=null,ttOpen=false,HJ=0;
+function closeEdit(){EDT=null;FC=null;HS=null;GS=null;$('#sheet').innerHTML=''}
+A.eclose=closeEdit;
+function buildEdt(v){const [k,id,t]=v.split('|'),i=decodeURIComponent(id);
+ if(k==='e'){const e=S.entries.find(x=>x.id===i);return e?{k,id:i,tx:e.text,s:e.ts-(e.dur||0)*6e4,e:e.ts,tag:tagOf(e)}:null}
+ if(k==='s'){const x=S.sleep.find(y=>y.id===i);return x?{k,id:i,s:x.start,e:x.end}:null}
+ if(k==='u'){const b=S.usage.find(y=>y.p===i&&y.s<=+t&&y.e>+t);return b?{k,id:i,name:b.a,s:b.s,e:b.e}:null}
+ if(k==='g')return{k,s:+i,e:+t,tx:'',tag:''};return null}
+A.efocus=v=>{const o=buildEdt(v);if(!o)return;FC=o;const ro=o.k==='u',g=o.k==='g',sl=o.k==='s',tg=sl?'Sleep':ro?(isSt({a:o.name,p:o.id})?'Study':'Phone'):o.tag;
+ const sub=[g?'':tg,o.s&&o.e?dur(Math.round((o.e-o.s)/6e4)):''].filter(Boolean).join('  ·  ');
+ $('#sheet').innerHTML=`<div class="bd" data-a="eclose"></div><div class="fc"><div class="fcard"><div class="fh"><i style="background:${g?'#6e6e6e':TC(tg)}"></i>${o.s?t12(o.s):''}${o.e&&o.e!==o.s?'  –  '+t12(o.e):''}</div><div class="ft">${esc(g?'Unlogged time':sl?'Sleep':ro?o.name:o.tx)}</div>${sub?`<small>${esc(sub)}</small>`:''}</div>${ro?'':`<div class="two"><button class="pb" style="margin:0" data-a="eedit">${g?'Log activity':'Edit'}</button>${g?'':'<button class="pb dl" style="margin:0" data-a="edel">Delete</button>'}</div>`}</div>`};
+A.eedit=()=>{EDT=FC;FC=null;drawEdit()};
+function syncE(){const o=EDT;if(!o)return;const a=$('#etx'),b=$('#est'),c=$('#een');if(a)o.tx=a.value;if(b)o.s=b.value?new Date(b.value).getTime():null;if(c)o.e=c.value?new Date(c.value).getTime():null}
+function drawEdit(){const o=EDT;if(!o)return;const sl=o.k==='s',g=o.k==='g';
+ const tags=sl?'':`<p class="lab" style="margin:16px 0 8px">Tag</p><div class="tgs">${S.tags.map(t=>`<button class="tg ${o.tag===t.n?'sel':''}" style="--c:${t.c}" data-a="etag" data-v="${esc(t.n)}"><i></i>${esc(t.n)}</button>`).join('')}<button class="tg nw" data-a="tgnew">+ New tag</button></div>${o.nt?`<div style="margin-top:12px"><input class="f" id="ntn" placeholder="New tag name" maxlength="24"><div class="sw2">${CP.map(c=>`<button class="cs ${c===o.nc?'sel':''}" style="background:${c}" data-a="ntc" data-v="${c}" aria-label="Color"></button>`).join('')}</div><button class="pb" style="margin-top:12px;height:44px" data-a="ntadd">Add tag</button></div>`:''}`;
+ $('#sheet').innerHTML=`<div class="bd" data-a="eclose"></div><div class="sh"><p class="lab" style="margin:0 0 10px">${sl?'Sleep':g?'Log activity':'Edit entry'}</p>${sl?'':`<input class="f" id="etx" placeholder="What did you do?" value="${esc(o.tx)}">`}<div style="margin-top:10px"><small>${sl?'Bed time':'Start'}</small><input class="f" id="est" type="datetime-local" value="${o.s?dtl(o.s):''}"></div><div style="margin-top:10px"><small>${sl?'Wake time':'End'}</small><input class="f" id="een" type="datetime-local" value="${o.e?dtl(o.e):''}"></div>${tags}<small id="eerr" style="display:block;margin-top:10px;color:#e5645f"></small><div class="two"><button class="pb" style="background:var(--s2);color:var(--tx)" data-a="eclose">Cancel</button><button class="pb" data-a="esave">Save</button></div></div>`}
+A.etag=n=>{syncE();EDT.tag=n;drawEdit()};
+A.tgnew=()=>{syncE();EDT.nt=!EDT.nt;const u=new Set(S.tags.map(t=>t.c));EDT.nc=EDT.nc||CP.find(c=>!u.has(c))||CP[0];drawEdit()};
+A.ntc=c=>{EDT.nc=c;document.querySelectorAll('#sheet .cs').forEach(b=>b.classList.toggle('sel',b.dataset.v===c))};
+A.ntadd=()=>{const n=($('#ntn').value||'').trim();if(!n){$('#eerr').textContent='Give the tag a name.';return}syncE();EDT.tag=addTag(n,EDT.nc);EDT.nt=false;drawEdit()};
+A.esave=()=>{const o=EDT;if(!o)return;syncE();const er=m=>{$('#eerr').textContent=m};
+ if(o.k==='s'){const x=S.sleep.find(y=>y.id===o.id);if(!x){closeEdit();return}if(o.s!==null&&o.e!==null&&o.e<=o.s)return er('Wake time must be after bed time.');if(x.end&&o.e===null)return er('Wake time cannot be empty.');x.start=o.s;x.end=o.e;x.wd=o.e?dayK(o.e):'';put('sleep')}
+ else{if(!o.s||!o.e)return er('Both start and end time are required.');if(o.e<o.s)return er('End time cannot be before start time.');const tx=(o.tx||'').trim(),du=Math.min(1440,Math.round((o.e-o.s)/6e4));
+  if(o.k==='g'){if(!tx&&!o.tag)return er('Add a name or pick a tag.');S.entries.push({id:Date.now()+'-g',ts:o.e,kind:'other',text:tx||o.tag,dur:du,cal:0,p:0,c:0,f:0,why:'',tag:o.tag||''});if(o.tag&&tx)learnTag(tx,o.tag)}
+  else{const x=S.entries.find(y=>y.id===o.id);if(!x){closeEdit();return}if(tx)x.text=tx;x.ts=o.e;x.dur=du;if(o.tag&&o.tag!==tagOf(x))learnTag(x.text,o.tag);if(o.tag)x.tag=o.tag}
+  put('entries')}
+ fixData();closeEdit();render()};
+A.edel=()=>{const o=FC;if(!o)return;
+ if(o.k==='e'){const i=S.entries.findIndex(x=>x.id===o.id);if(i<0)return;UNDO={a:'entries',it:S.entries.splice(i,1)[0]};put('entries')}
+ else if(o.k==='s'){const i=S.sleep.findIndex(x=>x.id===o.id);if(i<0)return;UNDO={a:'sleep',it:S.sleep.splice(i,1)[0]};put('sleep')}
+ closeEdit();render();toast('Deleted',1)};
+A.undo=()=>{if(!UNDO)return;S[UNDO.a].push(UNDO.it);put(UNDO.a);UNDO=null;$('#toast').classList.remove('on');render()};
+A.ttopen=()=>{ttOpen=!ttOpen;render()};
+function drawGym(){const o=GS;if(!o)return;const L=S.gym.filter(r=>exKey(r.ex)===o.k).sort((a,b)=>b.ts-a.ts);if(!L.length){closeEdit();return}
+ const top=[...L].reverse().map(r=>Math.max(0,...r.sets.map(x=>x.w)));
+ $('#sheet').innerHTML=`<div class="bd" data-a="eclose"></div><div class="sh"><p class="lab" style="margin:0 0 4px">Exercise</p><h2 class="hq">${esc(L[0].ex)}</h2>${top.some(v=>v>0)&&top.length>1?`<small>Top weight per session</small>${sparkline(top,300,60,'var(--tx)')}`:''}<p class="lab" style="margin:16px 0 6px">Note for next time</p><textarea class="f" id="gnote" placeholder="Form cues, pain, what to try next time">${esc(L[0].note||'')}</textarea><div class="hdl">${L.slice(0,10).map(r=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><small>${fdd(dayK(dayStart(r.ts)))}</small><div>${esc(setsStr(r.sets)||'Note only')}</div></div><button class="g" style="font-size:20px;width:36px;height:36px" data-a="gdel" data-v="${r.id}" aria-label="Delete session">×</button></div>`).join('')}</div><div class="two" style="margin-top:18px"><button class="pb" style="background:var(--s2);color:var(--tx);margin:0" data-a="eclose">Close</button><button class="pb" style="margin:0" data-a="gsave">Save note</button></div></div>`}
+A.gopen=k=>{GS={k};drawGym()};
+A.gsave=()=>{const L=S.gym.filter(r=>exKey(r.ex)===GS.k).sort((a,b)=>b.ts-a.ts);if(L[0]){L[0].note=$('#gnote').value.trim().slice(0,200);put('gym')}closeEdit();render()};
+A.gdel=id=>{S.gym=S.gym.filter(r=>r.id!==id);put('gym');drawGym();render()};
+A.glog=()=>{const t=$('#gi').value.trim();if(!t)return;V='chat';render();send(t)};
+A.wadd=()=>{const v=+$('#wi').value;if(!(v>20&&v<400)){toast('Enter your weight in kg');return}const p=lastWt(),kg=Math.round(v*10)/10;S.wt.push({ts:Date.now(),kg});put('wt');render();toast(!p?'First weigh-in logged. Now we build.':kg<p.kg?'Down '+(Math.round((p.kg-kg)*10)/10)+' kg. Keep going.':kg>p.kg?'Up '+(Math.round((kg-p.kg)*10)/10)+' kg. The trend matters, stay consistent.':'Same as last time. Steady.',0,4200)};
+/* ---------- habits ---------- */
+const HST=[{k:'name',q:'What habit do you want to build?',h:'Keep it simple and specific.',ph:'e.g. Drink a glass of water'},
+{k:'ident',q:'Who do you want to become?',h:'Every time you do it, you cast a vote for this identity. Finish the sentence: I am someone who…',ph:'e.g. takes care of his body'},
+{k:'when',q:'When will you do it?',h:'Anchor it to something you already do, or pick a time.'},
+{k:'where',q:'Where will you do it?',h:'A clear place makes it easier to start.',ph:'e.g. In the kitchen'},
+{k:'mins',q:'How long will it take?',h:'Shorter is better when you are starting.',chips:[2,5,10,20,30]},
+{k:'why',q:'Why does it matter to you?',h:'Your reason carries you through hard days.',ph:'e.g. I want more energy'},
+{k:'step',q:'What is the smallest first step?',h:'Make it so small you cannot say no. Two minutes or less.',ph:'e.g. Pour water into the glass'},
+{k:'reward',q:'What small reward will you give yourself right after?',h:'Feeling good right away makes the habit stick.',ph:'e.g. A deep breath and a smile'}];
+function hField(d,f){
+ if(d.k==='when')return `<div class="two">${[['after','After'],['before','Before'],['time','At a time']].map(([m,n])=>`<button class="chip ${f.mode===m?'on':''}" data-a="hmode" data-v="${m}">${n}</button>`).join('')}</div><div style="margin-top:10px">${f.mode==='time'?`<input class="f" id="hf-anchor" type="time" value="${esc(f.anchor||'')}">`:`<input class="f" id="hf-anchor" placeholder="${f.mode==='before'?'e.g. I go to sleep':'e.g. I wake up'}" value="${esc(f.anchor||'')}">`}</div>`;
+ if(d.chips)return `<div class="tgs">${d.chips.map(n=>`<button class="chip ${+f.mins===n?'on':''}" style="width:64px;flex:none" data-a="hmins" data-v="${n}">${n}m</button>`).join('')}</div><input class="f" id="hf-mins" type="number" placeholder="Or type minutes" value="${f.mins||''}" style="margin-top:10px">`;
+ return `<input class="f" id="hf-${d.k}" placeholder="${esc(d.ph||'')}" value="${esc(f[d.k]||'')}">`}
+function hSync(){const o=HS;if(!o||!o.f)return;HST.forEach(d=>{if(d.k==='when'){const a=$('#hf-anchor');if(a)o.f.anchor=a.value.trim()}else if(d.chips){const m=$('#hf-mins');if(m)o.f.mins=+m.value||0}else{const e=$('#hf-'+d.k);if(e)o.f[d.k]=e.value.trim()}})}
+function drawHabit(){const o=HS;if(!o)return;let b='';
+ if(o.mode==='view'){const h=S.habits.find(x=>x.id===o.id);if(!h){closeEdit();return}const lv=hl(h.id,hk()),wk=weekKeys(),n=wk.filter(d=>hl(h.id,d)>0).length,v=votes(h.id);
+  b=`<p class="lab" style="margin:0 0 4px">Habit</p><h2 class="hq">${esc(h.name)}</h2>${h.ident?`<p class="hi">I am someone who ${esc(h.ident)}.</p>`:''}<div class="hw" style="margin-top:14px">${wk.map(d=>`<i style="${hl(h.id,d)>1?'background:'+h.c:hl(h.id,d)===1?'background:'+h.c+';opacity:.5':''}"></i>`).join('')}</div><div class="hd">${['M','T','W','T','F','S','S'].map(x=>`<span>${x}</span>`).join('')}</div><small style="display:block;margin-top:8px">${n} day${n===1?'':'s'} this week  ·  ${v} vote${v===1?'':'s'} for your identity</small><div class="hdl">${[['When',whenText(h)],['Where',h.where],['How long',h.mins?h.mins+' min':''],['Why',h.why],['Smallest step',h.step],['Reward',h.reward]].filter(r=>r[1]).map(r=>`<div><small>${r[0]}</small><div>${esc(r[1])}</div></div>`).join('')}</div>${lv<1?`<button class="pb" style="margin-top:18px" data-a="htiny">Do the smallest step</button>`:''}${lv>0?`<button class="pb" style="background:var(--s2);color:var(--tx);margin-top:12px" data-a="hundo">Undo today</button>`:''}<div class="two" style="margin-top:12px"><button class="pb" style="background:var(--s2);color:var(--tx);margin:0" data-a="hedit">Edit</button><button class="pb dl" style="margin:0" data-a="hdel">${o.cd?'Tap again to delete':'Delete'}</button></div>`}
+ else if(o.mode==='new'){const d=HST[o.step],last=o.step===HST.length-1;
+  b=`<small>Step ${o.step+1} of ${HST.length}</small><div class="hp"><i style="width:${(o.step+1)/HST.length*100}%"></i></div><h2 class="hq">${d.q}</h2><small>${d.h}</small><div style="margin-top:14px">${hField(d,o.f)}</div><small id="eerr" style="display:block;margin-top:8px;color:#e5645f"></small><div class="two" style="margin-top:16px"><button class="pb" style="background:var(--s2);color:var(--tx);margin:0" data-a="${o.step?'hback':'eclose'}">${o.step?'Back':'Cancel'}</button><button class="pb" style="margin:0" data-a="hnext">${last?'Create habit':'Next'}</button></div>`}
+ else b=`<p class="lab" style="margin:0 0 4px">Edit habit</p>${HST.map(d=>`<p class="lab" style="margin:16px 0 6px">${d.q}</p>${hField(d,o.f)}`).join('')}<small id="eerr" style="display:block;margin-top:8px;color:#e5645f"></small><div class="two" style="margin-top:16px"><button class="pb" style="background:var(--s2);color:var(--tx);margin:0" data-a="eclose">Cancel</button><button class="pb" style="margin:0" data-a="hsave">Save</button></div>`;
+ $('#sheet').innerHTML=`<div class="bd" data-a="eclose"></div><div class="sh">${b}</div>`}
+A.hnew=()=>{HS={mode:'new',step:0,f:{mode:'after',anchor:'',mins:5}};drawHabit()};
+A.hopen=id=>{HS={mode:'view',id};drawHabit()};
+A.hedit=()=>{const h=S.habits.find(x=>x.id===HS.id);if(h){HS={mode:'edit',id:h.id,f:{...h}};drawHabit()}};
+A.hmode=m=>{hSync();if((HS.f.mode==='time')!==(m==='time'))HS.f.anchor='';HS.f.mode=m;drawHabit()};
+A.hmins=n=>{hSync();HS.f.mins=+n;drawHabit()};
+A.hback=()=>{hSync();HS.step--;drawHabit()};
+const hFields=f=>({name:f.name,ident:f.ident||'',mode:f.mode,anchor:f.anchor||'',where:f.where||'',mins:+f.mins||0,why:f.why||'',step:f.step||'',reward:f.reward||''});
+A.hnext=()=>{hSync();const o=HS,f=o.f;if(o.step===0&&!f.name){$('#eerr').textContent='Give your habit a name.';return}
+ if(o.step<HST.length-1){o.step++;drawHabit();return}
+ S.habits.push({id:'h'+Date.now(),...hFields(f),c:HC[S.habits.length%HC.length],ts:Date.now()});put('habits');syncN();closeEdit();render();toast('New habit planted. Your first vote is waiting.',0,4200)};
+A.hsave=()=>{hSync();const f=HS.f;if(!f.name){$('#eerr').textContent='Give your habit a name.';return}const h=S.habits.find(x=>x.id===HS.id);if(h){Object.assign(h,hFields(f));put('habits');syncN()}closeEdit();render()};
+A.hdel=()=>{if(!HS.cd){HS.cd=true;drawHabit();return}S.habits=S.habits.filter(x=>x.id!==HS.id);delete S.hlog[HS.id];put('habits');put('hlog');syncN();closeEdit();render()};
+A.htiny=()=>{const id=HS.id;closeEdit();habitDone(id,1)};
+A.hundo=()=>{if(S.hlog[HS.id])delete S.hlog[HS.id][hk()];put('hlog');closeEdit();render()};
+A.hhint=id=>{if(Date.now()-HJ<900)return;toast(hl(id,hk())>1?'Already done today. Open the habit to undo.':'Press and hold for 3 seconds to complete')};
+function burst(x,y,c){const b=document.createElement('div');b.className='burst';b.style.cssText=`left:${x}px;top:${y}px`;for(let i=0;i<14;i++){const a=i/14*6.283,r=42+Math.random()*30,p=document.createElement('i');p.style.cssText=`--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;background:${i%3?c:'#ffd60a'}`;b.appendChild(p)}document.body.appendChild(b);setTimeout(()=>b.remove(),900)}
+function habitDone(id,lv,el){const h=S.habits.find(x=>x.id===id);if(!h)return;const k=hk(),m=S.hlog[id]=S.hlog[id]||{};if((m[k]||0)>=lv)return;m[k]=lv;put('hlog');HJ=Date.now();
+ const r=el&&el.getBoundingClientRect(),n=votes(id);try{navigator.vibrate&&navigator.vibrate(lv>1?[40,50,90]:30)}catch(e){}
+ render();if(r)burst(r.left+r.width/2,r.top+r.height/2,h.c);
+ toast(['Nice work.','You showed up.','Small step, real progress.','That counts.'][n%4]+' Vote #'+n+(h.ident?' for being someone who '+h.ident+'.':'.')+(lv>1&&h.reward?' Now enjoy: '+h.reward:''),0,4800)}
+let HT=null;
+document.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-hold]');if(!b)return;b.classList.add('holding');try{navigator.vibrate&&navigator.vibrate(12)}catch(x){}HT={b,t:setTimeout(()=>{const id=b.dataset.hold;b.classList.remove('holding');HT=null;habitDone(id,2,b)},3000)}});
+const hend=()=>{if(HT){clearTimeout(HT.t);HT.b.classList.remove('holding');HT=null}};
+document.addEventListener('pointerup',hend);document.addEventListener('pointercancel',hend);
+document.addEventListener('contextmenu',e=>{if(e.target.closest('[data-hold]'))e.preventDefault()});
+A.vtest=()=>speak('नमस्ते, मैं पार्टनर हूँ। आज की पढ़ाई कैसी चल रही है?');
+A.model=k=>{S.set.model=k;put('set');render()};A.effort=k=>{S.set.effort=k;put('set');render()};A.maxtok=k=>{S.set.maxTok=+k;put('set');render()};A.vprov=k=>{S.set.vp=k;put('set');render()};
+Object.assign(A,{
+ atog:()=>{paS().alarm=!paS().alarm;put('set');render()},
+ ctog:async()=>{const p=paS();if(p.cal){p.cal=false;put('set');render();return}if(!PH){warn('Calendar needs the APK.');return}try{const r=await PH.requestCalendar();if(r&&r.granted)p.cal=true;else warn('Calendar permission was not given.')}catch(e){warn('Could not ask for calendar access.')}put('set');render()},
+ lkon:()=>lkEdit(c=>{c.on=!c.on;return c}),
+ lkprot:()=>lkEdit(c=>{c.protect=!c.protect;return c}),
+ lkexit:()=>lkEdit(c=>{c.exit=!c.exit;return c}),
+ lkdelay:()=>lkEdit(c=>{c.delay=!c.delay;return c}),
+ lkrule:id=>{LKD.ed=id;V='s-rule';render()},
+ lkadd:()=>{LKD.q='';V='s-apps';render();loadApps()},
+ lkpick:async pkg=>{const ex=lkView().rules.find(r=>r.pkg===pkg);if(ex){LKD.ed=ex.id;V='s-rule';render();return}const id='r'+Date.now();await lkEdit(c=>{c.rules.push({id,pkg,name:LKD.map[pkg]||pkg,min:30,lock:20});c.on=true;return c});LKD.ed=id;V='s-rule';render()},
+ lkmins:m=>lkEdit(c=>{const r=c.rules.find(x=>x.id===LKD.ed);if(r)r.min=+m;return c}),
+ lklock:m=>lkEdit(c=>{const r=c.rules.find(x=>x.id===LKD.ed);if(r)r.lock=+m;return c}),
+ lkdel:async()=>{await lkEdit(c=>{c.rules=c.rules.filter(x=>x.id!==LKD.ed);return c});V='s-lock';render()},
+ lkcancel:async()=>{if(LKD.st&&LKD.st.locked){warn('Lockdown is active. Settings are locked until it ends.');return}const l=lkd();l.pend=null;l.pendAt=0;put('set');await lkPush();render()},
+ lkacc:async()=>{if(!LK)return;try{await LK.openAccessibility()}catch(e){warn('Could not open accessibility settings: '+((e&&e.message)||e))}},
+ lkadmin:async()=>{if(!LK)return;LKD.adminErr='';try{await LK.requestAdmin()}catch(e){LKD.adminErr='Android did not open the screen ('+((e&&e.message)||e)+'). Open Android Settings, Security, Device admin apps, Partner, and activate it.';warn(LKD.adminErr);render()}await lkSync();if(V==='s-lock')render()},
+ lkmin:m=>{LKD.min=+m;render()},
+ lkstart:async()=>{const mn=LKD.min||30;if(!confirm('Start lockdown for '+mn+' minutes? Only calls will work until it ends.'))return;if(await lkStart(mn,'Lockdown'))render()}
+});
+Object.assign(A,{suall:()=>{SU.on=true;SU.one=false;SU.tried=new Set();SU.err='';render();suRun()},sustep:k=>{SU.err='';SU.one=true;SU.tried=new Set(SUS.map(y=>y[0]).filter(y=>y!==k));SU.on=true;suRun()},suskip:()=>{S.set.setupDone=true;put('set');SU.on=false;V='diary';render()}});
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&A[b.dataset.a])A[b.dataset.a](b.dataset.v)});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset&&t.dataset.f;if(!k)return;S.set[k]=t.type==='number'?(+t.value||0):(['key','evKey','evVoice','ggKey','ggVoice'].includes(k)?t.value.trim():t.value);put('set');if(k==='rev')syncN()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='in'){e.preventDefault();A.sendt()}if(e.key==='Enter'&&e.target.id==='mn'){e.preventDefault();A.addmem()}});
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ try{const j=JSON.parse(await f.text());if(j.app!=='partner')throw 0;const have=new Set(S.entries.map(x=>x.id));let n=0;(j.entries||[]).forEach(x=>{if(!have.has(x.id)){S.entries.push(x);n++}});
+  const ht=new Set(S.targets.map(x=>x.id));(j.targets||[]).forEach(x=>{if(!ht.has(x.id))S.targets.push(x)});const hs=new Set(S.sleep.map(x=>x.id));(j.sleep||[]).forEach(x=>{if(!hs.has(x.id))S.sleep.push(x)});const hm=new Set(S.mem.map(x=>x.id));(j.mem||[]).forEach(x=>{if(!hm.has(x.id))S.mem.push(x)});const hn=new Set(S.notes.map(x=>x.ts));(j.notes||[]).forEach(x=>{if(!hn.has(x.ts))S.notes.push(x)});
+  {const th=new Set(S.tags.map(t=>t.n));(j.tags||[]).forEach(t=>{if(!th.has(t.n))S.tags.push(t)});const hh=new Set(S.habits.map(h=>h.id));(j.habits||[]).forEach(h=>{if(!hh.has(h.id))S.habits.push(h)});Object.entries(j.hlog||{}).forEach(([id,m])=>{S.hlog[id]={...m,...(S.hlog[id]||{})}});(j.gym||[]).forEach(g=>{if(!S.gym.some(x=>x.id===g.id))S.gym.push(g)});(j.wt||[]).forEach(w=>{if(!S.wt.some(x=>x.ts===w.ts))S.wt.push(w)})}if(!S.chat.length)S.chat=j.chat||[];const keep=S.set.key,keepE=S.set.evKey,keepG=S.set.ggKey;S.set={...S.set,...j.set,key:keep,evKey:keepE,ggKey:keepG};
+  await Promise.all(['set','mem','entries','sleep','targets','notes','chat','tags','habits','hlog','gym','wt'].map(put));render();warn(n+' new entries restored.')}catch(x){warn('This is not a valid Partner backup file.')}e.target.value=''};
+boot();
+</script></body></html>

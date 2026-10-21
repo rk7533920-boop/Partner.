@@ -49,8 +49,12 @@ public class HotwordService extends Service {
     // Both listen at the same time and either one can wake Partner.
     static final String[] ASSETS = { "vosk-model", "vosk-model-in" };
     static final String MODEL_VER = "v2";
-    static final String[] PHRASES = { "hey partner", "hi partner", "hay partner", "hey pardner", "hi pardner", "hey parter", "hi parter" };
+    // One spelling per sound. Spellings that sound the same (hey/hay, partner/pardner) make the speech
+    // engine split its certainty between them, so a perfect "Hey Partner" only ever scored about 50%.
+    static final String[] PHRASES = { "hey partner", "hi partner" };
+    static final String[] LONE = { "hey", "hi" };
     static final Set<String> WAKE = new HashSet<>(Arrays.asList(PHRASES));
+    static final Set<String> LONE_WAKE = new HashSet<>(Arrays.asList(LONE));
     static final String CH_FG = "partner_hotword_fg";
     static final String CH_GO = "partner_hotword_go";
     static final int FG_ID = 7101;
@@ -64,6 +68,7 @@ public class HotwordService extends Service {
     static volatile int modelCount = 0;
     private static volatile long pauseUntil = 0;
     private static volatile long lastFire = 0;
+    private long lastWeak = 0; // when the last half-heard "Hey Partner" was, a repeat within a few seconds counts
 
     private volatile boolean stopFlag = false;
     private Thread worker;
@@ -79,9 +84,9 @@ public class HotwordService extends Service {
         c.getSharedPreferences(PREF, 0).edit().putBoolean("on", on).apply();
     }
 
-    /** 0 = careful (default), 1 = balanced, 2 = easy */
+    /** 0 = careful, 1 = balanced (default), 2 = easy */
     static int sensitivity(Context c) {
-        return c.getSharedPreferences(PREF, 0).getInt("sens", 0);
+        return c.getSharedPreferences(PREF, 0).getInt("sens", 1);
     }
 
     static void setSensitivity(Context c, int level) {
@@ -417,8 +422,13 @@ public class HotwordService extends Service {
                 }
 
                 double lv = rms(buf, n);
-                boolean voiced = lv > Math.max(90.0, floor * 2.5);
-                if (!voiced && !active && !noisy) floor = Math.min(1500, Math.max(20, floor * 0.97 + lv * 0.03));
+                // The bar for "someone is talking" follows the room's background level, but never climbs
+                // so high that normal speech cannot pass it.
+                boolean voiced = lv > Math.max(90.0, Math.min(floor * 2.5, 1200.0));
+                if (!voiced && !active) floor = Math.min(500, Math.max(20, floor * 0.97 + lv * 0.03));
+                // Steady loud sound (fan, AC, TV, traffic): learn it as background, slowly, so Partner
+                // does not stay deaf for as long as it lasts.
+                else if (noisy) floor = Math.min(500, floor * 0.995 + lv * 0.005);
 
                 // Non-stop sound (a video, music, a TV, a crowd) is not someone saying the phrase.
                 // Ignore it completely until it goes quiet for a second.
@@ -495,6 +505,7 @@ public class HotwordService extends Service {
     private static String grammar() {
         StringBuilder g = new StringBuilder("[");
         for (String p : PHRASES) g.append('"').append(p).append("\", ");
+        for (String p : LONE) g.append('"').append(p).append("\", ");
         g.append("\"[unk]\"]");
         return g.toString();
     }
@@ -505,67 +516,111 @@ public class HotwordService extends Service {
         }
     }
 
+    static final int NO = 0, WEAK = 1, STRONG = 2;
+
+    /** How sure the phone must be before it wakes at once (careful, balanced, easy). */
+    private static double needStrong(int level) {
+        return level == 0 ? 0.80 : (level == 1 ? 0.60 : 0.45);
+    }
+
+    /** Below this a hit is ignored. Between this and the line above it only counts if you say it twice. */
+    private static double needWeak(int level) {
+        return level == 0 ? 2.0 : (level == 1 ? 0.35 : 0.25); // careful: never
+    }
+
     /**
-     * Only a finished phrase counts, never a half-heard one. The text must be exactly "hey partner"
-     * (or a close spelling of it), every word must be scored high enough, and it must be about
-     * as long as someone really saying it.
+     * Looks at one finished piece of speech. STRONG wakes Partner. WEAK means it probably heard
+     * "Hey Partner" but is not sure (an accent, a noisy room): two of those within a few seconds
+     * also wake it, because people repeat themselves when nothing happens, and noise does not.
      */
-    private boolean judge(String json, int level) {
+    private int judge(String json, int level) {
         try {
             JSONObject o = new JSONObject(json);
             String text = o.optString("text", "").trim();
-            if (text.isEmpty()) return false;
-            // "Easy" also accepts the phrase followed by other speech, the strict levels need it on its own
+            if (text.isEmpty()) return NO;
             String core = text;
             if (level == 2) {
+                // Easy also accepts the phrase with other speech after it
                 while (core.endsWith(" [unk]")) core = core.substring(0, core.length() - 6).trim();
             }
-            if (!WAKE.contains(core)) {
+            boolean full = WAKE.contains(core);
+            boolean lone = level == 2 && LONE_WAKE.contains(core);
+            if (!full && !lone) {
                 if (text.contains("partner")) heard = "partner, with other sounds around it";
+                else if (LONE_WAKE.contains(text)) heard = text + " (say the full Hey Partner)";
                 else heard = text.contains("[unk]") ? "something else" : text;
-                return false;
+                return NO;
             }
-            double min = 1.0, start = -1, end = 0;
+            double min = 1.0, sum = 0, start = -1, end = 0;
+            int cnt = 0;
             JSONArray w = o.optJSONArray("result");
             if (w != null) {
                 for (int k = 0; k < w.length(); k++) {
                     JSONObject x = w.getJSONObject(k);
-                    min = Math.min(min, x.optDouble("conf", 1.0));
+                    double c = x.optDouble("conf", 1.0);
+                    min = Math.min(min, c);
+                    sum += c;
+                    cnt++;
                     if (k == 0) start = x.optDouble("start", 0);
                     end = x.optDouble("end", 0);
                 }
             }
-            double need = level == 0 ? 0.90 : (level == 1 ? 0.85 : 0.70);
+            // one weak word should not sink the phrase on its own: blend the worst word with the average
+            double score = cnt == 0 ? 1.0 : 0.5 * min + 0.5 * (sum / cnt);
             double dur = end - start;
-            boolean durOk = w == null || (dur >= 0.3 && dur <= 2.2);
-            int pct = (int) Math.round(min * 100);
-            if (min < need || !durOk) {
-                heard = "hey partner " + pct + "% (not sure enough)";
-                return false;
+            boolean durOk = w == null || cnt == 0 || (full ? (dur >= 0.3 && dur <= 2.6) : (dur >= 0.1 && dur <= 0.9));
+            int pct = (int) Math.round(score * 100);
+            String name = full ? "hey partner " : text + " ";
+            if (!durOk) {
+                heard = name + pct + "% (" + (dur < 0.3 ? "too short" : "too slow") + ")";
+                return NO;
             }
-            heard = "hey partner " + pct + "%";
-            return true;
+            double strong = lone ? 0.75 : needStrong(level);
+            if (score >= strong) {
+                heard = name + pct + "%";
+                return STRONG;
+            }
+            if (full && score >= needWeak(level)) {
+                heard = name + pct + "% (say it once more)";
+                return WEAK;
+            }
+            heard = name + pct + "% (too low, needs " + (int) Math.round(strong * 100) + "%)";
+            return NO;
         } catch (Exception e) {
-            return false;
+            return NO;
         }
     }
 
     /** Feeds one chunk to every speech model. Returns true when a model finished hearing "Hey Partner". */
     private boolean feed(List<Recognizer> recs, short[] b, int n, int level) {
-        boolean wake = false;
+        int best = NO;
         for (Recognizer r : recs) {
-            if (r.acceptWaveForm(b, n) && judge(r.getResult(), level)) wake = true;
+            if (r.acceptWaveForm(b, n)) best = Math.max(best, judge(r.getResult(), level));
         }
-        return wake && fire();
+        return decide(best);
     }
 
     /** The speech ended without the models closing the phrase themselves: ask for what they have. */
     private boolean finish(List<Recognizer> recs, int level) {
-        boolean wake = false;
+        int best = NO;
         for (Recognizer r : recs) {
-            if (judge(r.getFinalResult(), level)) wake = true;
+            best = Math.max(best, judge(r.getFinalResult(), level));
         }
-        return wake && fire();
+        return decide(best);
+    }
+
+    private boolean decide(int best) {
+        if (best == STRONG) return fire();
+        if (best == WEAK) {
+            long now = SystemClock.elapsedRealtime();
+            if (lastWeak != 0 && now - lastWeak >= 1200 && now - lastWeak <= 10000) {
+                lastWeak = 0;
+                heard = heard.replace(" (say it once more)", "") + " (said twice, so it woke)";
+                return fire();
+            }
+            lastWeak = now;
+        }
+        return false;
     }
 
     private boolean fire() {

@@ -456,14 +456,14 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){chec
 async function hwSync(){if(!HW)return;try{HWS.st=await HW.status()}catch(e){}}
 function hwKeep(){if(S.set.hotword&&HW&&HW.setEnabled)HW.setEnabled({enabled:true}).catch(()=>{})}
 function hwOpen(f){if(!HW){warn('This works only in the APK.');return}HW[f]().catch(e=>warn('Could not open the Android page: '+((e&&e.message)||e)))}
-const SENSN=['Careful','Balanced','Easy'],SENSD=['Fewest mistakes. Waits while a video or music is playing. Say it on its own, then pause.','Also listens while a video or music is playing.','Hears more accents and voices, but may wake by mistake.'];
+const SENSN=['Careful','Balanced','Easy'],SENSD=['Fewest mistakes. Waits while a video or music is playing. Say the full phrase clearly, then pause.','Recommended. Also listens during videos and music. If it only half hears you, say it again and it wakes.','Best for accents. Wakes on a clear "Hey" alone too, and on a repeated half-heard phrase. May wake by mistake.'];
 function hwBlock(s){
  if(!HW)return '';
  const st=HWS.st||{};
  let msg='Say "Hey Partner" with the phone locked or on the table, and Partner opens and starts listening. The wake word is checked on the phone, no audio is sent anywhere.';
  if(s.hotword){
   if(st.model===false)msg='This build has no wake-word model. Run Build APK again.';
-  else if(st.running)msg=st.state==='paused'?'On. Waiting while Partner is open, it listens again when you leave.':'On. Listening for "Hey Partner".';
+  else if(st.running)msg=st.state==='paused'?'On. Waiting while Partner is open, it listens again when you leave.':'On. Listening for "Hey Partner".'+(st.models===1?' Only the US English voice model is loaded. The Indian English one is missing from this build, so accents are harder.':'');
   else msg='Not running'+(st.error?': '+st.error:'. Open Partner once and it starts again.');
   if(st.heard)msg+=' Last heard: '+st.heard+'.'}
  const r=(a,t,d,v)=>`<button class="r" data-a="${a}"><span><b>${t}</b><small>${esc(d)}</small></span><i>${v}</i></button>`;

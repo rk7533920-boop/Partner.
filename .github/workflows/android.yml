@@ -88,6 +88,9 @@ jobs:
           mv vosk_tmp/vosk-model-small-en-us-0.15 $A/vosk-model
           test -f $A/vosk-model/am/final.mdl
           ls $A/vosk-model
+          curl -L -f --retry 3 --retry-delay 5 -o vosk_tmp/in.zip https://alphacephei.com/vosk/models/vosk-model-small-en-in-0.4.zip && unzip -q vosk_tmp/in.zip -d vosk_tmp && mv vosk_tmp/vosk-model-small-en-in-0.4 $A/vosk-model-in || echo "Indian English model skipped"
+          test -f $A/vosk-model-in/am/final.mdl || rm -rf $A/vosk-model-in
+          ls $A
       - name: Use fixed signing key
         run: |
           mkdir -p ~/.android

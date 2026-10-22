@@ -47,6 +47,13 @@ public class HotwordPlugin extends Plugin {
         call.resolve();
     }
 
+    /** Test mode: for 30 seconds it listens even while Partner is open and only shows what it heard. */
+    @PluginMethod
+    public void setTesting(PluginCall call) {
+        HotwordService.setTesting(Boolean.TRUE.equals(call.getBoolean("on")));
+        call.resolve();
+    }
+
     @PluginMethod
     public void status(PluginCall call) {
         Context c = getContext();
@@ -59,6 +66,7 @@ public class HotwordPlugin extends Plugin {
         r.put("heard", HotwordService.heard);
         r.put("models", HotwordService.modelCount);
         r.put("sens", HotwordService.sensitivity(c));
+        r.put("testing", HotwordService.testing());
         r.put("overlay", Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(c));
         boolean battery = true;
         try {

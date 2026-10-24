@@ -52,6 +52,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(UsageStatsPlugin.class);
@@ -60,6 +61,12 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PhonePlugin.class);
         registerPlugin(LockdownPlugin.class);
         registerPlugin(HotwordPlugin.class);
+        try {
+            // only present when the workflow could bundle the offline voice
+            registerPlugin((Class<? extends com.getcapacitor.Plugin>) Class.forName("com.partner.diary.OfflineVoicePlugin"));
+        } catch (Throwable t) {
+            // this build has no offline voice
+        }
         super.onCreate(savedInstanceState);
         registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
         handle(getIntent());

@@ -66,6 +66,40 @@ public class PhonePlugin extends Plugin {
   }
 
   @PluginMethod
+  public void cancelAlarm(PluginCall call) {
+    String mode = call.getString("mode", "next");
+    Intent i = new Intent(AlarmClock.ACTION_DISMISS_ALARM).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    if ("time".equals(mode)) {
+      Integer hour = call.getInt("hour");
+      Integer minute = call.getInt("minute", 0);
+      if (hour == null || hour < 0 || hour > 23 || minute == null || minute < 0 || minute > 59) {
+        call.reject("Bad time");
+        return;
+      }
+      i.putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_TIME)
+        .putExtra(AlarmClock.EXTRA_HOUR, (int) hour)
+        .putExtra(AlarmClock.EXTRA_MINUTES, (int) minute);
+    } else if ("label".equals(mode)) {
+      String label = call.getString("label", "");
+      if (label == null || label.isEmpty()) {
+        call.reject("Missing label");
+        return;
+      }
+      i.putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_LABEL).putExtra(AlarmClock.EXTRA_MESSAGE, label);
+    } else if ("all".equals(mode)) {
+      i.putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_ALL);
+    } else {
+      i.putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT);
+    }
+    try {
+      getContext().startActivity(i);
+      call.resolve();
+    } catch (Exception e) {
+      call.reject("No clock app could close the alarm");
+    }
+  }
+
+  @PluginMethod
   public void hasCalendar(PluginCall call) {
     JSObject r = new JSObject();
     r.put("granted", calOk());
@@ -190,7 +224,7 @@ public class PhonePlugin extends Plugin {
     JSArray arr = new JSArray();
     Cursor c = CalendarContract.Instances.query(
       getContext().getContentResolver(),
-      new String[] { CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.END, CalendarContract.Instances.ALL_DAY },
+      new String[] { CalendarContract.Instances.TITLE, CalendarContract.Instances.BEGIN, CalendarContract.Instances.END, CalendarContract.Instances.ALL_DAY, CalendarContract.Instances.EVENT_ID },
       f.longValue(),
       t.longValue()
     );
@@ -202,6 +236,27 @@ public class PhonePlugin extends Plugin {
           o.put("start", c.getLong(1));
           o.put("end", c.getLong(2));
           o.put("allDay", c.getInt(3) == 1);
+          long eid = c.getLong(4);
+          o.put("id", eid);
+          boolean rep = false;
+          Cursor ec = getContext().getContentResolver().query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eid),
+            new String[] { CalendarContract.Events.RRULE },
+            null,
+            null,
+            null
+          );
+          if (ec != null) {
+            try {
+              if (ec.moveToFirst()) {
+                String rr = ec.getString(0);
+                rep = rr != null && !rr.isEmpty();
+              }
+            } finally {
+              ec.close();
+            }
+          }
+          o.put("repeats", rep);
           arr.put(o);
         }
       } finally {

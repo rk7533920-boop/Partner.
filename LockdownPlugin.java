@@ -48,10 +48,13 @@ public class LockdownPlugin extends Plugin {
 
   @PluginMethod
   public void status(PluginCall call) {
+    LockdownAcc.checkBank(getContext());
     SharedPreferences p = sp(getContext());
     DevicePolicyManager dpm = (DevicePolicyManager) getContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
     JSObject o = new JSObject();
     o.put("accessibility", accOn());
+    o.put("granted", LockdownAcc.granted(getContext()));
+    o.put("bankUntil", p.getLong("bankUntil", 0));
     o.put("admin", dpm != null && dpm.isAdminActive(admin()));
     o.put("locked", locked());
     o.put("until", p.getLong("until", 0));
@@ -87,14 +90,85 @@ public class LockdownPlugin extends Plugin {
       return;
     }
     if (!accOn()) {
-      call.reject("Turn on the accessibility service first");
-      return;
+      if (LockdownAcc.granted(getContext())) {
+        LockdownAcc.endBank(getContext()); // switches the service back on, it connects within a second
+      } else {
+        call.reject("Turn on the accessibility service first");
+        return;
+      }
     }
     SharedPreferences p = sp(getContext());
     long now = System.currentTimeMillis();
     long until = Math.max(now + m * 60000L, p.getLong("until", 0));
     p.edit().putLong("until", until).putString("reason", call.getString("reason", "Lockdown")).putLong("exitAt", 0).apply();
     if (LockdownService.inst != null) LockdownService.inst.poke();
+    call.resolve();
+  }
+
+  @PluginMethod
+  public void secureStatus(PluginCall call) {
+    LockdownAcc.checkBank(getContext());
+    SharedPreferences p = sp(getContext());
+    JSObject o = new JSObject();
+    o.put("granted", LockdownAcc.granted(getContext()));
+    o.put("accessibility", accOn());
+    o.put("bankUntil", p.getLong("bankUntil", 0));
+    o.put("smart", p.getBoolean("smartbank", false));
+    o.put("bankMin", p.getInt("bankmin", 10));
+    o.put("bankPkgs", p.getString("bankpkgs", ""));
+    o.put("locked", locked());
+    call.resolve(o);
+  }
+
+  @PluginMethod
+  public void setBankConfig(PluginCall call) {
+    if (locked()) {
+      call.reject("Lockdown is active");
+      return;
+    }
+    Integer m = call.getInt("minutes", 10);
+    int mm = m == null ? 10 : Math.max(1, Math.min(60, m));
+    Boolean smart = call.getBoolean("smart", false);
+    sp(getContext())
+      .edit()
+      .putBoolean("smartbank", smart != null && smart)
+      .putInt("bankmin", mm)
+      .putString("bankpkgs", call.getString("pkgs", ""))
+      .apply();
+    call.resolve();
+  }
+
+  @PluginMethod
+  public void bankMode(PluginCall call) {
+    if (locked()) {
+      call.reject("Lockdown is active, so the accessibility service cannot be paused");
+      return;
+    }
+    if (!LockdownAcc.granted(getContext())) {
+      call.reject("The one-time adb permission is missing");
+      return;
+    }
+    if (!accOn()) {
+      call.reject("The accessibility service is already off");
+      return;
+    }
+    Integer m = call.getInt("minutes", 15);
+    if (!LockdownAcc.startBank(getContext(), m == null ? 15 : m)) {
+      call.reject("Could not pause the accessibility service");
+      return;
+    }
+    JSObject o = new JSObject();
+    o.put("bankUntil", sp(getContext()).getLong("bankUntil", 0));
+    call.resolve(o);
+  }
+
+  @PluginMethod
+  public void bankEnd(PluginCall call) {
+    if (!LockdownAcc.granted(getContext())) {
+      call.reject("The one-time adb permission is missing");
+      return;
+    }
+    LockdownAcc.endBank(getContext());
     call.resolve();
   }
 

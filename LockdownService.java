@@ -156,6 +156,10 @@ public class LockdownService extends AccessibilityService {
       performGlobalAction(GLOBAL_ACTION_BACK);
       return;
     }
+    // smart banking mode: a listed bank or payment app opened, so pause this service for a while
+    if (!isLocked() && sp.getBoolean("smartbank", false) && isBankPkg(p)) {
+      if (LockdownAcc.startBank(this, sp.getInt("bankmin", 10))) return;
+    }
     if (ignore.contains(p)) return;
     curPkg = p;
     fgAllowed = allow.contains(p);
@@ -166,6 +170,15 @@ public class LockdownService extends AccessibilityService {
         // ignore
       }
     }
+  }
+
+  private boolean isBankPkg(String pkg) {
+    String list = sp.getString("bankpkgs", "");
+    if (list == null || list.isEmpty()) return false;
+    for (String x : list.split("[,\\s]+")) {
+      if (!x.isEmpty() && x.equals(pkg)) return true;
+    }
+    return false;
   }
 
   private void applyPending(long now) {

@@ -47,13 +47,15 @@ jobs:
       - name: Add alarms, calendar and lockdown
         run: |
           D=android/app/src/main/java/com/partner/diary
-          cp PhonePlugin.java LockdownPlugin.java LockdownService.java PartnerAdminReceiver.java $D/
+          cp PhonePlugin.java LockdownPlugin.java LockdownService.java PartnerAdminReceiver.java LockdownAcc.java BankModeReceiver.java $D/
           mkdir -p android/app/src/main/res/xml android/app/src/main/res/values
           cp lockdown_service.xml device_admin.xml android/app/src/main/res/xml/
           cp lockdown_strings.xml android/app/src/main/res/values/lockdown_strings.xml
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's#</application>#<service android:name="com.partner.diary.LockdownService" android:exported="false" android:label="Partner lockdown" android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"><intent-filter><action android:name="android.accessibilityservice.AccessibilityService"/></intent-filter><meta-data android:name="android.accessibilityservice" android:resource="@xml/lockdown_service"/></service><receiver android:name="com.partner.diary.PartnerAdminReceiver" android:exported="true" android:permission="android.permission.BIND_DEVICE_ADMIN"><meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin"/><intent-filter><action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/></intent-filter></receiver></application>#' $M
           sed -i 's#</manifest>#<uses-permission android:name="com.android.alarm.permission.SET_ALARM"/><uses-permission android:name="android.permission.READ_CALENDAR"/><uses-permission android:name="android.permission.WRITE_CALENDAR"/></manifest>#' $M
+          sed -i 's#</application>#<receiver android:name="com.partner.diary.BankModeReceiver" android:exported="false"/></application>#' $M
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/></manifest>#' $M
       - name: Allow speech engines on Android 11+
         run: |
           sed -i 's#</manifest>#<queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent><intent><action android:name="android.speech.RecognitionService"/></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml
@@ -91,6 +93,50 @@ jobs:
           curl -L -f --retry 3 --retry-delay 5 -o vosk_tmp/in.zip https://alphacephei.com/vosk/models/vosk-model-small-en-in-0.4.zip && unzip -q vosk_tmp/in.zip -d vosk_tmp && mv vosk_tmp/vosk-model-small-en-in-0.4 $A/vosk-model-in || echo "Indian English model skipped"
           test -f $A/vosk-model-in/am/final.mdl || rm -rf $A/vosk-model-in
           ls $A
+      - name: Add offline Hindi voice (Piper via sherpa-onnx)
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p voice_tmp
+          # 1) the sherpa-onnx Android library (first link that works)
+          OK=0
+          for U in \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.12.39/sherpa-onnx-1.12.39.aar \
+            https://huggingface.co/csukuangfj/sherpa-onnx-libs/resolve/main/android/aar/sherpa-onnx-1.12.39.aar \
+            https://huggingface.co/csukuangfj/sherpa-onnx-libs/resolve/main/android/aar/sherpa-onnx-1.10.35.aar; do
+            if curl -L -f --retry 3 --retry-delay 5 -o voice_tmp/sherpa.aar "$U" && unzip -l voice_tmp/sherpa.aar | grep -q "libsherpa-onnx-jni.so"; then OK=1; echo "sherpa-onnx library from $U"; break; fi
+          done
+          test "$OK" = 1
+          # 2) a Hindi Piper voice (first one that exists)
+          BASE=https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models
+          V=""
+          for N in vits-piper-hi_IN-pratham-high vits-piper-hi_IN-pratham-medium vits-piper-hi_IN-priyamvada-medium vits-piper-hi_IN-rohan-medium; do
+            if curl -L -f --retry 3 --retry-delay 5 -o voice_tmp/v.tar.bz2 "$BASE/$N.tar.bz2" && tar tjf voice_tmp/v.tar.bz2 | grep -q "tokens.txt"; then V=$N; echo "voice $N"; break; fi
+          done
+          test -n "$V"
+          tar xjf voice_tmp/v.tar.bz2 -C voice_tmp
+          test -f voice_tmp/$V/tokens.txt
+          ls voice_tmp/$V/*.onnx
+          if [ ! -d voice_tmp/$V/espeak-ng-data ]; then
+            curl -L -f --retry 3 --retry-delay 5 -o voice_tmp/e.tar.bz2 $BASE/espeak-ng-data.tar.bz2
+            tar xjf voice_tmp/e.tar.bz2 -C voice_tmp/$V
+          fi
+          test -d voice_tmp/$V/espeak-ng-data
+          # 3) only now change the Android project, so a failed download leaves the build untouched
+          A=android/app/src/main/assets
+          mkdir -p $A android/app/libs
+          rm -rf $A/hindi_voice
+          mkdir -p $A/hindi_voice
+          cp voice_tmp/$V/*.onnx voice_tmp/$V/tokens.txt $A/hindi_voice/
+          cp -r voice_tmp/$V/espeak-ng-data $A/hindi_voice/espeak-ng-data
+          echo "$V" > $A/hindi_voice/VOICE_NAME
+          cp voice_tmp/sherpa.aar android/app/libs/sherpa-onnx.aar
+          B=android/app/build.gradle
+          sed -i '/^dependencies {/a implementation fileTree(dir: "libs", include: ["*.aar"])' $B
+          sed -i '/^dependencies {/a implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"' $B
+          grep -q "kotlin-stdlib" $B
+          cp OfflineVoicePlugin.java android/app/src/main/java/com/partner/diary/
+          echo "Offline voice added: $V"
       - name: Use fixed signing key
         run: |
           mkdir -p ~/.android

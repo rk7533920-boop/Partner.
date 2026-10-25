@@ -1,12 +1,16 @@
 package com.partner.diary;
 
 import android.accessibilityservice.AccessibilityService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -21,8 +25,10 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +57,10 @@ public class LockdownService extends AccessibilityService {
   private final Map<String, Long> seen = new HashMap<>();
   private final Set<String> allow = new HashSet<>();
   private final Set<String> ignore = new HashSet<>();
+  // focus nudges: front app (the app's own window counts, system windows do not), home screen app, time spent on apps that are not allowed
+  private String nzPkg = "";
+  private String launcherPkg = "";
+  private long nzOff = 0, nzAway = 0, nzLast = 0, shadeAt = 0, usedSave = 0;
 
   private final Runnable tick = new Runnable() {
     @Override
@@ -71,6 +81,7 @@ public class LockdownService extends AccessibilityService {
     sp = LockdownPlugin.sp(this);
     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
     buildSets();
+    loadUsed();
     lastTick = System.currentTimeMillis();
     h.removeCallbacks(tick);
     h.post(tick);
@@ -121,6 +132,14 @@ public class LockdownService extends AccessibilityService {
     } catch (Exception e) {
       // ignore
     }
+    try {
+      Intent hi = new Intent(Intent.ACTION_MAIN);
+      hi.addCategory(Intent.CATEGORY_HOME);
+      ResolveInfo ri = getPackageManager().resolveActivity(hi, PackageManager.MATCH_DEFAULT_ONLY);
+      if (ri != null && ri.activityInfo != null) launcherPkg = ri.activityInfo.packageName;
+    } catch (Exception e) {
+      // ignore
+    }
   }
 
   private JSONObject cfg() {
@@ -152,8 +171,14 @@ public class LockdownService extends AccessibilityService {
     if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
     String p = e.getPackageName().toString();
     String c = e.getClassName() == null ? "" : e.getClassName().toString().toLowerCase(Locale.ROOT);
+    if (!ignore.contains(p) || p.equals(getPackageName())) nzPkg = p;
     if (isLocked() && protect() && (c.contains("globalactions") || c.contains("powermenu") || c.contains("shutdown") || c.contains("reboot"))) {
       performGlobalAction(GLOBAL_ACTION_BACK);
+      return;
+    }
+    // during a lockdown the notification shade stays shut: notifications (even inline replies) are a way around the lock
+    if (isLocked() && "com.android.systemui".equals(p) && isShade(c, e)) {
+      closeShade();
       return;
     }
     // smart banking mode: a listed bank or payment app opened, so pause this service for a while
@@ -189,13 +214,73 @@ public class LockdownService extends AccessibilityService {
     }
   }
 
+  /**
+   * Scheduled lockdown. While a schedule window is running, the phone stays locked until the window ends,
+   * and it unlocks by itself afterwards. Needs lockdown mode on in the config (cfg.on) and this service running.
+   */
+  private void schedTick(long now) {
+    JSONObject c = cfg();
+    if (c == null || !c.optBoolean("on", false)) return;
+    JSONArray sc = c.optJSONArray("sched");
+    if (sc == null || sc.length() == 0) return;
+    long best = 0;
+    for (int i = 0; i < sc.length(); i++) {
+      JSONObject s = sc.optJSONObject(i);
+      if (s == null || !s.optBoolean("on", true)) continue;
+      long end = windowEnd(s, now);
+      if (end > best) best = end;
+    }
+    if (best > now && best > sp.getLong("schedSkip", 0) && sp.getLong("until", 0) < best) {
+      sp
+        .edit()
+        .putLong("until", best)
+        .putLong("schedEnd", best)
+        .putString("reason", "Scheduled lockdown")
+        .putLong("exitAt", 0)
+        .apply();
+    }
+  }
+
+  /** End time of the schedule window that is running right now, or 0 when none is. Windows can run past midnight. */
+  private long windowEnd(JSONObject s, long now) {
+    JSONArray days = s.optJSONArray("days");
+    int f = hm(s.optString("from", ""), -1);
+    int t = hm(s.optString("to", ""), -1);
+    if (days == null || f < 0 || t < 0 || f == t) return 0;
+    int len = t > f ? t - f : t + 1440 - f;
+    for (int back = 0; back <= 1; back++) {
+      Calendar cal = Calendar.getInstance();
+      cal.setTimeInMillis(now);
+      cal.add(Calendar.DAY_OF_YEAR, -back);
+      cal.set(Calendar.HOUR_OF_DAY, f / 60);
+      cal.set(Calendar.MINUTE, f % 60);
+      cal.set(Calendar.SECOND, 0);
+      cal.set(Calendar.MILLISECOND, 0);
+      long start = cal.getTimeInMillis();
+      long end = start + len * 60000L;
+      int dow = cal.get(Calendar.DAY_OF_WEEK) - 1; // 0 = Sunday, like JavaScript
+      boolean on = false;
+      for (int i = 0; i < days.length(); i++) {
+        if (days.optInt(i, -1) == dow) on = true;
+      }
+      if (on && now >= start && now < end) return end;
+    }
+    return 0;
+  }
+
   private void onTick() {
     long now = System.currentTimeMillis();
     applyPending(now);
+    schedTick(now);
     long until = sp.getLong("until", 0);
     long exitAt = sp.getLong("exitAt", 0);
     if (until > 0 && (now >= until || (exitAt > 0 && now >= exitAt))) {
-      sp.edit().putLong("until", 0).putLong("exitAt", 0).apply();
+      SharedPreferences.Editor ed = sp.edit().putLong("until", 0).putLong("exitAt", 0);
+      // left early through the emergency exit: do not lock again for the rest of this scheduled window
+      if (exitAt > 0 && now >= exitAt && now < until && sp.getLong("schedEnd", 0) == until) {
+        ed.putLong("schedSkip", until);
+      }
+      ed.apply();
       until = 0;
       exitAt = 0;
     }
@@ -206,7 +291,42 @@ public class LockdownService extends AccessibilityService {
       hideOverlay();
       trackUsage(now);
     }
+    nudgeTick(now);
     lastTick = now;
+  }
+
+  /** The limit day changes at 5 AM, so late-night use still counts for the day that is ending. */
+  private int dayKey(long t) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(t - 5L * 3600000L);
+    return cal.get(Calendar.YEAR) * 10000 + (cal.get(Calendar.MONTH) + 1) * 100 + cal.get(Calendar.DAY_OF_MONTH);
+  }
+
+  private void loadUsed() {
+    used.clear();
+    try {
+      if (sp.getInt("usedDay", 0) == dayKey(System.currentTimeMillis())) {
+        JSONObject o = new JSONObject(sp.getString("usedJson", "{}"));
+        Iterator<String> it = o.keys();
+        while (it.hasNext()) {
+          String k = it.next();
+          used.put(k, o.optLong(k, 0L));
+        }
+      }
+    } catch (Exception e) {
+      // start from zero
+    }
+  }
+
+  private void saveUsed(long now) {
+    try {
+      JSONObject o = new JSONObject();
+      for (Map.Entry<String, Long> en : used.entrySet()) o.put(en.getKey(), en.getValue().longValue());
+      sp.edit().putInt("usedDay", dayKey(now)).putString("usedJson", o.toString()).apply();
+      usedSave = now;
+    } catch (Exception e) {
+      // ignore
+    }
   }
 
   private void trackUsage(long now) {
@@ -217,29 +337,142 @@ public class LockdownService extends AccessibilityService {
     if (c == null || !c.optBoolean("on", false)) return;
     JSONArray rs = c.optJSONArray("rules");
     if (rs == null) return;
+    if (sp.getInt("usedDay", 0) != dayKey(now)) {
+      used.clear();
+      seen.clear();
+      saveUsed(now);
+    }
+    boolean changed = false;
     for (int i = 0; i < rs.length(); i++) {
       JSONObject r = rs.optJSONObject(i);
       if (r == null) continue;
       String id = r.optString("id"), pkg = r.optString("pkg");
       int min = r.optInt("min", 30), lock = r.optInt("lock", 20);
+      boolean session = r.optBoolean("session", false); // old behaviour, only if a rule asks for it
       if (pkg.equals(curPkg)) {
         long u = (used.containsKey(id) ? used.get(id) : 0L) + dt;
         used.put(id, u);
         seen.put(id, now);
+        changed = true;
         if (u >= min * 60000L) {
-          used.put(id, 0L);
+          if (session) used.put(id, 0L);
           sp.edit()
             .putLong("until", now + lock * 60000L)
-            .putString("reason", r.optString("name", "App") + " for " + min + " min")
+            .putString("reason", r.optString("name", "App") + " for " + min + " min" + (session ? "" : " today"))
             .putLong("exitAt", 0)
             .apply();
           fgAllowed = false;
+          saveUsed(now);
           return;
         }
-      } else if (seen.containsKey(id) && now - seen.get(id) > 180000L) {
+      } else if (session && seen.containsKey(id) && now - seen.get(id) > 180000L) {
         used.put(id, 0L);
         seen.remove(id);
       }
+    }
+    if (changed && now - usedSave > 15000L) saveUsed(now);
+  }
+
+  // ---- focus nudges: an app that is not allowed, used for long, makes the phone speak his message ----
+
+  private int hm(String t, int d) {
+    try {
+      String[] p = t.split(":");
+      return Integer.parseInt(p[0].trim()) * 60 + Integer.parseInt(p[1].trim());
+    } catch (Exception e) {
+      return d;
+    }
+  }
+
+  private boolean inWindow(JSONObject n, long now) {
+    int a = hm(n.optString("from", "00:00"), 0), b = hm(n.optString("to", "23:59"), 1439);
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(now);
+    int t = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+    if (a == b) return true;
+    return a < b ? (t >= a && t < b) : (t >= a || t < b);
+  }
+
+  private boolean nzAllowed(JSONObject n, String p) {
+    if (p.equals(getPackageName()) || p.equals(launcherPkg) || allow.contains(p)) return true;
+    JSONArray a = n.optJSONArray("allow");
+    if (a != null) {
+      for (int i = 0; i < a.length(); i++) {
+        if (p.equals(a.optString(i))) return true;
+      }
+    }
+    return false;
+  }
+
+  private void nudgeTick(long now) {
+    JSONObject n = null;
+    try {
+      String raw = sp.getString("nudge", "");
+      if (raw != null && !raw.isEmpty()) n = new JSONObject(raw);
+    } catch (Exception e) {
+      n = null;
+    }
+    long dt = lastTick == 0 ? 0 : Math.min(now - lastTick, 10000L);
+    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+    boolean screenOn = pm == null || pm.isInteractive();
+    if (n == null || !n.optBoolean("on", false) || isLocked() || !inWindow(n, now)) {
+      nzOff = 0;
+      nzAway = 0;
+      return;
+    }
+    if (!screenOn || nzPkg.isEmpty() || nzAllowed(n, nzPkg)) {
+      nzAway += dt;
+      if (nzAway >= (screenOn ? 90000L : 120000L)) nzOff = 0;
+      return;
+    }
+    nzAway = 0;
+    nzOff += dt;
+    long after = Math.max(1, n.optInt("after", 10)) * 60000L;
+    long every = Math.max(1, n.optInt("every", 10)) * 60000L;
+    if (nzOff >= after && now - nzLast >= every) {
+      nzLast = now;
+      String m = n.optString("msg", "");
+      if (m == null || m.trim().isEmpty()) m = "You have been on your phone for a while.";
+      speakNudge(this, m);
+    }
+  }
+
+  /** Speaks a message through the same alarm path the reminders use, so it also works with the screen off. */
+  static void speakNudge(Context ctx, String msg) {
+    boolean hindi = false;
+    for (int i = 0; i < msg.length(); i++) {
+      char ch = msg.charAt(i);
+      if (ch >= 0x0900 && ch <= 0x097F) {
+        hindi = true;
+        break;
+      }
+    }
+    SpeakerPlugin.set(ctx, 9100, System.currentTimeMillis() + 700L, "Partner", msg, msg, hindi ? "hi-IN" : "en-IN", false, "");
+  }
+
+  // ---- notification shade ----
+
+  private boolean isShade(String c, AccessibilityEvent e) {
+    String t = "";
+    try {
+      if (e.getText() != null) t = e.getText().toString().toLowerCase(Locale.ROOT);
+    } catch (Exception ex) {
+      t = "";
+    }
+    return c.contains("notification") || c.contains("shade") || c.contains("quicksetting") || c.contains("qspanel")
+      || t.contains("notification shade") || t.contains("quick settings") || t.contains("notification panel");
+  }
+
+  private void closeShade() {
+    long now = System.currentTimeMillis();
+    if (now - shadeAt < 400L) return;
+    shadeAt = now;
+    try {
+      // 15 = GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE (Android 12 and newer); older versions: Back closes the shade
+      if (Build.VERSION.SDK_INT >= 31) performGlobalAction(15);
+      else performGlobalAction(GLOBAL_ACTION_BACK);
+    } catch (Exception ex) {
+      // ignore
     }
   }
 

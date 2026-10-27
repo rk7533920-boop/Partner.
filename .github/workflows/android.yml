@@ -56,6 +56,29 @@ jobs:
           sed -i -E "s/versionCode [0-9]+/versionCode $N/; s/versionName \"[^\"]*\"/versionName \"1.0.$N\"/" $B
           grep -n "versionCode\|versionName" $B
           grep -q "versionCode $N" $B
+      - name: Sign with Partner's key (set explicitly, not left to the Android default)
+        run: |
+          set -e
+          cp ~/.android/debug.keystore android/app/partner.keystore
+          cat >> android/app/build.gradle <<'EOF'
+
+          android {
+              signingConfigs {
+                  partner {
+                      storeFile file('partner.keystore')
+                      storePassword 'android'
+                      keyAlias 'androiddebugkey'
+                      keyPassword 'android'
+                  }
+              }
+              buildTypes {
+                  debug {
+                      signingConfig signingConfigs.partner
+                  }
+              }
+          }
+          EOF
+          tail -20 android/app/build.gradle
       - name: Sync web files and plugins
         run: npx cap sync android
       - name: Add screen-time plugin

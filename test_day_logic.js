@@ -155,5 +155,10 @@ const jp=wParseImport(wPlanJson(wPlanFromTpl('t3')));
 q2('JSON export imports back with the same days, exercises and schedule',[jp.days.length,jp.days.map(d=>d.ex.length),jp.sched.filter(Boolean).length,jp.name],[3,[6,6,6],3,'Beginner Full Body']);
 q2('garbage import is refused',wParseImport('hello there'),null);
 q2('backup, state defaults and quick-mode keys know the new data',[/BKEYS=\[[^\]]*'wplans'[^\]]*'wsess'[^\]]*'audio'/.test(src),/wplans:\[\],wsess:\[\],audio:\[\]/.test(src),/'rx','audio'\]\.includes\(k\)/.test(src)],[true,true,true]);
+/* every click handler name in A must be defined once: a later A.x= silently replaces an earlier one (this made "Back up now" run banking mode). go, tab, mic and review are deliberate wrappers. */
+{const names={};(src.match(/\bA\.[A-Za-z0-9_]+\s*=(?!=)/g)||[]).forEach(x=>{const k=x.replace(/^A\./,'').replace(/\s*=$/,'');names[k]=(names[k]||0)+1});
+ const dup=Object.keys(names).filter(k=>names[k]>1&&!['go','tab','mic','review'].includes(k));
+ q2('no click handler name is defined twice',dup,[]);
+ q2('Back up now and Banking mode use different handlers',[/data-a="bknow">Back up now/.test(src),/data-a="bkbank">Banking mode now/.test(src)],[true,true])}
 }
 console.log(ok,'passed',bad,'failed');

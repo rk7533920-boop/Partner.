@@ -32,7 +32,8 @@ A personal diary and mentor app for one person (the owner), built by himself wit
 - XML: `assist_service.xml`, `lockdown_service.xml`, `device_admin.xml`, `lockdown_strings.xml`.
 - `.github/workflows/android.yml`: builds the APK. It creates the Android project with `npx cap add android`, copies the Java and XML files above into it and patches the manifest with `sed`. **A new native file must be added to this workflow, or it is silently left out of the APK.**
 - `package.json`, `capacitor.config.json` (appId `com.partner.diary`, webDir `www`), `sw.js` and `manifest.webmanifest` (web version), icons, `README.md` (setup steps, Hinglish), `test_day_logic.js` (see section 8).
-- `debug.keystore`: signs the APK. Never delete, regenerate or replace it, or updates will not install over the old app. (The owner wants it kept private if possible, not on a public repo; a free way was requested.)
+- `debug.keystore`: signs the APK. Never delete, regenerate or replace it, or updates will not install over the old app. SHA-256 of the key: `e17a7b96668a6e242007bb33a17278a5054431a6135baa76aaafeea7300be1ac` (also in `android.yml` as `EXPECTED_KEY_SHA256`; the build stops if the key in use differs). Optional: the workflow uses the GitHub Secret `PARTNER_KEYSTORE_B64` (base64 of the keystore) when it exists, otherwise the repo file. The owner keeps the repo Private and a copy of the keystore outside GitHub.
+- App version: `android.yml` sets `versionCode` = `github.run_number` and `versionName` = `1.0.<run number>` right after `npx cap add android`, and stamps the same number into `const BUILD='dev';` in `www/index.html` (shown in Settings as "Version · build N"). Without a rising versionCode Android treats every build as the same version and the update will not install over the old app. **Never rename or recreate the workflow file**: the run number restarts and the new APK would look older than the installed one.
 
 Build: GitHub, Actions, "Build APK", Run workflow, about 5 to 10 minutes, then download the artifact `Partner-APK`. Web version: GitHub Pages from `main` root.
 
@@ -44,7 +45,8 @@ Build: GitHub, Actions, "Build APK", Run workflow, about 5 to 10 minutes, then d
 - Tools the AI can call are defined in `TL` (`log_entry`, `start_activity`, `end_activity`, `update_entry`, `delete_entry`, targets, habits, gym, weight, reminders, alarms, calendar, timers, routines, memory, food databank, banking mode, ...). `send()` applies them. There is a regex backup (`rxScan`, `S.rx`) that logs start/end phrases when Claude fails or logs nothing; the AI may teach it new phrases with `learn_phrase`.
 - Rendering: `dayView()` (Today), `diaryRows()` (timeline), `segsFor()` (the "Where your day went" bar), editor sheet `buildEdt/drawEdit/A.esave`.
 - Backups: automatic to phone storage folder `Partner/` (one file per day), import takes the whole folder; API keys may be included (files stay on the phone).
-- Gotcha: every handler name in the `A` object must be unique. `A.undo` (chat Undo) was silently replaced by a later `A.undo` (toast Undo) and the chat button did nothing; the toast one is now `A.undot`. Undo also takes back a bed or wake-up logged by that message.
+- Gotcha: every handler name in the `A` object must be unique (`test_day_logic.js` now checks this). `A.bknow` was defined twice, so "Back up now" ran banking mode; banking mode is now `A.bkbank`. Wrappers `go`, `tab`, `mic`, `review` are deliberate.
+- Gotcha (old): every handler name in the `A` object must be unique. `A.undo` (chat Undo) was silently replaced by a later `A.undo` (toast Undo) and the chat button did nothing; the toast one is now `A.undot`. Undo also takes back a bed or wake-up logged by that message.
 - Failures must be visible: `fail()` shows a banner, lists it in Settings > Problems and sends an Android notification when the app is in the background.
 
 ## 5. Diary logging rules (the most important part)
@@ -122,7 +124,7 @@ These are decisions made together with the owner. Do not undo them without askin
 - Whole-app UI redesign (mockups only).
 - Mic and speech recognition improvements; the "Hey Partner" noise false triggers.
 - Why bank apps (Paytm, YONO) fail on his phone (suspected accessibility service) and whether Partner can be marked trustworthy.
-- Keeping `debug.keystore` private.
+- Update over the old APK: fixed in the workflow (rising versionCode, key fingerprint check) but not yet proven on the phone. The first build after this change may still need one uninstall if the installed app was signed with another key.
 - Not tested on a phone yet (only in a desktop browser): the Mentor tab's hands-free listening (Android may play a system sound at every restart of the recogniser), audio tracks with the screen off (WebView may pause them; a native player would be the fix), the full-screen timer's screen-awake request, and the workout screens one-handed on a real screen.
 - Anything from his older request lists that you cannot verify in the code: verify first, then tell him honestly what is and is not done.
 

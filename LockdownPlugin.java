@@ -63,7 +63,33 @@ public class LockdownPlugin extends Plugin {
     o.put("cfg", p.getString("cfg", ""));
     o.put("pend", p.getString("pend", ""));
     o.put("pendAt", p.getLong("pendAt", 0));
+    NightRule.applyPending(getContext(), System.currentTimeMillis());
+    o.put("night", p.getString("night", ""));
+    o.put("nightPend", p.getString("nightPend", ""));
+    o.put("nightPendAt", p.getLong("nightPendAt", 0));
+    o.put("nightUntil", p.getLong("nightUntil", 0));
+    o.put("nightLastCut", p.getLong("nightLastCut", 0));
+    o.put("nightLastBlock", p.getLong("nightLastBlock", 0));
     call.resolve(o);
+  }
+
+  /** The late-night call rule. Like the lockdown settings it cannot be changed while a lockdown or the night window is running. */
+  @PluginMethod
+  public void setNight(PluginCall call) {
+    long now = System.currentTimeMillis();
+    if (locked() || NightRule.activeEnd(getContext(), now) > 0) {
+      call.reject("Lockdown is active");
+      return;
+    }
+    Double pa = call.getDouble("pendAt");
+    sp(getContext())
+      .edit()
+      .putString("night", call.getString("cfg", ""))
+      .putString("nightPend", call.getString("pend", ""))
+      .putLong("nightPendAt", pa == null ? 0 : pa.longValue())
+      .apply();
+    if (LockdownService.inst != null) LockdownService.inst.poke();
+    call.resolve();
   }
 
   @PluginMethod

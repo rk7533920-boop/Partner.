@@ -61,6 +61,8 @@ public class LockdownService extends AccessibilityService {
   private String nzPkg = "";
   private String launcherPkg = "";
   private long nzOff = 0, nzAway = 0, nzLast = 0, shadeAt = 0, usedSave = 0;
+  // the late-night call rule is running (see NightRule)
+  private boolean nightRun = false;
 
   private final Runnable tick = new Runnable() {
     @Override
@@ -70,7 +72,7 @@ public class LockdownService extends AccessibilityService {
       } catch (Exception e) {
         // keep ticking
       }
-      h.postDelayed(this, shown ? 1000 : 5000);
+      h.postDelayed(this, shown ? 1000 : (nightRun ? 2000 : 5000));
     }
   };
 
@@ -161,6 +163,8 @@ public class LockdownService extends AccessibilityService {
   }
 
   private boolean exitOn() {
+    // the night rule has no exit until its end time: that was his own choice
+    if (sp.getLong("nightUntil", 0) > System.currentTimeMillis()) return false;
     JSONObject c = cfg();
     return c == null || c.optBoolean("exit", true);
   }
@@ -241,6 +245,54 @@ public class LockdownService extends AccessibilityService {
     }
   }
 
+  /**
+   * The late-night call rule. While its window runs the phone is locked until the window ends (no emergency exit), a normal
+   * call with somebody who is not on his list is ended, and WhatsApp calls are hung up by the notification listener.
+   */
+  private void nightTick(long now) {
+    NightRule.applyPending(this, now);
+    long end = NightRule.activeEnd(this, now);
+    nightRun = end > 0;
+    if (end > 0) {
+      long until = sp.getLong("until", 0);
+      SharedPreferences.Editor ed = sp.edit().putLong("nightUntil", end).putLong("exitAt", 0);
+      if (until < end) ed.putLong("until", end).putString("reason", "Night rule");
+      ed.apply();
+      nightCalls(now);
+      PartnerNotifListener.sweep();
+    } else if (sp.getLong("nightUntil", 0) != 0) {
+      sp.edit().putLong("nightUntil", 0).apply();
+    }
+  }
+
+  /**
+   * Ends a running normal call when it is with somebody he did not allow. It only ends a call the call screener has seen
+   * and marked as not allowed. A call nobody wrote down (an emergency call, or the call screening app is not set) is never touched.
+   */
+  private void nightCalls(long now) {
+    if (Build.VERSION.SDK_INT < 28) return;
+    try {
+      TelecomManager tm = (TelecomManager) getSystemService(TELECOM_SERVICE);
+      if (tm == null) return;
+      boolean inCall;
+      try {
+        inCall = tm.isInCall();
+      } catch (Exception e) {
+        return; // the phone permission is off
+      }
+      if (!inCall) {
+        if (sp.contains("curCallTs")) sp.edit().remove("curCallOk").remove("curCallTs").apply();
+        return;
+      }
+      long ts = sp.getLong("curCallTs", 0);
+      if (ts == 0 || now - ts > 6 * 3600000L || sp.getBoolean("curCallOk", false)) return;
+      if (checkSelfPermission(android.Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) return;
+      if (tm.endCall()) sp.edit().putLong("nightLastCut", now).apply();
+    } catch (Exception e) {
+      // try again on the next tick
+    }
+  }
+
   /** End time of the schedule window that is running right now, or 0 when none is. Windows can run past midnight. */
   private long windowEnd(JSONObject s, long now) {
     JSONArray days = s.optJSONArray("days");
@@ -272,6 +324,7 @@ public class LockdownService extends AccessibilityService {
     long now = System.currentTimeMillis();
     applyPending(now);
     schedTick(now);
+    nightTick(now);
     long until = sp.getLong("until", 0);
     long exitAt = sp.getLong("exitAt", 0);
     if (until > 0 && (now >= until || (exitAt > 0 && now >= exitAt))) {
@@ -547,7 +600,12 @@ public class LockdownService extends AccessibilityService {
     long left = Math.max(0, until - now) / 1000;
     tTime.setText(String.format(Locale.US, "%d:%02d", left / 60, left % 60));
     String reason = sp.getString("reason", "");
-    tMsg.setText((reason.isEmpty() ? "Your phone is resting." : reason + ". Your phone is resting.") + " Calls still work.");
+    boolean nightNow = sp.getLong("nightUntil", 0) > now;
+    tMsg.setText(
+      nightNow
+        ? "Night rule. Your phone is resting. Only the contacts you allowed can be called."
+        : (reason.isEmpty() ? "Your phone is resting." : reason + ". Your phone is resting.") + " Calls still work."
+    );
     if (exitOn()) {
       bExit.setVisibility(View.VISIBLE);
       if (exitAt > 0) {
@@ -588,6 +646,7 @@ public class LockdownService extends AccessibilityService {
   }
 
   private void toggleExit() {
+    if (!exitOn()) return;
     long ex = sp.getLong("exitAt", 0);
     sp.edit().putLong("exitAt", ex > 0 ? 0 : System.currentTimeMillis() + 10 * 60000L).apply();
     try {

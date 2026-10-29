@@ -61,6 +61,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PhonePlugin.class);
         registerPlugin(LockdownPlugin.class);
         registerPlugin(HotwordPlugin.class);
+        registerPlugin(SpendPlugin.class);
         try {
             // only present when the workflow could bundle the offline voice
             registerPlugin((Class<? extends com.getcapacitor.Plugin>) Class.forName("com.partner.diary.OfflineVoicePlugin"));

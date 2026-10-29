@@ -161,4 +161,48 @@ q2('backup, state defaults and quick-mode keys know the new data',[/BKEYS=\[[^\]
  q2('no click handler name is defined twice',dup,[]);
  q2('Back up now and Banking mode use different handlers',[/data-a="bknow">Back up now/.test(src),/data-a="bkbank">Banking mode now/.test(src)],[true,true])}
 }
+
+/* ---- new: health score, identities, boredom training, spending, night call rule ---- */
+{
+const grab=(a,b)=>between(a,b).replace(/^\s*async function/gm,'function').replace(/\bconst /g,'var ').replace(/(^|[^\w.])function (\w+)/g,'$1var $2=function $2');
+const SPC=eval(between('const SPC=','const sT=').replace(/^const SPC=/,'').replace(/;\s*$/,''));
+const normf=eval('('+between('const norm=','function addMem').replace(/^const norm=/,'').replace(/;\s*$/,'')+')');
+globalThis.norm=normf;globalThis.SPC=SPC;
+let S3={habits:[],hlog:{},spend:[],bore:[],set:{}};globalThis.S=S3;globalThis.votes=id=>Object.values(S3.hlog[id]||{}).filter(v=>v>0).length;
+globalThis.esc=x=>x;
+(0,eval)(grab('const dayScore=','/* ---- Identity'));
+(0,eval)(grab('const idKey=','function idVotesView'));
+(0,eval)(grab('const boL=','const BO={'));
+(0,eval)(grab('const SPCOL=','async function spStatus'));
+(0,eval)(grab('const ntm=','const ntLocked'));
+const j=x=>JSON.stringify(x),t3=(n,a,b)=>{if(j(a)===j(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',j(a),'want',j(b))}};
+t3('graph %: calories and protein only, each capped at 100',[dayScore(3000,120,3000,120),dayScore(1500,60,3000,120),dayScore(4000,30,3000,120),dayScore(0,0,3000,120),dayScore(2400,0,3000,120),dayScore(0,60,3000,120)],[100,50,63,null,80,50]);
+t3('graph % ignores carbs and fat (healthView uses dayScore with calories and protein only)',[/dayScore\(kc\[k\],pr\[k\],MQ\(\)\.cal,MQ\(\)\.p\)/.test(src),!/kc\[k\]\/\(s\.cal\|\|1\)\*100/.test(src)],[true,true]);
+S3.habits=[{id:'a',name:'Gym',ident:'takes care of his body',c:'#fff'},{id:'b',name:'Diet',ident:'Takes care of his body.',c:'#fff'},{id:'c',name:'Read',ident:'reads daily',c:'#fff'},{id:'d',name:'Walk',ident:'',c:'#fff'}];
+S3.hlog={a:{x1:1,x2:2},b:{x1:1},c:{}};
+const g=idGroups();
+t3('two habits with the same identity are one identity and their votes add up',[g.length,g[0].hs.map(h=>h.name),g[0].v,g[1].v],[2,['Gym','Diet'],3,0]);
+t3('habits form offers existing identities as choices',idChoices(),['takes care of his body','reads daily']);
+t3('boredom target: first 2 min, grows after a finished sit, stays after an early stop',[(()=>{S3.bore=[];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:130,goal:2}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:600,goal:10}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:1200,goal:20}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:100,goal:5}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:10,goal:2}];return boNext()})()],[2,3,11,22,5,2]);
+const P=x=>{const r=spParse(x);return r?[r.amt,r.to]:null};
+t3('payment texts: amount and shop from bank messages',[
+ P('Rs 250.00 debited from A/c XX1234 on 28-10-26 to VPA swiggy@icici (UPI Ref 123456). Avl Bal Rs 5000.00'),
+ P('Sent Rs.250.00 from HDFC Bank A/c 1234 To RAHUL SHARMA On 28/10/26 Ref 123456789'),
+ P('INR 250.00 debited from A/c no. XX1234 on 28-10-26 14:22:11 UPI/P2M/123456/ZOMATO'),
+ P('Spent Rs.1299 on HDFC Card xx1234 at AMAZON on 28-Oct-26'),
+ P('A/C X1234 debited by 250.0 on date 28Oct26 trf to SWIGGY Refno 123456'),
+ P('Paid \u20b9250 to Swiggy')
+],[[250,'Swiggy'],[250,'Rahul Sharma'],[250,'Zomato'],[1299,'Amazon'],[250,'Swiggy'],[250,'Swiggy']]);
+t3('payment texts: credits, OTPs and the balance are not spends',[P('Rs 500.00 credited to your A/c XX1234 on 28-10-26 by UPI from RAHUL'),P('Your OTP for payment of Rs 500 is 123456'),P('Rs 40 debited from A/c XX1234. Avl Bal Rs 12,345.67'),P('Refund of Rs 300 received')],[null,null,[40,''],null]);
+S3.spend=[];
+const n1=spIngest({amt:250,to:'',ts:1e12,key:'s1',src:'sms'}),n2=spIngest({amt:250,to:'Swiggy',ts:1e12+120000,key:'nk',src:'notif'}),n3=spIngest({amt:250,to:'',ts:1e12+60000,key:'s2',src:'sms'}),n4=spIngest({amt:250,to:'',ts:1e12,key:'s1',src:'sms'});
+t3('the same payment from the bank message and the app notification is saved once; two real payments are not merged; reading a message twice adds nothing',[n1,n2,n3,n4,S3.spend.length,S3.spend[0].to,S3.spend[0].cat,S3.spend[0].q,S3.spend[1].q],[1,0,1,0,2,'Swiggy','Food',0,1]);
+S3.set.spmap={};
+t3('categories by shop name, unknown names stay unsorted',[spCat('Swiggy'),spCat('Uber'),spCat('Apollo Pharmacy'),spCat('Rahul Sharma'),spCat('')],['Food','Travel','Health','','']);
+{const x={id:'t',to:'Rahul Sharma',amt:50,q:1,ts:1,src:'sms'};S3.spend=[x,{id:'u',to:'Rahul Sharma',amt:20,q:1,ts:2,src:'sms'}];globalThis.put=()=>{};(0,eval)(grab('function spSet','const spDayK'));spSet(x,'Fun');t3('sorting one payment sorts the same shop everywhere and is remembered',[S3.spend.map(y=>y.cat),S3.spend.map(y=>y.q),spCat('Rahul Sharma')],[['Fun','Fun'],[0,0],'Fun'])}
+const W=(a,b)=>ntWeaker(Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'+91 98765 43210'}]},a),Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'09876543210'}]},b));
+t3('night rule: only a weaker change waits 24 hours',[W({},{}),W({},{on:false}),W({on:false},{on:false,from:'23:59'}),W({},{from:'23:30'}),W({},{from:'22:30'}),W({},{to:'06:00'}),W({},{to:'08:00'}),W({},{allow:[{n:'Papa',num:'9876543210'},{n:'Friend',num:'9000000001'}]}),W({},{allow:[]})],[false,true,false,true,false,true,false,true,false]);
+t3('night rule: wired into lockdown, calls, notifications, settings and permissions',[/setNight/.test(fs.readFileSync('LockdownPlugin.java','utf8')),/nightTick\(now\)/.test(fs.readFileSync('LockdownService.java','utf8')),/tm\.endCall\(\)/.test(fs.readFileSync('LockdownService.java','utf8')),/CallScreeningService/.test(fs.readFileSync('NightCallScreen.java','utf8')),/NotificationListenerService/.test(fs.readFileSync('PartnerNotifListener.java','utf8')),/case's-night':return nightView\(\)/.test(src),/'s-night':'Night call rule'/.test(src),/\['scr','Call screening'/.test(src),/id:760/.test(src)],[true,true,true,true,true,true,true,true,true]);
+t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
+}
 console.log(ok,'passed',bad,'failed');

@@ -114,6 +114,17 @@ jobs:
           sed -i 's#</manifest>#<uses-permission android:name="com.android.alarm.permission.SET_ALARM"/><uses-permission android:name="android.permission.READ_CALENDAR"/><uses-permission android:name="android.permission.WRITE_CALENDAR"/></manifest>#' $M
           sed -i 's#</application>#<receiver android:name="com.partner.diary.BankModeReceiver" android:exported="false"/></application>#' $M
           sed -i 's#</manifest>#<uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/></manifest>#' $M
+      - name: Add spending, night call rule and call screening
+        run: |
+          set -e
+          D=android/app/src/main/java/com/partner/diary
+          cp SpendPlugin.java NightRule.java NightCallScreen.java PartnerNotifListener.java $D/
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#</application>#<service android:name="com.partner.diary.NightCallScreen" android:exported="true" android:permission="android.permission.BIND_SCREENING_SERVICE"><intent-filter><action android:name="android.telecom.CallScreeningService"/></intent-filter></service><service android:name="com.partner.diary.PartnerNotifListener" android:exported="true" android:label="Partner" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"><intent-filter><action android:name="android.service.notification.NotificationListenerService"/></intent-filter></service></application>#' $M
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.READ_SMS"/><uses-permission android:name="android.permission.READ_CONTACTS"/><uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/><uses-permission android:name="android.permission.READ_PHONE_STATE"/></manifest>#' $M
+          grep -q "NightCallScreen" $M
+          grep -q "PartnerNotifListener" $M
+          grep -q "READ_SMS" $M
       - name: Allow speech engines on Android 11+
         run: |
           sed -i 's#</manifest>#<queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent><intent><action android:name="android.speech.RecognitionService"/></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml

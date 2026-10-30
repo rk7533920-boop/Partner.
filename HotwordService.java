@@ -367,6 +367,7 @@ public class HotwordService extends Service {
             double floor = 40;
             long nextCheck = 0;
             boolean mediaOn = false;
+            boolean onBreak = false;
             int level = 0;
             AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -375,13 +376,19 @@ public class HotwordService extends Service {
                 if (now >= nextCheck) {
                     nextCheck = now + 1000;
                     level = sensitivity(this);
+                    // a planned break: the microphone stays closed until it ends
+                    boolean b = NightRule.breakNow(this, System.currentTimeMillis());
+                    if (b != onBreak) {
+                        onBreak = b;
+                        note(b ? "Break mode: not listening" : "Listening for Hey Partner");
+                    }
                     try {
                         mediaOn = am != null && am.isMusicActive();
                     } catch (Exception e) {
                         mediaOn = false;
                     }
                 }
-                boolean appBusy = appVisible || now < pauseUntil;
+                boolean appBusy = appVisible || now < pauseUntil || onBreak;
                 // On "careful" it also stays quiet while a video or music is playing
                 if (appBusy || (level == 0 && mediaOn)) {
                     if (ar != null) {
@@ -392,7 +399,7 @@ public class HotwordService extends Service {
                     noisy = false;
                     preN = 0;
                     activeChunks = 0;
-                    state = appBusy ? "paused" : "media";
+                    state = onBreak ? "break" : appBusy ? "paused" : "media";
                     Thread.sleep(150);
                     continue;
                 }

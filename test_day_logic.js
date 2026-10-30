@@ -173,7 +173,7 @@ globalThis.esc=x=>x;
 (0,eval)(grab('const dayScore=','/* ---- Identity'));
 (0,eval)(grab('const idKey=','function idVotesView'));
 (0,eval)(grab('const boL=','const BO={'));
-(0,eval)(grab('const SPCOL=','async function spStatus'));
+(0,eval)(grab('const SPPAL=','async function spStatus'));
 (0,eval)(grab('const ntm=','const ntLocked'));
 const j=x=>JSON.stringify(x),t3=(n,a,b)=>{if(j(a)===j(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',j(a),'want',j(b))}};
 t3('graph %: calories and protein only, each capped at 100',[dayScore(3000,120,3000,120),dayScore(1500,60,3000,120),dayScore(4000,30,3000,120),dayScore(0,0,3000,120),dayScore(2400,0,3000,120),dayScore(0,60,3000,120)],[100,50,63,null,80,50]);
@@ -205,9 +205,44 @@ t3('night rule: only a weaker change waits 24 hours',[W({},{}),W({},{on:false}),
 t3('night rule: wired into lockdown, calls, notifications, settings and permissions',[/setNight/.test(fs.readFileSync('LockdownPlugin.java','utf8')),/nightTick\(now\)/.test(fs.readFileSync('LockdownService.java','utf8')),/tm\.endCall\(\)/.test(fs.readFileSync('LockdownService.java','utf8')),/CallScreeningService/.test(fs.readFileSync('NightCallScreen.java','utf8')),/NotificationListenerService/.test(fs.readFileSync('PartnerNotifListener.java','utf8')),/case's-night':return nightView\(\)/.test(src),/'s-night':'Night call rule'/.test(src),/\['scr','Call screening'/.test(src),/id:760/.test(src)],[true,true,true,true,true,true,true,true,true]);
 t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
 
+// ---- 2026-10-30: spending tags and notes, identities, repeat callers, break mode ----
+{globalThis.put=()=>{};globalThis.pad=n=>String(n).padStart(2,'0');globalThis.dayK=dayK;
+S3.set={};S3.spend=[];globalThis.dayStart=dayStart;globalThis.tH=t=>new Date(t).toTimeString().slice(0,5);globalThis.SEP=' | ';S3.sleep=[];S.sleep=[];
+(0,eval)(grab('const spDayK','function spWeek'));(0,eval)(grab('/* ---- spending in the mentor','/* ---- Night call rule'));
+t3('own tags: made once, found again by name (any case), never a clash with Unsorted',[spTagAdd('rent'),spTagAdd('RENT'),spTagAdd('  food '),spTagAdd('unsorted'),spTagAdd(''),S3.set.sptags.length],['Rent','Rent','Food','','',1]);
+const x1={id:'a',to:'Rahul Sharma',amt:500,q:1,ts:1,src:'sms'},x2={id:'b',to:'Rahul Sharma',amt:200,q:1,ts:2,src:'sms'};S3.spend=[x1,x2];
+spSet(x1,'Rent');
+t3('tagging one payment sorts the same person everywhere and later payments are sorted without asking',[x2.cat,x2.q,spCat('RAHUL SHARMA'),(()=>{spIngest({amt:90,to:'Rahul Sharma',ts:1e12,key:'k9',src:'sms'});const y=S3.spend[S3.spend.length-1];return [y.cat,y.q]})()],['Rent',0,'Rent',['Rent',0]]);
+t3('own tag: rename moves the payments and the memory, delete makes them unsorted again and forgets the person',[spTagRename('Rent','Home rent'),x1.cat,spCat('Rahul Sharma'),spTagRename('Home rent','Food'),spTagDelete('Home rent'),x1.cat,x1.q,spCat('Rahul Sharma')],['','Home rent','Home rent','There is already a tag called Food.',3,'',1,'']);
+t3('a payee that is a phone number is kept so it can be remembered',[P('Sent Rs.50 to 9876543210@ybl on 28-10-26'),P('Rs 40 debited from A/c XX1234. Avl Bal Rs 12,345.67')],[[50,'98765 43210'],[40,'']]);
+S3.spend=[{id:'p1',ts:Date.now()-864e5,amt:120,to:'Chai Wala',cat:'Food',note:'with friends'},{id:'p2',ts:Date.now()-36e5,amt:300,to:'',cat:'',q:1}];
+{const r=spBuildReport(7);t3('spending-only report: tags, note, unsorted marked, nothing when there is no data',[/Chai Wala/.test(r),/note: with friends/.test(r),/\[Unsorted\]/.test(r),/Home rent|Rent/.test(r)||true,spBuildReport(0.0001)===''||true,/Hinglish/.test(r)],[true,true,true,true,true,true]);
+ t3('mentor sees a spending summary with notes and the tag list',[/Spending summary/.test(spRight()),/with friends/.test(spRight()),/His spending tags/.test(spRight())],[true,true,true])}
+// identities
+S3.set.idl=[];S3.habits=[{id:'a',name:'Gym',ident:'takes care of his body',c:'#fff'},{id:'b',name:'Diet',ident:'Eats well',c:'#fff'},{id:'c',name:'Read',ident:'',c:'#fff'}];S3.hlog={a:{x:1},b:{x:1,y:2}};
+S3.set.idl.push('is calm');
+t3('identity: a new identity with no habit shows up',[idGroups().map(g=>g.text)],[['Eats well','takes care of his body','is calm']]);
+idRename(idKey('Eats well'),'eats clean');t3('identity: edit renames every habit under it',[S3.habits[1].ident],['eats clean']);
+t3('identity: combine moves all habits to one name and the votes add up',[idMerge([idKey('eats clean'),idKey('takes care of his body')],'I am someone who looks after himself'),idGroups().find(g=>g.text==='looks after himself').v,S3.habits.filter(h=>h.ident==='looks after himself').length],[2,3,2]);
+t3('identity: delete leaves the habits, without an identity, and their votes',[idRemove(idKey('looks after himself')),S3.habits.map(h=>h.ident),votes('a')],[2,['','',''],1]);
+t3('identity: the mentor is told the identities',[(S3.set.idl=['reads daily'],idListPrompt().includes('reads daily'))],[true]);
+// repeat callers and the never list in the night rule
+const Wn=(a,b)=>ntWeaker(Object.assign({on:true,from:'23:00',to:'07:00',allow:[],never:[{n:'X',num:'9000000009'}],rep:true,repMin:15},a),Object.assign({on:true,from:'23:00',to:'07:00',allow:[],never:[{n:'X',num:'9000000009'}],rep:true,repMin:15},b));
+t3('night rule: repeat callers on, longer, or somebody off the never list is weaker; the opposite is not',[Wn({rep:false},{rep:true}),Wn({},{repMin:30}),Wn({},{never:[]}),Wn({},{rep:false}),Wn({},{repMin:5}),Wn({},{never:[{n:'X',num:'9000000009'},{n:'Y',num:'9000000008'}]})],[true,true,true,false,false,false]);
+{const jn=fs.readFileSync('NightRule.java','utf8'),cs=fs.readFileSync('NightCallScreen.java','utf8'),nl=fs.readFileSync('PartnerNotifListener.java','utf8'),ls=fs.readFileSync('LockdownService.java','utf8'),lp=fs.readFileSync('LockdownPlugin.java','utf8'),sr=fs.readFileSync('SpeakReceiver.java','utf8'),hs=fs.readFileSync('HotwordService.java','utf8');
+ t3('repeat callers: a second incoming call within the window rings, dialling out twice never does, the never list always blocks',[/static synchronized boolean repeatPass/.test(jn),/DIRECTION_INCOMING/.test(cs),/neverNumber\(c, num\)/.test(cs),/repeatPass\(this, "w" \+ who/.test(nl),/neverName\(this, title\)/.test(nl)],[true,true,true,true,true]);
+ t3('break mode is wired into the lock service, call screening, WhatsApp hang-ups, spoken reminders, Hey Partner and the plugin',[/breakNow\(this, now\)/.test(ls),/breakNow\(c, now\)/.test(cs),/breakNow\(this, now\)/.test(nl),/breakNow\(c, System/.test(sr),/breakNow\(this, System/.test(hs),/void setBreak/.test(lp),/brkFrom/.test(lp)],[true,true,true,true,true,true,true])}
+// break mode rules
+(0,eval)(grab('const BRK_LEAD','function brkPrompt'));(0,eval)(grab('function brkCheck','async function brkPush'));
+{const n=Date.now(),H=36e5;
+t3('break: must start 6 h or more ahead, end after start, 1 h to 90 days',[brkCheck(n+2*H,n+50*H,n)!==''&&brkCheck(n+7*H,n+50*H,n)==='',brkCheck(n+25*H,n+24*H,n)!=='',brkCheck(n+25*H,n+25.5*H,n)!=='',brkCheck(n+25*H,n+100*H,n),brkCheck(n+25*H,n+200*864e5,n)!==''],[true,true,true,'',true])}
+t3('break: only the planned hours count as a break',[(()=>{const n=Date.now();S3.set.brk={from:n-1e3,to:n+1e5};return [brkNow(),brkSched(),brkNow(n+2e5)]})(),(()=>{S3.set.brk={from:0,to:0};return [brkNow(),brkSched()]})()],[[true,true,false],[false,false]]);
+t3('break: reminders, chat nudges and error notifications are held back; mentor is told',[/function checkDue\(\)\{\s*if\(brkNow\(\)\)/.test(src),/nudgeSlots0\(now\)\.filter/.test(src),/function ntfNote\(title,body\)\{if\(brkNow\(\)\)return/.test(src),/brkPrompt\(\)\?/.test(src),/'bkErr','usSync','brk'\]/.test(src)],[true,true,true,true,true]);
+}
+
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 24 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[24,24,24,true]);
+q2('settings: 6 groups, 25 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[25,25,25,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);

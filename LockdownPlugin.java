@@ -70,6 +70,9 @@ public class LockdownPlugin extends Plugin {
     o.put("nightUntil", p.getLong("nightUntil", 0));
     o.put("nightLastCut", p.getLong("nightLastCut", 0));
     o.put("nightLastBlock", p.getLong("nightLastBlock", 0));
+    o.put("nightLastRepeat", p.getLong("nightLastRepeat", 0));
+    o.put("brkFrom", p.getLong("brkFrom", 0));
+    o.put("brkTo", p.getLong("brkTo", 0));
     call.resolve(o);
   }
 
@@ -88,6 +91,23 @@ public class LockdownPlugin extends Plugin {
       .putString("nightPend", call.getString("pend", ""))
       .putLong("nightPendAt", pa == null ? 0 : pa.longValue())
       .apply();
+    if (LockdownService.inst != null) LockdownService.inst.poke();
+    call.resolve();
+  }
+
+  /**
+   * Break mode. The app has already checked that it was planned in advance. Cancelling or shortening a break is always allowed,
+   * a lockdown or the night window running right now never blocks it (a break only ever starts later, so nothing is cut short).
+   */
+  @PluginMethod
+  public void setBreak(PluginCall call) {
+    Double f = call.getDouble("from"), t = call.getDouble("to");
+    long from = f == null ? 0 : f.longValue(), to = t == null ? 0 : t.longValue();
+    if (from <= 0 || to <= from) {
+      from = 0;
+      to = 0;
+    }
+    sp(getContext()).edit().putLong("brkFrom", from).putLong("brkTo", to).apply();
     if (LockdownService.inst != null) LockdownService.inst.poke();
     call.resolve();
   }
@@ -113,6 +133,10 @@ public class LockdownPlugin extends Plugin {
     Integer m = call.getInt("minutes", 0);
     if (m == null || m < 1 || m > 600) {
       call.reject("Bad length");
+      return;
+    }
+    if (NightRule.breakNow(getContext(), System.currentTimeMillis())) {
+      call.reject("Break mode is on. Nothing locks until it ends.");
       return;
     }
     if (!accOn()) {

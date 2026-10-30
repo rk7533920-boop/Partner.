@@ -3,7 +3,10 @@ package com.partner.diary;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.telephony.PhoneNumberUtils;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -98,12 +101,11 @@ final class NightRule {
     }
   }
 
-  /** A hidden number is never an allowed number. */
-  static boolean allowedNumber(Context c, String num) {
+  private static boolean numberIn(Context c, String list, String num) {
     String d = last10(num);
     if (d.length() < 6) return false;
     JSONObject n = cfg(c);
-    JSONArray a = n == null ? null : n.optJSONArray("allow");
+    JSONArray a = n == null ? null : n.optJSONArray(list);
     if (a == null) return false;
     for (int i = 0; i < a.length(); i++) {
       JSONObject o = a.optJSONObject(i);
@@ -112,13 +114,12 @@ final class NightRule {
     return false;
   }
 
-  /** WhatsApp and other apps show a name, not a number. */
-  static boolean allowedName(Context c, String name) {
+  private static boolean nameIn(Context c, String list, String name) {
     if (name == null) return false;
     String x = name.trim().toLowerCase(Locale.ROOT);
     if (x.length() < 3) return false;
     JSONObject n = cfg(c);
-    JSONArray a = n == null ? null : n.optJSONArray("allow");
+    JSONArray a = n == null ? null : n.optJSONArray(list);
     if (a == null) return false;
     for (int i = 0; i < a.length(); i++) {
       JSONObject o = a.optJSONObject(i);
@@ -127,5 +128,78 @@ final class NightRule {
       if (y.length() >= 3 && (x.equals(y) || x.contains(y) || y.contains(x))) return true;
     }
     return false;
+  }
+
+  /** A hidden number is never an allowed number. */
+  static boolean allowedNumber(Context c, String num) {
+    return numberIn(c, "allow", num);
+  }
+
+  /** WhatsApp and other apps show a name, not a number. */
+  static boolean allowedName(Context c, String name) {
+    return nameIn(c, "allow", name);
+  }
+
+  /** People who stay blocked at night even when they call a second time. */
+  static boolean neverNumber(Context c, String num) {
+    return numberIn(c, "never", num);
+  }
+
+  static boolean neverName(Context c, String name) {
+    return nameIn(c, "never", name);
+  }
+
+  /**
+   * Break mode: the app writes a start and an end (milliseconds) when he has planned a break in advance.
+   * While it runs nothing automatic happens: no lock, no night rule, no call blocking, no spoken or written reminders.
+   */
+  static boolean breakNow(Context c, long now) {
+    SharedPreferences p = sp(c);
+    long f = p.getLong("brkFrom", 0), t = p.getLong("brkTo", 0);
+    return f > 0 && t > f && now >= f && now < t;
+  }
+
+  /**
+   * Repeat callers, like Samsung Do Not Disturb: somebody who was stopped by the night rule and calls again within the set
+   * minutes (default 15) gets through, and keeps getting through while he keeps calling. The key is the last 10 digits of
+   * the number or the name shown on a WhatsApp call. Returns true when this call must ring. A call from somebody on the
+   * never list, and a call with no usable number or name, is never let through. The first call of a pair is written down here.
+   */
+  static synchronized boolean repeatPass(Context c, String key, long now) {
+    if (key == null || key.length() < 3) return false;
+    JSONObject n = cfg(c);
+    if (n == null || !n.optBoolean("rep", true)) return false;
+    long win = Math.max(1, Math.min(60, n.optInt("repMin", 15))) * 60000L;
+    SharedPreferences p = sp(c);
+    JSONObject r;
+    try {
+      r = new JSONObject(p.getString("nightRep", "{}"));
+    } catch (Exception e) {
+      r = new JSONObject();
+    }
+    boolean pass = false;
+    try {
+      long ps = r.optLong(key + "#p", 0), bl = r.optLong(key, 0);
+      if (ps > 0 && now - ps <= win) {
+        pass = true;
+        r.put(key + "#p", now);
+      } else if (bl > 0 && now - bl <= win) {
+        pass = true;
+        r.put(key + "#p", now);
+      } else {
+        r.put(key, now);
+      }
+      List<String> old = new ArrayList<>();
+      Iterator<String> it = r.keys();
+      while (it.hasNext()) {
+        String k = it.next();
+        if (now - r.optLong(k, 0) > 86400000L) old.add(k);
+      }
+      for (String k : old) r.remove(k);
+      p.edit().putString("nightRep", r.toString()).apply();
+    } catch (Exception e) {
+      return false;
+    }
+    return pass;
   }
 }

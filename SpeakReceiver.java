@@ -8,10 +8,14 @@ import android.os.Build;
 public class SpeakReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
-        Intent s = new Intent(c, SpeakService.class);
-        if (i.getExtras() != null) s.putExtras(i.getExtras());
-        if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(s);
-        else c.startService(s);
+        // a planned break: spoken reminders stay silent (a timer he started himself still rings)
+        boolean quiet = NightRule.breakNow(c, System.currentTimeMillis()) && !i.getBooleanExtra("ring", false);
+        if (!quiet) {
+            Intent s = new Intent(c, SpeakService.class);
+            if (i.getExtras() != null) s.putExtras(i.getExtras());
+            if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(s);
+            else c.startService(s);
+        }
 
         // daily review: set tomorrow's alarm so it keeps coming even if the app is never opened
         if (i.getBooleanExtra("repeat", false)) {

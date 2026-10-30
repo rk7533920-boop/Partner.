@@ -171,7 +171,15 @@ const dbGet=k=>new Promise((ok,no)=>{const q=db.transaction('kv').objectStore('k
 const dbPut=(k,v)=>new Promise((ok,no)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=ok;t.onerror=t.onabort=()=>no(t.error)});
 let WLAST='',WT=0;const NF={};
 function logErr(w,m){try{S.errs.push({ts:Date.now(),w:String(w||'').slice(0,40),m:String(m||'').slice(0,300)});if(S.errs.length>100)S.errs=S.errs.slice(-100);put('errs')}catch(e){}}
-function ntfNote(title,body){const LN=NP&&NP.LocalNotifications;if(!LN)return;try{LN.schedule({notifications:[{id:9000+Math.floor(Math.random()*900),title:String(title).slice(0,60),body:String(body).slice(0,240),schedule:{at:new Date(Date.now()+800)}}]}).catch(()=>{})}catch(e){}}
+/* ---- Break mode: planned in advance (S.set.brk = {from,to}); while it runs nothing automatic happens ---- */
+const BRK_LEAD=6*36e5;
+const brk=()=>{const b=S.set&&S.set.brk;return b&&b.from>0&&b.to>b.from?b:null};
+const brkNow=t=>{const b=brk(),n=t||Date.now();return !!b&&n>=b.from&&n<b.to};
+const brkSched=()=>{const b=brk();return !!b&&Date.now()<b.to};
+const brkFmt=ts=>new Date(ts).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+const brkSum=()=>{const b=brk();if(!b||Date.now()>=b.to)return 'Off';return brkNow()?'On until '+brkFmt(b.to):'Planned: '+brkFmt(b.from)+' to '+brkFmt(b.to)};
+function brkPrompt(){const b=brk();if(!b||Date.now()>=b.to)return '';return brkNow()?'BREAK MODE: he planned this break himself and it runs until '+brkFmt(b.to)+'. Do not remind, nudge or push him about logging, targets, routines, habits, lockdown or the night rule, and never call missing time wasted or unlogged days a failure. Stay light. Log only what he tells you.':'He has planned a break from '+brkFmt(b.from)+' to '+brkFmt(b.to)+' (everything automatic is switched off then). Mention it only if he asks.'}
+function ntfNote(title,body){if(brkNow())return;const LN=NP&&NP.LocalNotifications;if(!LN)return;try{LN.schedule({notifications:[{id:9000+Math.floor(Math.random()*900),title:String(title).slice(0,60),body:String(body).slice(0,240),schedule:{at:new Date(Date.now()+800)}}]}).catch(()=>{})}catch(e){}}
 function ntfFail(w,m){const k=w||'x',n=Date.now();if(NF[k]&&n-NF[k]<6e4)return;NF[k]=n;ntfNote('Partner problem'+(w?': '+w:''),m)}
 let INF=false;
 function fail(m,o){if(INF)return;INF=true;try{o=o||{};const msg=String(m||'Something went wrong.');if(!o.nolog)logErr(o.where,msg);const n=Date.now();
@@ -205,7 +213,7 @@ async function boot(){
   if(!QK&&!S.entries.length&&!S.chat.length)await migrate();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
  catch(e){warn('Could not open storage. Data will be lost after this session. ('+((e&&e.message)||e)+')')}
  if(QK){render();startC();return}
- ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();
+ ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();brkPush();
  if(!NP&&'serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
@@ -491,7 +499,7 @@ ${mem}${n}
 Food databank (use these exact names):
 ${foodText()}
 Existing tags: ${S.tags.map(t=>t.n).join(', ')}.${S.tl.length?' His own tag corrections (follow these patterns): '+S.tl.slice(-12).map(z=>'"'+z.t+'" = '+z.g).join('; ')+'.':''}
-${S.set.idNow?'Who he is now: '+S.set.idNow.slice(0,300)+'. ':''}${S.set.idWant?'Who he wants to become: '+S.set.idWant.slice(0,300)+'. ':''}${idPrompt()}${cnPrompt()}`,C=`Right now:
+${S.set.idNow?'Who he is now: '+S.set.idNow.slice(0,300)+'. ':''}${S.set.idWant?'Who he wants to become: '+S.set.idWant.slice(0,300)+'. ':''}${idListPrompt()}${idPrompt()}${cnPrompt()}`,C=`Right now:
 Now: ${new Date().toString().slice(0,24)} (${partOfDay()}).
 His day started when he woke up at ${t12(st)} (days run wake to wake, not midnight). ${slp}${us}Eaten so far: ${eat} kcal, ${eatP} g protein.
 Diary of yesterday and today (entries marked (yesterday) belong to the day before; fix or remove any of them by their number):
@@ -503,7 +511,7 @@ ${CALTXT||'(not available)'}
 ${rv?(RVD?'THIS REVIEW IS FOR AN EARLIER DAY, '+new Date(RVD.a).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+'. He is doing it late (he slept early or forgot). Review that day only, say which day it is, and do not judge today.\nFull diary of that day (every entry, phone and YPT usage, sleep):\n'+diaryText(RVD.a-1,RVD.b)+'\n':'Full diary of today for the review (every entry, phone and YPT usage, sleep):\n'+diaryText(st-1)+'\n'):''}Current date (his day starts when he wakes): ${tk}, ${wd}. Open targets (refer by T number):
 ${tl}
 Targets done today: ${td}
-Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}
+Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}
 ${S.routines.length?'Routines (refer by RT number; a routine marked RUNNING is happening now):\n'+rtText()+'\n':''}${(TMREF=S.timers.filter(t=>t.end>Date.now()),TMREF.length)?'Timers running (refer by TM number): '+TMREF.map((t,i)=>'TM'+(i+1)+' '+t.text+' (ends '+t12(t.end)+')').join('; ')+'\n':''}His usual durations (reference only): ${usual()||'(not enough data)'}
 ${(HREF=S.habits.slice(0,30),HREF.length)?'Habits he is building (refer by H number; each one done is a vote for his identity):\n'+HREF.map((h,i)=>'H'+(i+1)+' '+h.name+' | cue: '+(whenText(h)||'none')+(h.step?' | smallest step: '+h.step:'')+(h.mins?' | '+h.mins+' min':'')+(h.where?' | where: '+h.where:'')+(h.reward?' | reward: '+h.reward:'')+' | '+(hl(h.id,tk)>1?'done today':hl(h.id,tk)===1?'tiny step today':'not yet today')).join('\n')+'\n':''}
 Gym status:${lastWt()?' Last weigh-in: '+lastWt().kg+' kg ('+ago(lastWt().ts)+').':' He has not logged his weight yet.'}${S.set.goalWt?' Goal weight: '+S.set.goalWt+' kg.':''} Gym goal: ${S.set.gymDays||4} days a week. If the last weigh-in is over 7 days old, remind him once to weigh in.${S.gym.length?'\nGym history per exercise:\n'+exPrompt():''}${QK?'\nThe phone is locked, so it may not be him. Log only what he says now and answer in one short sentence. Never reveal, summarise or read out anything stored or from earlier, such as memory, diary, targets, goals, reviews or screen time. If asked, tell him to open the full app.':''}`;
@@ -592,8 +600,8 @@ const TL=[
  mkT('delete_entry','Remove a wrong diary entry by its number. Only when he says it was wrong or asks to delete it.',{n:iT},['n']),
  mkT('stop_timer','Stop a running countdown timer by its TM number. The activity itself stays open.',{ref:iT},['ref']),
  mkT('add_habit','Add a new habit he asks for. cue = what it follows (after I wake up, after brushing teeth). step = its smallest version.',{name:sT,cue:sT,step:sT,mins:nT,identity:sT},['name']),
- mkT('log_spend','He tells you about money he spent that the phone did not catch (cash, or a payment you were not told about), for example chai pe 20 kharche. Not for payments already listed with an S number.',{amt:nT,to:sT,cat:{type:'string',enum:SPC.map(x=>x[0])}},['amt']),
- mkT('tag_spend','He tells you where an unsorted payment went. n is the S number from the list.',{n:iT,cat:{type:'string',enum:SPC.map(x=>x[0])}},['n','cat']),
+ mkT('log_spend','He tells you about money he spent that the phone did not catch (cash, or a payment you were not told about), for example chai pe 20 kharche. Not for payments already listed with an S number. cat is one of his spending tags (listed under Right now); note only if he gave a short note.',{amt:nT,to:sT,cat:{type:'string'},note:{type:'string'},newtag:{type:'boolean',description:'true only when he asked for a tag that does not exist yet'}},['amt']),
+ mkT('tag_spend','He tells you where an unsorted payment went. n is the S number from the list. cat is one of his spending tags (listed under Right now). Once he tags a person or shop the app remembers it and never asks about that person or shop again.',{n:iT,cat:{type:'string'},note:{type:'string',description:'a short note, only if he gave one'},newtag:{type:'boolean',description:'true only when he asked for a tag that does not exist yet'}},['n','cat']),
  mkT('banking_mode','He needs to use a bank or payment app (Paytm, YONO, a UPI app). Pauses Partner\'s accessibility service for a few minutes so those apps work; it turns back on by itself. Refused during a lockdown.',{minutes:{type:'number',description:'1 to 60, default 15'}},[]),
  mkT('end_banking_mode','Turn the accessibility service back on now, he is done with the bank app.',{},[]),
  mkT('add_food','Save a food in the Food databank with its macros per 100 g, per 100 ml or per 1 piece. Only for a food that is not in the list yet, or to correct one (update true). from_him true when the numbers come from him or from a label he read out. units = how many g (or ml) one unit weighs, for example pc 50, tbsp 21.',{name:sT,per:{type:'string',enum:['100 g','100 ml','1 piece']},kcal:nT,protein:nT,carbs:nT,fat:nT,units:{type:'array',items:{type:'object',properties:{unit:sT,amount:nT},required:['unit','amount']}},aliases:{type:'array',items:sT},from_him:{type:'boolean'},update:{type:'boolean'}},['name','per','kcal','protein','carbs','fat'])];
@@ -753,7 +761,8 @@ function nudgeInfo(cv,at){const ub=usageIn(cv,Math.min(at,Date.now())),sm=usageS
   body='Nothing logged since '+t12(cv)+'. Phone: '+dur(om.t)+(om.top.length?' ('+om.top.map(a=>a[0]+' '+dur(a[1])).join(', ')+')':'')+', study timer: '+dur(sm)+'. '+(waste?'That time went on the phone. Put it down and start studying now.':sm>=20?'Good, now log what you did.':'What have you been up to?');
   text=waste?'यह समय फोन में गया। फोन रखो और अभी पढ़ाई शुरू करो।':sm>=20?'अच्छा, अब बताओ क्या किया।':text}
  return{body,text}}
-function nudgeSlots(now){
+function nudgeSlots(now){return nudgeSlots0(now).filter(z=>!brkNow(z.at))}
+function nudgeSlots0(now){
  if(S.set.idle===false)return[];
  const gap=Math.max(30,Math.min(+S.set.idleMin||120,360))*6e4,op=S.sleep.find(x=>!x.end);
  if(op&&op.start&&now-op.start<14*36e5)return[];
@@ -770,6 +779,7 @@ function nudgeSlots(now){
  return out}
 /* ---------- reminders ---------- */
 function checkDue(){
+ if(brkNow()){const n=Date.now();let ch=false;S.fu.forEach(f=>{if(!f.done&&f.at<=n){f.done=true;ch=true}});if(ch)put('fu');return}
  if(!S.set.notif||muted())return;let ch=false,fr=0,fq=0;const n=Date.now(),say=[];
  S.fu.forEach(f=>{if(!f.done&&f.at<=n){f.done=true;S.chat.push({id:'d'+f.id,role:'assistant',c:f.q,ts:n});ch=true;if(f.at>n-6e5){say.push(f.sp||f.q);fq=1;if(f.at>n-2e4)fr=1}}});
  nudgeSlots(n).forEach(z=>{if(z.at<=n&&z.at>n-6e5&&S.set.idleSent!==z.at){S.set.idleSent=z.at;S.chat.push({id:'n'+z.at,role:'assistant',c:z.body,ts:n});put('set');ch=true;say.push(z.text)}});
@@ -788,7 +798,7 @@ function hwBlock(s){
  let msg='Say "Hey Partner" with the phone locked or on the table, and Partner opens and starts listening. The wake word is checked on the phone, no audio is sent anywhere.';
  if(s.hotword){
   if(st.model===false)msg='This build has no wake-word model. Run Build APK again.';
-  else if(st.running)msg=st.state==='paused'?'On. Waiting while Partner is open, it listens again when you leave.':'On. Listening for "Hey Partner".'+(st.models===1?' Only the US English voice model is loaded. The Indian English one is missing from this build, so accents are harder.':'');
+  else if(st.running)msg=st.state==='break'?'On, but resting during your break. It listens again when the break ends.':st.state==='paused'?'On. Waiting while Partner is open, it listens again when you leave.':'On. Listening for "Hey Partner".'+(st.models===1?' Only the US English voice model is loaded. The Indian English one is missing from this build, so accents are harder.':'');
   else msg='Not running'+(st.error?': '+st.error:'. Open Partner once and it starts again.');
   if(st.heard)msg+=' Last heard: '+st.heard+'.'}
  const r=(a,t,d,v)=>`<button class="r" data-a="${a}"><span><b>${t}</b><small>${esc(d)}</small></span><i>${v}</i></button>`;
@@ -877,24 +887,25 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Da
 /* ---------- views ---------- */
 const greet=()=>{const h=new Date().getHours();return h<5?'It is very late.':h<12?'Good morning.':h<17?'Good afternoon.':h<22?'Good evening.':'Good night.'};
 const row=(a,b,v)=>`<button class="r" data-a="go" data-v="${v}"><span><b>${a}</b><small>${esc(b)}</small></span><i>›</i></button>`;
-const SUB={'s-us':'Screen time','s-night':'Night call rule','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
+const SUB={'s-us':'Screen time','s-night':'Night call rule','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
 /* ---- Settings home: 6 groups, search, "needs you" (redesign approved 2026-10-29) ---- */
 const GRPS={'g-mentor':{t:'Mentor',d:'How Partner talks and listens.',k:['tone','voice','mtog','mem','key']},
  'g-health':{t:'Health and food',d:'Targets, workouts and your food list.',k:['goals','wplan','food','mtxt']},
  'g-daily':{t:'Daily plan',d:'Your routines and your ideal day.',k:['rt','ideal','cont','aud']},
- 'g-self':{t:'Self-control',d:'Tools that keep you on track.',k:['lock','night','nz','us']},
+ 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['lock','night','nz','us','brk']},
  'g-phone':{t:'Phone',d:'What Partner may do on this phone.',k:['perm','notif','acc']},
  'g-data':{t:'Data and app',d:'Backups, reports and app behaviour.',k:['bak','ana','err','swtog']}};
-const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-night':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
+const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-night':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
 const RET={};let SQ='',HLG=false,WXALL=false,BKO='';
 const foodSum=()=>S.foods.length+(S.foods.length===1?' food':' foods')+(S.foods.some(f=>f.nw)?'  ·  '+S.foods.filter(f=>f.nw).length+' to check':'');
 const voiceSum=()=>natP()==='gg'?'Google voice':natP()==='el'?'ElevenLabs voice':natP()==='of'?'Offline voice':'Phone voice';
 const gSum={'g-mentor':()=>({gentle:'Gentle',strict:'Strict',brutal:'Brutally honest'}[S.set.tone]||'')+'  ·  '+voiceSum(),'g-health':()=>wpSum(),'g-daily':()=>idSum(),
- 'g-self':()=>LK?(lkd().on?'Lockdown on  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Lockdown off'):'APK only',
+ 'g-self':()=>brkSched()?(brkNow()?'Break mode on':'Break planned'):LK?(lkd().on?'Lockdown on  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Lockdown off'):'APK only',
  'g-phone':()=>PH?(paS().alarm?'Alarms on':'Alarms off')+'  ·  '+(paS().cal?'Calendar on':'Calendar off'):'APK only','g-data':()=>bkSum()};
 /* each entry: [title, search words, page it opens (null = a switch), html of the row] */
 function SETR(k){const s=S.set;return({
- night:['Night call rule','night call phone locked calls bedtime sleep','s-night',()=>row('Night call rule',ntSum(),'s-night')],
+ night:['Night call rule','night call phone locked calls bedtime sleep repeat callers','s-night',()=>row('Night call rule',ntSum(),'s-night')],
+ brk:['Break mode','break mode pause stop switch off app busy holiday vacation travel exam away schedule','s-brk',()=>row('Break mode',brkSum(),'s-brk')],
  perm:['Permissions','permissions allow access microphone calendar usage lockdown notifications','s-setup',()=>row('Permissions',NP?'Notifications, mic, calendar, usage, lockdown':'APK only','s-setup')],
  mem:['Memory','memory notes about me remembers','s-mem',()=>row('Memory',S.mem.length+' notes'+(newMem()?'  ·  '+newMem()+' new from AI':''),'s-mem')],
  food:['Food databank','food databank calories nutrition macros foods','s-food',()=>row('Food databank',foodSum(),'s-food')],
@@ -948,11 +959,12 @@ function dayView(){
  const tot=segsFor(st,en,es,ub,i===ds.length-1),slt=Math.round(tot.Sleep||0);
  const lab=new Date(st).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});window.VDR=[st,en];
  return `<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1 class="h">${vd?new Date(st).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'Today'}</h1><small style="font-size:14px">${lab}</small></div><div style="display:flex;gap:8px"><button class="ic" data-a="pday" data-v="1" ${i?'':'disabled style="opacity:.3"'} aria-label="Previous day">‹</button><button class="ic" data-a="pday" data-v="-1" ${vd?'':'disabled style="opacity:.3"'} aria-label="Next day">›</button></div></div>
+${brkSched()?`<div class="card"><div><p class="lab" style="margin:0 0 4px">Break mode</p>${esc(brkSum())}</div><button class="pill" data-a="go" data-v="s-brk">Open</button></div>`:''}
 <div class="tiles"><div class="tile"><b>${mN?(mK?cal+(mK<mN?'+':''):'?'):'—'}</b><small>${!mN?'no meals logged':!mK?'nutrition not logged':'of '+s.cal+' kcal<br>'+Math.round(p)+' g protein'+(mK<mN?'<br>'+(mN-mK)+' meal'+(mN-mK>1?'s':'')+' without data':'')}</small></div><div class="tile"><b>${study?dur(study):hasU?'0m':'—'}</b><small>${study||hasU?'study':'study not logged'}</small></div><div class="tile"><b>${slt?dur(slt):'—'}</b><small>${slt?'slept':'sleep not logged'}</small></div></div>
 <p class="lab">Where your day went</p>${en-st>3e5?`<div class="bar">${Object.entries(tot).filter(([k,m])=>m>0).sort((a,b)=>b[1]-a[1]).map(([k,m])=>`<i style="flex:${m} 1 0;background:${TC(k)}" title="${esc(k)}"></i>`).join('')}</div><div class="lg">${Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([k,m])=>`<span><i style="background:${TC(k)}"></i>${esc(k)} ${dur(Math.round(m))}</span>`).join('')}</div>${tot.Unlogged>0?'<small style="display:block;margin-top:8px">Grey is time with nothing logged. It is unknown, not zero.</small>':''}`:'<p class="g">The day has just started.</p>'}
 ${hasU?(()=>{const q=usageSum(ub,8);return `<button class="r" data-a="stog" style="min-height:52px;margin-top:8px"><span>Screen time</span><span class="g">${dur(q.t)}  <i style="display:inline-block;font-style:normal;transform:rotate(${stOpen?90:0}deg)">›</i></span></button>`+(stOpen?q.top.map(([a,m])=>`<div class="sw" style="min-height:38px"><span>${esc(a)}</span><small>${dur(m)}</small></div>`).join(''):'')})():''}
 
-${vd?'':runBlock()}${tasksBlock(dayK(st))}<div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px"><p class="lab" style="margin:0">Diary</p><span style="display:flex;gap:8px"><button class="pill" data-a="eadd" data-v="e">+ Activity</button><button class="pill" data-a="eadd" data-v="s">+ Sleep</button></span></div>${it.length?diaryRows(it,st,en):'<p class="g">Nothing logged yet.</p>'}${revCard(st,en,i,ds)}`}
+${vd?'':runBlock()}${tasksBlock(dayK(st))}<div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px"><p class="lab" style="margin:0">Diary</p><span style="display:flex;gap:8px"><button class="pill" data-a="eadd" data-v="e">+ Activity</button><button class="pill" data-a="eadd" data-v="s">+ Sleep</button></span></div>${it.length?diaryRows(it,st,en):'<p class="g">Nothing logged yet.</p>'}${brkNow()&&i===ds.length-1?'':revCard(st,en,i,ds)}`}
 function diaryRows(it,st,en){const G=3e5,PPM=(S.set.cmpx||63)/60,MIN=20,out=[],tail=Math.min(en,Date.now()),cap=(d,h)=>Math.max(5,Math.min(h,d*PPM)-3);let cur=st;
  /* PPM: Android WebView css px are 1/160 inch, so 63 px = 1 cm; 60 min = 1 cm */
  it.forEach(e=>{const f=e.t+(e.d||0)*6e4,nw=Date.now(),bb=Math.min(e.t,nw);if(bb-cur>G)out.push({g:1,a:cur,b:bb});e.m=e.d>0?Math.max(0,(f-Math.max(e.t,cur))/6e4):0;out.push(e);if(f>cur&&!e.pl)cur=f});
@@ -1159,13 +1171,17 @@ ${n}
 - "nutrition not logged" on a meal means calories are unknown, not zero. "no meals logged" in a day header means unknown, not that I fasted.
 - The MESSAGES section at the end is everything I said to Partner (me) and its replies (P) in this period. Use it for context, mood and the reasons I gave.
 - Tags are the activity categories I chose (Study, Work, Food, Sleep and so on).
+- The SPENDING section lists my payments (money out only): day, time, amount in rupees, who or what, [my tag] and my own note. [Unsorted] means I have not tagged it yet: unknown, not bad. If a day has no payments, nothing was recorded, which is not proof that I spent nothing.
 
 # What I want from you
-1) Sleep, wake-up time and morning pattern. 2) Calories and protein versus target. 3) Study, work and gym time, and the real reasons behind skipped tasks. 4) My habits and how I am moving toward the identity I want. 5) The 3 clearest patterns, each with evidence from the data. 6) What went wrong, without blame. 7) ONE or TWO concrete changes for tomorrow. 8) One honest closing sentence.
+1) Sleep, wake-up time and morning pattern. 2) Calories and protein versus target, and where my money went (SPENDING section, if it has data). 3) Study, work and gym time, and the real reasons behind skipped tasks. 4) My habits and how I am moving toward the identity I want. 5) The 3 clearest patterns, each with evidence from the data. 6) What went wrong, without blame. 7) ONE or TWO concrete changes for tomorrow. 8) One honest closing sentence.
 Finish with a summary of at most 120 words between ===SAVE=== and ===END=== so I can paste it back into my app.
 
 # DIARY (${d===1?'today':'last '+d+' days'})
 ${data}
+
+# SPENDING (${d===1?'today':'last '+d+' days'})
+${spAll().length?spBlock(cut+1,(rg&&rg.b)?rg.b:Infinity,d===1?'this day':'this period'):'(spending is not tracked yet)'}
 
 # MESSAGES (${d===1?'today':'last '+d+' days'}, every message, me = my words, P = Partner)
 ${msgText(cut)}`}
@@ -1908,7 +1924,7 @@ function tfTick(){if(!TF)return;const t=S.timers.find(x=>x.id===TF);if(!t){TF=''
 function tfRelease(){try{TFW&&TFW.release()}catch(e){}TFW=null}
 A.tfull=id=>{TF=id;tfDraw()};A.tclose=()=>{TF='';tfRelease();$('#ring').innerHTML=''};
 A.tdone=id=>{const t=S.timers.find(x=>x.id===id);TF='';tfRelease();$('#ring').innerHTML='';if(!t)return;if(t.oid&&S.open.some(o=>o.id===t.oid))openDone(t.oid);else{S.timers=S.timers.filter(x=>x.id!==id);put('timers');syncN();render()}};
-function newMain2(){switch(V){case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();default:return null}}
+function newMain2(){switch(V){case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-brk':return breakView();default:return null}}
 
 /* ---------- failures, timers, backup, goals, navigation ---------- */
 const trimChat=()=>{const c=Date.now()-60*864e5;S.chat=S.chat.filter(m=>m.ts>c);if(S.chat.length>4000)S.chat=S.chat.slice(-4000)};
@@ -1957,7 +1973,7 @@ function mergeBackup(j,c){const by=(k,key)=>{const have=new Set(S[k].map(key));l
  Object.entries(j.hlog||{}).forEach(([id,m])=>{S.hlog[id]={...m,...(S.hlog[id]||{})}});Object.entries(j.rrun||{}).forEach(([k,m])=>{S.rrun[k]={...m,...(S.rrun[k]||{})}});
  if(j.ana&&(!S.ana||j.ana.ts>S.ana.ts))S.ana=j.ana;
  S.usage.sort((a,b)=>a.s-b.s);S.chat.sort((a,b)=>a.ts-b.ts);
- if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
+ if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync','brk'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
   if(cur.lk)ns.lk=cur.lk;['key','evKey','ggKey'].forEach(k=>{ns[k]=j.set[k]||cur[k]||''});S.set=ns}
  return c}
 async function importFiles(list){let ok=0;const bad=[],parsed=[],c={};
@@ -2019,11 +2035,39 @@ const dayScore=(cal,pro,rc,rp)=>{const a=[];if(cal>0&&rc>0)a.push(Math.min(100,c
 
 /* ---- Identity: many habits can sit under one identity, each habit votes for it ---- */
 const idKey=t=>norm(String(t||'').replace(/^i am someone who\s+/i,''));
-const idGroups=()=>{const m=new Map();S.habits.forEach(h=>{const t=String(h.ident||'').trim();if(!t)return;const k=idKey(t);if(!k)return;if(!m.has(k))m.set(k,{k,text:t,hs:[]});m.get(k).hs.push(h)});return [...m.values()].map(g=>({...g,v:g.hs.reduce((a,h)=>a+votes(h.id),0)})).sort((a,b)=>b.v-a.v)};
+const idDecl=()=>{if(!Array.isArray(S.set.idl))S.set.idl=[];return S.set.idl};
+const idClean=t=>String(t||'').replace(/^\s*i am someone who\s+/i,'').replace(/\s+/g,' ').trim().replace(/\.+$/,'').slice(0,80);
+const idGroups=()=>{const m=new Map();S.habits.forEach(h=>{const t=String(h.ident||'').trim();if(!t)return;const k=idKey(t);if(!k)return;if(!m.has(k))m.set(k,{k,text:t,hs:[]});m.get(k).hs.push(h)});idDecl().forEach(t=>{const k=idKey(t);if(k&&!m.has(k))m.set(k,{k,text:t,hs:[]})});return [...m.values()].map(g=>({...g,v:g.hs.reduce((a,h)=>a+votes(h.id),0)})).sort((a,b)=>b.v-a.v)};
 const idChoices=()=>idGroups().map(g=>g.text);
-function idVotesView(){const G=idGroups(),none=S.habits.filter(h=>!String(h.ident||'').trim());if(!G.length&&!none.length)return '';
- return '<p class="lab">Votes cast</p>'+G.map(g=>`<div class="card" style="display:block"><div class="sw" style="min-height:40px"><span style="min-width:0"><b style="font-weight:600">I am someone who ${esc(g.text)}</b></span><b style="font-weight:600">${g.v}</b></div>${g.hs.map(h=>`<div class="sw" style="min-height:36px"><span style="min-width:0;color:var(--mu);font-size:14px">${esc(h.name)}</span><b style="font-weight:400;color:${h.c}">${votes(h.id)}</b></div>`).join('')}</div>`).join('')
- +(none.length?`<div class="card" style="display:block"><div class="sw" style="min-height:40px"><span style="color:var(--mu)">No identity yet</span></div>${none.map(h=>`<div class="sw" style="min-height:36px"><span style="min-width:0;color:var(--mu);font-size:14px">${esc(h.name)}</span><b style="font-weight:400;color:${h.c}">${votes(h.id)}</b></div>`).join('')}<small style="display:block;margin-top:6px">Open a habit and pick or write who it makes you.</small></div>`:'')}
+/* ---- Identity: add, edit, delete, combine ---- */
+let IDS={ed:'',sel:null,del:''};
+function idRename(k,t){S.habits.forEach(h=>{if(idKey(h.ident)===k)h.ident=t});S.set.idl=idDecl().map(x=>idKey(x)===k?t:x).filter((x,i,a)=>a.findIndex(y=>idKey(y)===idKey(x))===i);put('habits');put('set')}
+function idRemove(k){let n=0;S.habits.forEach(h=>{if(idKey(h.ident)===k){h.ident='';n++}});S.set.idl=idDecl().filter(x=>idKey(x)!==k);put('habits');put('set');return n}
+/* combine two or more identities into one: every habit under any of them moves to the new text, their votes add up */
+function idMerge(keys,text){const t=idClean(text),ks=new Set(keys);if(!t||ks.size<2)return 0;let n=0;S.habits.forEach(h=>{if(ks.has(idKey(h.ident))){h.ident=t;n++}});S.set.idl=idDecl().filter(x=>!ks.has(idKey(x)));
+ if(!S.habits.some(h=>idKey(h.ident)===idKey(t))&&!S.set.idl.some(x=>idKey(x)===idKey(t)))S.set.idl.push(t);put('habits');put('set');return n}
+function idListPrompt(){const G=idGroups();return G.length?'Identities he is building (each habit done is a vote): '+G.map(g=>g.text+' ('+g.v+(g.v===1?' vote':' votes')+(g.hs.length?'':', no habit yet')+')').join('; ')+'. ':''}
+function idVotesView(){const G=idGroups(),none=S.habits.filter(h=>!String(h.ident||'').trim()),cb=IDS.sel!==null,sel=cb?IDS.sel:[];
+ const addBox=`<p class="lab">Add an identity</p><div style="display:flex;gap:8px"><input class="f" id="idnew" maxlength="80" placeholder="I am someone who... e.g. takes care of his body" style="flex:1;margin:0"><button class="mn" data-a="idadd">Add</button></div>`;
+ const topBar=G.length>1?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px"><p class="lab" style="margin:0">Identities</p><button class="pill" data-a="idcomb">${cb?'Cancel':'Combine'}</button></div>`:`<p class="lab">Identities</p>`;
+ const mergeBox=cb?(sel.length>=2?`<div class="card" style="display:block"><small style="display:block;margin-bottom:6px">Name for the combined identity</small><input class="f" id="idcn" maxlength="80" value="${esc((G.find(g=>g.k===sel[0])||{text:''}).text)}" style="margin:0 0 10px"><button class="pb" style="margin:0" data-a="idmerge">Combine ${sel.length} identities</button></div>`:`<small style="display:block;margin:8px 0">Tap two or more identities to combine them. Their habits and votes become one.</small>`):'';
+ const card=g=>{const editing=IDS.ed===g.k&&!cb,picked=sel.includes(g.k);
+  const head=editing?`<div style="display:flex;gap:8px;margin-bottom:8px"><input class="f" id="idedit" maxlength="80" value="${esc(g.text)}" style="flex:1;margin:0"><button class="mn" data-a="idsave" data-v="${g.k}">Save</button></div>`
+   :`<${cb?'button':'div'} class="sw" style="min-height:40px;${cb?'width:100%;background:none;border:0;text-align:left;color:var(--tx);font:inherit;':''}" ${cb?`data-a="idsel" data-v="${g.k}"`:''}><span style="min-width:0"><b style="font-weight:600">I am someone who ${esc(g.text)}</b></span><b style="font-weight:600">${cb?(picked?'\u2713':'\u25cb'):g.v}</b></${cb?'button':'div'}>`;
+  const habs=g.hs.length?g.hs.map(h=>`<div class="sw" style="min-height:36px"><span style="min-width:0;color:var(--mu);font-size:14px">${esc(h.name)}</span><b style="font-weight:400;color:${h.c}">${votes(h.id)}</b></div>`).join(''):'<small style="display:block;margin:2px 0 6px">No habit yet. Open a habit and pick this identity for it.</small>';
+  const acts=cb?'':`<div class="two" style="margin-top:8px"><button class="pb" style="background:var(--s2);color:var(--tx);margin:0" data-a="ided" data-v="${g.k}">${editing?'Cancel':'Edit'}</button><button class="pb dl" style="margin:0" data-a="iddel" data-v="${g.k}">${IDS.del===g.k?'Tap again to delete':'Delete'}</button></div>${IDS.del===g.k?`<small style="display:block;margin-top:6px">${g.hs.length?g.hs.length+(g.hs.length===1?' habit keeps':' habits keep')+' its votes but will have no identity.':'This identity has no habits.'}</small>`:''}`;
+  return `<div class="card" style="display:block;${picked?'outline:2px solid var(--ac,#0a84ff)':''}">${head}${habs}${acts}</div>`};
+ return addBox+topBar+mergeBox+(G.length?G.map(card).join(''):'<p class="g" style="margin:10px 0">No identity yet. Add one above, or pick one when you make a habit.</p>')
+ +(none.length&&!cb?`<div class="card" style="display:block"><div class="sw" style="min-height:40px"><span style="color:var(--mu)">No identity yet</span></div>${none.map(h=>`<div class="sw" style="min-height:36px"><span style="min-width:0;color:var(--mu);font-size:14px">${esc(h.name)}</span><b style="font-weight:400;color:${h.c}">${votes(h.id)}</b></div>`).join('')}<small style="display:block;margin-top:6px">Open a habit and pick or write who it makes you.</small></div>`:'')}
+Object.assign(A,{
+ idadd:()=>{const t=idClean(($('#idnew')||{}).value);if(!t){toast('Write who you want to be.');return}if(idGroups().some(g=>g.k===idKey(t))){toast('That identity is already there.');return}idDecl().push(t);put('set');render()},
+ ided:k=>{IDS.ed=IDS.ed===k?'':k;IDS.del='';render()},
+ idsave:k=>{const t=idClean(($('#idedit')||{}).value);if(!t){toast('Write who you want to be.');return}const nk=idKey(t),dup=nk!==k&&idGroups().some(g=>g.k===nk);idRename(k,t);IDS.ed='';render();if(dup)toast('It matched another identity, so they are combined now.')},
+ iddel:k=>{if(IDS.del!==k){IDS.del=k;render();return}const n=idRemove(k);IDS.del='';IDS.ed='';render();toast('Identity deleted'+(n?'. '+n+(n===1?' habit has':' habits have')+' no identity now.':'.'))},
+ idcomb:()=>{IDS.sel=IDS.sel===null?[]:null;IDS.ed='';IDS.del='';render()},
+ idsel:k=>{if(IDS.sel===null)return;const i=IDS.sel.indexOf(k);if(i>=0)IDS.sel.splice(i,1);else IDS.sel.push(k);render()},
+ idmerge:()=>{const t=idClean(($('#idcn')||{}).value);if(!t){toast('Write a name for it.');return}const ks=(IDS.sel||[]).slice();if(ks.length<2)return;const n=idMerge(ks,t);IDS.sel=null;render();toast('Combined into one identity'+(n?' ('+n+(n===1?' habit':' habits')+').':'.'))}
+});
 function idChips(f){const ch=idChoices();return ch.length?`<small style="display:block;margin:0 0 6px">Pick an identity you already use, or write a new one. Habits with the same identity vote together.</small><div class="tgs" style="margin-bottom:10px">${ch.map((t,i)=>`<button class="chip${idKey(f.ident)===idKey(t)?' on':''}" style="flex:none;padding:0 14px" data-a="hident" data-v="${i}">${esc(t.length>34?t.slice(0,32)+'\u2026':t)}</button>`).join('')}</div>`:''}
 A.hident=i=>{hSync();const t=idChoices()[+i];if(t!=null)HS.f.ident=t;drawHabit()};
 
@@ -2078,10 +2122,23 @@ Object.assign(A,{
 
 /* ---- Spending: bank and UPI messages, payment notifications, voice and hand entries ---- */
 const SPN=NP&&NP.Spend;let SPS=null,SPB=0,SPW=0,SPO='',SPREF=[];
-const SPCOL=c=>c==='Unsorted'?'#8a8a8a':(SPC.find(x=>x[0]===c)||['','#8a8a8a'])[1];
+/* his own tags stay until he deletes them (S.set.sptags = [{n,c}]) */
+const SPPAL=['#ff6b6b','#4dd0e1','#9ccc65','#ffb74d','#ba68c8','#4db6ac','#f06292','#7986cb','#a1887f','#e6c229'];
+let SPT='',SPE='',SPD='',SPR=30;
+const spTags=()=>{if(!Array.isArray(S.set.sptags))S.set.sptags=[];return S.set.sptags};
+const spCats=()=>SPC.concat(spTags().map(t=>[t.n,t.c]));
+const SPCOL=c=>c==='Unsorted'?'#8a8a8a':(spCats().find(x=>x[0]===c)||['','#8a8a8a'])[1];
 const SPKW=[['Food',/swiggy|zomato|domino|mcdonald|kfc|burger|pizza|cafe|restaurant|dhaba|bakery|sweets?|chai|juice|biryani|eatery|canteen|mess\b/i],['Groceries',/blinkit|zepto|bigbasket|instamart|dmart|kirana|grocer|supermarket|vegetable|dairy|milk|fruit|\bmart\b/i],['Travel',/uber|\bola\b|rapido|irctc|redbus|metro|petrol|fuel|fastag|indian ?oil|bharat ?petro|makemytrip|railway|\bcab\b/i],['Health',/pharm|medical|apollo|1mg|hospital|clinic|chemist|\bgym\b|\bcult\b/i],['Shopping',/amazon|flipkart|myntra|meesho|ajio|nykaa|decathlon/i],['Bills',/jio|airtel|vodafone|\bvi\b|bsnl|electric|recharge|broadband|insurance|\blic\b|\bbill|postpaid|\bdth\b|\bgas\b/i],['Fun',/netflix|spotify|hotstar|prime ?video|youtube|bookmyshow|steam|google ?play|\bgame/i],['Study',/unacademy|byju|coaching|library|\bbook|stationer|udemy|institute|exam/i]];
-const spCatName=c=>{const x=SPC.find(y=>y[0].toLowerCase()===String(c||'').toLowerCase());return x?x[0]:''};
-const spCat=to=>{const t=String(to||'').trim();if(!t)return '';const m=(S.set.spmap||{})[norm(t)];if(m)return m;for(const [c,re] of SPKW)if(re.test(t))return c;return ''};
+const spCatName=c=>{const x=spCats().find(y=>y[0].toLowerCase()===String(c||'').toLowerCase());return x?x[0]:''};
+const spTagClean=n=>{const t=String(n||'').replace(/\s+/g,' ').trim().slice(0,20);return t?t.charAt(0).toUpperCase()+t.slice(1):''};
+/* makes a tag of his own (or finds the one that already has this name); returns its name, or '' when the name is not usable */
+function spTagAdd(name){const n=spTagClean(name);if(!n||/^unsorted$/i.test(n))return '';const ex=spCatName(n);if(ex)return ex;const used=new Set(spCats().map(x=>x[1]));spTags().push({n,c:SPPAL.find(c=>!used.has(c))||SPPAL[spTags().length%SPPAL.length]});put('set');return n}
+/* rename: returns '' when it worked, otherwise the reason */
+function spTagRename(old,nw){const n=spTagClean(nw),t=spTags().find(x=>x.n===old);if(!t)return 'That tag is gone.';if(!n||/^unsorted$/i.test(n))return 'Type a name for the tag.';if(n.toLowerCase()!==old.toLowerCase()&&spCatName(n))return 'There is already a tag called '+n+'.';
+ t.n=n;(S.spend||[]).forEach(x=>{if(x.cat===old)x.cat=n});const m=S.set.spmap||{};Object.keys(m).forEach(k=>{if(m[k]===old)m[k]=n});put('spend');put('set');return ''}
+/* delete: payments with this tag become unsorted again; returns how many */
+function spTagDelete(n){const t=spTags(),i=t.findIndex(x=>x.n===n);if(i<0)return 0;t.splice(i,1);let c=0;(S.spend||[]).forEach(x=>{if(x.cat===n){x.cat='';x.q=1;c++}});const m=S.set.spmap||{};Object.keys(m).forEach(k=>{if(m[k]===n)delete m[k]});put('spend');put('set');return c}
+const spCat=to=>{const t=String(to||'').trim();if(!t)return '';const m=spCatName((S.set.spmap||{})[norm(t)]);if(m)return m;for(const [c,re] of SPKW)if(re.test(t))return c;return ''};
 const spAll=()=>(S.spend||[]).filter(x=>!x.del);
 const spMoney=v=>'\u20b9'+Math.round(v).toLocaleString('en-IN');
 const spTitle=t=>/^[A-Z0-9 .&'_-]+$/.test(t)||/^[a-z0-9 .&'_-]+$/.test(t)?t.toLowerCase().replace(/(^|[ .&'-])([a-z])/g,(m,a,b)=>a+b.toUpperCase()):t;
@@ -2099,7 +2156,7 @@ function spParse(raw){let t=String(raw||'').replace(/\s+/g,' ').trim();if(!t)ret
   while((r=re.exec(t))){const c=r[1].trim();if(/^(?:your|you|a\/c|ac|acct|account|bank|rs|inr|vpa)\b/i.test(c)||/^[\dxX* -]+$/.test(c))continue;to=c;break}}
  if(!to&&(mm=t.match(/;\s*([A-Za-z0-9 .&'_-]{2,30}?)\s+credited/i)))to=mm[1];
  to=to.replace(/@.*$/,'').replace(/\b(?:ref\w*|upi)\b.*$/i,'').replace(/\s+/g,' ').trim().slice(0,40);
- if(/^[\dxX* -]*$/.test(to))to='';
+ {const dg=to.replace(/[\s-]/g,'');if(/^(?:\+?91)?[6-9]\d{9}$/.test(dg))to=dg.slice(-10).replace(/^(\d{5})(\d{5})$/,'$1 $2');else if(/^[\dxX* -]*$/.test(to))to=''}
  return{amt,to:spTitle(to)}}
 /* adds one payment unless it is already there. The same payment arrives twice (bank message and app notification): those two are merged, two equal payments from the same source are not */
 function spIngest(it){if(!(it.amt>0))return 0;if(!Array.isArray(S.spend))S.spend=[];
@@ -2122,45 +2179,94 @@ function spDonut(by,tot){if(!tot)return '';let off=0;const rows=Object.entries(b
  const segs=rows.map(([c,v])=>{const p=v/tot*100,e=`<circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="${SPCOL(c)}" stroke-width="5" stroke-dasharray="${p.toFixed(2)} ${(100-p).toFixed(2)}" stroke-dashoffset="${(25-off).toFixed(2)}"/>`;off+=p;return e}).join('');
  return `<svg viewBox="0 0 42 42" width="190" height="190" style="display:block;margin:8px auto" role="img" aria-label="Spending by category"><circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--s2)" stroke-width="5"/>${segs}<text x="21" y="21.8" text-anchor="middle" font-size="4.6" fill="var(--tx)" font-weight="600">${spMoney(tot)}</text></svg>`
  +rows.map(([c,v])=>`<div class="sw" style="min-height:38px"><span style="display:flex;align-items:center;gap:10px"><i style="width:12px;height:12px;border-radius:6px;background:${SPCOL(c)};display:inline-block"></i>${esc(c)}</span><span><b style="font-weight:600">${spMoney(v)}</b> <span class="g">${Math.round(v/tot*100)}%</span></span></div>`).join('')}
-const spChips=(id,cur)=>`<div class="tgs" style="margin:6px 0 4px">${SPC.map(([c])=>`<button class="chip${cur===c?' on':''}" style="flex:none;padding:0 12px" data-a="spcat" data-v="${id}:${c}">${c}</button>`).join('')}</div>`;
-function spendView(){const st=SPS||{},w=spWeek(SPW),un=spAll().filter(x=>x.q).sort((a,b)=>b.ts-a.ts).slice(0,8),ds=spDays(SPW),fd=k=>new Date(k+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+const spChips=(id,cur)=>`<div class="tgs" style="margin:6px 0 4px">${spCats().map(([c])=>`<button class="chip${cur===c?' on':''}" style="flex:none;padding:0 12px" data-a="spcat" data-v="${id}:${esc(c)}">${esc(c)}</button>`).join('')}<button class="chip${SPT===id?' on':''}" style="flex:none;padding:0 12px" data-a="sptn" data-v="${id}">+ Tag</button></div>${SPT===id?`<div style="display:flex;gap:8px;margin:2px 0 8px"><input class="f" id="sptnm" maxlength="20" placeholder="New tag, for example Rent" style="flex:1;margin:0"><button class="mn" data-a="sptmk" data-v="${id}">Add</button></div>`:''}`;
+/* the editor of one payment: tag, who or what for, a short note */
+const spEd=x=>`${spChips(x.id,x.cat)}<input class="f" id="spnm" maxlength="40" placeholder="Who or what for" value="${esc(x.to||'')}" style="margin:2px 0 8px"><input class="f" id="spnote" maxlength="140" placeholder="A short note (optional)" value="${esc(x.note||'')}" style="margin:0 0 10px"><div class="two"><button class="pb" style="margin:0" data-a="spsave" data-v="${x.id}">Save</button><button class="pb dl" style="margin:0" data-a="sprm" data-v="${x.id}">Remove</button></div>`;
+function spendView(){const st=SPS||{},w=spWeek(SPW),un=spAll().filter(x=>x.q).sort((a,b)=>b.ts-a.ts).slice(0,8),unIds=new Set(un.map(x=>x.id)),ds=spDays(SPW),fd=k=>new Date(k+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
  const lab=SPW===0?'Last 7 days':fd(ds[0])+' to '+fd(ds[6]);
  const src=!SPN?'<small style="display:block">Automatic tracking needs the APK. You can still add spends here or tell the mentor.</small>':rw('Bank and UPI messages',st.sms?'Reading debit messages':'Reads debit messages on this phone',st.sms?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')+rw('Payment notifications','PhonePe, Paytm, Google Pay, BHIM, CRED',st.listener?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')+'<button class="pb" style="background:none;color:var(--tx);border:1px solid var(--ln)" data-a="spsync">Check for new payments</button>';
- const dayRow=x=>`<button class="r" data-a="spopen" data-v="${x.id}"><span><b>${esc(x.to||'Payment')}</b><small>${new Date(x.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}, ${t12(x.ts)}  \u00b7  ${esc(x.cat||'Unsorted')}</small></span><b style="font-weight:600">${spMoney(x.amt)}</b></button>${SPO===x.id?spChips(x.id,x.cat)+`<button class="g" style="padding:6px 0 10px" data-a="sprm" data-v="${x.id}">Remove this payment</button>`:''}`;
+ const noteLn=x=>x.note?`<small style="display:block;color:var(--tx)">${esc(x.note)}</small>`:'';
+ const dayRow=x=>`<button class="r" data-a="spopen" data-v="${x.id}"><span><b>${esc(x.to||'Payment')}</b><small>${new Date(x.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}, ${t12(x.ts)}  \u00b7  ${esc(x.cat||'Unsorted')}</small>${noteLn(x)}</span><b style="font-weight:600">${spMoney(x.amt)}</b></button>${SPO===x.id&&!unIds.has(x.id)?spEd(x):''}`;
+ const tags=spTags(),tagBox=`<p class="lab">Your tags</p><small style="display:block;margin-bottom:6px">Tags you make stay until you delete them. Tag a person or shop once and Partner remembers it, so it never asks about them again.</small>${tags.length?`<div class="tgs" style="margin:6px 0 8px">${tags.map(t=>`<button class="chip${SPE===t.n?' on':''}" style="flex:none;padding:0 12px" data-a="spted" data-v="${esc(t.n)}"><i style="width:8px;height:8px;border-radius:4px;background:${t.c};display:inline-block;margin-right:6px"></i>${esc(t.n)}</button>`).join('')}</div>`:''}${SPE?`<div style="display:flex;gap:8px;margin:8px 0 4px"><input class="f" id="sptrn" maxlength="20" value="${esc(SPE)}" style="flex:1;margin:0"><button class="mn" data-a="sptrn">Rename</button></div><button class="g" style="padding:6px 0 10px" data-a="sptdel">${SPD===SPE?'Tap again to delete this tag':'Delete this tag'}</button>`:''}<div style="display:flex;gap:8px;margin-top:8px"><input class="f" id="spnt" maxlength="20" placeholder="New tag" style="flex:1;margin:0"><button class="mn" data-a="sptadd">Add</button></div>`;
  return `<h1 class="h">Insights</h1>${insSeg()}<div class="two" style="margin-top:12px;align-items:center"><button class="g" style="font-size:22px;height:40px" data-a="spw" data-v="1" aria-label="Earlier week">\u2039</button><b style="text-align:center;font-weight:600">${lab}</b><button class="g" style="font-size:22px;height:40px" data-a="spw" data-v="-1" aria-label="Later week" ${SPW===0?'disabled':''}>\u203a</button></div>
 ${w.tot?spDonut(w.by,w.tot):'<p class="g" style="margin:22px 0">No spending recorded for this week.</p>'}
-${un.length?`<p class="lab">Where did this go?</p>${un.map(x=>`<div class="card" style="display:block"><div class="sw" style="min-height:34px"><span style="min-width:0"><b>${esc(x.to||'Payment')}</b><small style="display:block">${new Date(x.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}, ${t12(x.ts)}</small></span><b style="font-weight:600">${spMoney(x.amt)}</b></div>${spChips(x.id,'')}</div>`).join('')}`:''}
+${un.length?`<p class="lab">Where did this go?</p>${un.map(x=>`<div class="card" style="display:block"><button class="r" style="padding:0;min-height:34px" data-a="spopen" data-v="${x.id}"><span style="min-width:0"><b>${esc(x.to||'Payment')}</b><small style="display:block">${new Date(x.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}, ${t12(x.ts)}</small>${noteLn(x)}</span><b style="font-weight:600">${spMoney(x.amt)}</b></button>${SPO===x.id?spEd(x):spChips(x.id,'')}</div>`).join('')}`:''}
 <p class="lab">Add cash or other spends</p><div style="display:flex;gap:8px"><input class="f" id="spa" type="number" inputmode="decimal" placeholder="Amount" style="flex:0 0 96px;margin:0"><input class="f" id="spn" placeholder="What for" style="flex:1;margin:0"><button class="mn" data-a="spadd">Add</button></div>
-${w.L.length?`<p class="lab">This week</p>${[...w.L].sort((a,b)=>b.ts-a.ts).map(dayRow).join('')}`:''}
-<p class="lab">Sources</p>${src}<small style="display:block;margin-top:10px">Partner reads only the amount and the shop name from a payment. The message text is not saved. The mentor sees today\u2019s total and the names of payments you have not sorted yet.</small>`}
+${w.L.length?`<p class="lab">This week</p><small style="display:block;margin-bottom:4px">Tap a payment to change its tag, its name, or add a short note.</small>${[...w.L].sort((a,b)=>b.ts-a.ts).map(dayRow).join('')}`:''}
+<p class="lab">Analyse</p><small style="display:block;margin-bottom:8px">The mentor already sees your totals, tags and notes, so you can just ask it about your spending. For a deeper look, share a report with only your spending into a Claude chat.</small><div class="seg">${[7,30,90].map(d=>`<button class="${SPR===d?'on':''}" data-a="sprg" data-v="${d}">${d} days</button>`).join('')}</div><button class="pb" data-a="sprep">Share spending report</button>
+${tagBox}
+<p class="lab">Sources</p>${src}<small style="display:block;margin-top:10px">Partner reads only the amount and the shop name from a payment. The message text is not saved. The mentor sees your totals, your tags, your notes and the names of payments you have not sorted yet.</small>`}
 Object.assign(A,{
  spw:d=>{SPW=Math.max(0,SPW+ +d);render()},
- spopen:id=>{SPO=SPO===id?'':id;render()},
+ spopen:id=>{SPO=SPO===id?'':id;SPT='';render()},
  spcat:v=>{const i=v.indexOf(':'),x=spAll().find(y=>y.id===v.slice(0,i));if(!x)return;spSet(x,v.slice(i+1));render()},
+ sptn:id=>{SPT=SPT===id?'':id;render();if(SPT){const e=$('#sptnm');if(e)e.focus()}},
+ sptmk:id=>{const nm=spTagAdd(($('#sptnm')||{}).value),x=spAll().find(y=>y.id===id);if(!nm){toast('Type a name for the tag.');return}if(x)spSet(x,nm);SPT='';render()},
+ spsave:id=>{const x=spAll().find(y=>y.id===id);if(!x)return;const nm=(($('#spnm')||{}).value||'').trim().slice(0,40),nt=(($('#spnote')||{}).value||'').trim().slice(0,140);x.to=nm;if(nt)x.note=nt;else delete x.note;
+  if(nm&&x.cat&&!x.q)spSet(x,x.cat);else if(nm&&!x.cat){const c=spCat(nm);if(c){x.cat=c;x.q=0}}put('spend');SPO='';render()},
  sprm:id=>{const x=spAll().find(y=>y.id===id);if(!x)return;x.del=1;SPO='';put('spend');render()},
  spadd:()=>{const a=parseFloat(($('#spa').value||'').replace(',','.')),n=($('#spn').value||'').trim().slice(0,40);if(!(a>0)){toast('Enter an amount.');return}
-  if(!Array.isArray(S.spend))S.spend=[];const cat=spCat(n);S.spend.push({id:'sp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),ts:Date.now(),amt:a,to:n,cat,src:'manual',ks:[],q:cat?0:1});put('spend');render()},
+  if(!Array.isArray(S.spend))S.spend=[];const cat=spCat(n),id='sp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);S.spend.push({id,ts:Date.now(),amt:a,to:n,cat,src:'manual',ks:[],q:cat?0:1});SPO=id;put('spend');render()},
+ sptadd:()=>{const nm=spTagAdd(($('#spnt')||{}).value);if(!nm){toast('Type a name for the tag.');return}render();toast(nm+' is ready to use.')},
+ spted:n=>{SPE=SPE===n?'':n;SPD='';render()},
+ sptrn:()=>{const r=spTagRename(SPE,($('#sptrn')||{}).value);if(r){toast(r);return}SPE=spTagClean(($('#sptrn')||{}).value);render()},
+ sptdel:()=>{if(SPD!==SPE){SPD=SPE;render();return}const n=SPE,c=spTagDelete(n);SPE='';SPD='';render();toast(n+' is deleted'+(c?'. '+c+(c===1?' payment is':' payments are')+' unsorted again.':'.'))},
+ sprg:v=>{SPR=+v||30;render()},
+ sprep:async()=>{const t=spBuildReport(SPR);if(!t){toast('There are no payments in the last '+SPR+' days.');return}
+  try{if(NP&&NP.Share)await NP.Share.share({text:t});else if(navigator.share)await navigator.share({text:t});else{await copyT(t);toast('Report copied. Paste it into your Claude chat.')}}catch(e){if(await copyT(t))toast('Report copied. Paste it into your Claude chat.')}},
  spsync:async()=>{const n=await spSync(true);toast(n?n+' new '+(n===1?'payment':'payments')+' found.':'No new payments.');if(V==='spend')render()},
  spallow:async k=>{if(!SPN)return;try{if(k==='sms')await SPN.requestSms();else await SPN.openListener()}catch(e){warn('Could not open it: '+((e&&e.message)||e))}await spStatus();if(V==='spend')render()}
 });
-/* the mentor sees today's total and the payments he has not sorted yet, and asks about them once in the evening */
+/* ---- spending in the mentor's prompt and in the reports ---- */
+const spSumBy=a=>{const o={};a.forEach(x=>{const c=x.cat||'Unsorted';o[c]=(o[c]||0)+x.amt});return Object.entries(o).sort((p,q)=>q[1]-p[1])};
+function spBrief(){const L=spAll(),n=Date.now(),d7=n-7*864e5,d14=n-14*864e5,d30=n-30*864e5,sum=a=>a.reduce((t,x)=>t+x.amt,0),by=a=>spSumBy(a).map(([c,v])=>c+' '+Math.round(v)).join(', ');
+ const w=L.filter(x=>x.ts>=d7),pw=L.filter(x=>x.ts>=d14&&x.ts<d7),m=L.filter(x=>x.ts>=d30),pe={};
+ m.forEach(x=>{const k=x.to||'(no name)';pe[k]=pe[k]||{v:0,n:0};pe[k].v+=x.amt;pe[k].n++});
+ const top=Object.entries(pe).sort((p,q)=>q[1].v-p[1].v).slice(0,6).map(([k,o])=>k+' Rs '+Math.round(o.v)+' ('+o.n+'x)').join('; '),
+  nt=m.filter(x=>x.note).sort((p,q)=>q.ts-p.ts).slice(0,10).map(x=>dayK(x.ts)+' Rs '+Math.round(x.amt)+(x.to?' '+x.to:'')+': '+x.note).join('; ');
+ return ' Spending summary (Rs): last 7 days '+Math.round(sum(w))+(w.length?' ['+by(w)+']':'')+'; the 7 days before '+Math.round(sum(pw))+(pw.length?' ['+by(pw)+']':'')+'; last 30 days '+Math.round(sum(m))+(top?'. Biggest in 30 days: '+top:'')+(nt?'. His notes: '+nt:'')+'. When he asks about his spending, answer from these numbers only, call money he has not tagged Unsorted, and never invent an amount.'}
+/* the mentor sees today's total, his tags, a short summary, and the payments he has not sorted yet (asked about once in the evening) */
 function spRight(){const L=spAll();if(!L.length)return '';const t0=dayStart(Date.now()),day=L.filter(x=>x.ts>=t0),tot=Math.round(day.reduce((a,x)=>a+x.amt,0));
  SPREF=L.filter(x=>x.q&&x.ts>Date.now()-3*864e5).sort((a,b)=>b.ts-a.ts).slice(0,8);
- return 'Spending today: Rs '+tot+' in '+day.length+(day.length===1?' payment.':' payments.')+(SPREF.length?' Payments he has not sorted yet (refer by S number): '+SPREF.map((x,i)=>'S'+(i+1)+' Rs '+Math.round(x.amt)+(x.to?' to '+x.to:' (no name)')+' at '+tH(x.ts)).join('; ')+'. In the evening (after 8 PM) or at the daily review, ask him once where this money went, and call tag_spend when he answers. Do not nag if he skips.':'')+' Cash or other spends he tells you about: call log_spend.'}
+ return 'Spending today: Rs '+tot+' in '+day.length+(day.length===1?' payment.':' payments.')+(SPREF.length?' Payments he has not sorted yet (refer by S number): '+SPREF.map((x,i)=>'S'+(i+1)+' Rs '+Math.round(x.amt)+(x.to?' to '+x.to:' (no name)')+' at '+tH(x.ts)).join('; ')+'. In the evening (after 8 PM) or at the daily review, ask him once where this money went, and call tag_spend when he answers. Do not nag if he skips. Payments to a person or shop he has tagged before are sorted by the app already.':'')+' His spending tags: '+spCats().map(x=>x[0]).join(', ')+' (use only these; a new tag only when he asks for one, with newtag true). Cash or other spends he tells you about: call log_spend.'+spBrief()}
 function spendApply(out,FB,t0){
- (out.spend||[]).forEach(a=>{const amt=+a.amt;if(!(amt>0))return;if(!Array.isArray(S.spend))S.spend=[];const to=String(a.to||'').trim().slice(0,40),cat=spCatName(a.cat)||spCat(to);
-  S.spend.push({id:'sp'+t0.toString(36)+Math.random().toString(36).slice(2,5),ts:t0,amt,to,cat,src:'voice',ks:[],q:cat?0:1});FB.push('Spend noted'+SEP+'Rs '+Math.round(amt)+(to?' '+to:'')+(cat?' ('+cat+')':''))});
- (out.sptag||[]).forEach(a=>{const x=SPREF[(+a.n)-1],cat=spCatName(a.cat);if(!x||!cat||!(S.spend||[]).includes(x))return;spSet(x,cat);FB.push('Payment sorted'+SEP+'Rs '+Math.round(x.amt)+' as '+cat)})}
+ (out.spend||[]).forEach(a=>{const amt=+a.amt;if(!(amt>0))return;if(!Array.isArray(S.spend))S.spend=[];const to=String(a.to||'').trim().slice(0,40);let cat=spCatName(a.cat);if(!cat&&a.newtag&&a.cat)cat=spTagAdd(a.cat);const told=!!cat;cat=cat||spCat(to);
+  const x={id:'sp'+t0.toString(36)+Math.random().toString(36).slice(2,5),ts:t0,amt,to,cat,src:'voice',ks:[],q:cat?0:1};const nt=String(a.note||'').trim().slice(0,140);if(nt)x.note=nt;S.spend.push(x);if(told&&to)spSet(x,cat);
+  FB.push('Spend noted'+SEP+'Rs '+Math.round(amt)+(to?' '+to:'')+(cat?' ('+cat+')':''))});
+ (out.sptag||[]).forEach(a=>{const x=SPREF[(+a.n)-1];let cat=spCatName(a.cat);if(!cat&&a.newtag&&a.cat)cat=spTagAdd(a.cat);if(!x||!cat||!(S.spend||[]).includes(x))return;const nt=String(a.note||'').trim().slice(0,140);if(nt)x.note=nt;spSet(x,cat);FB.push('Payment sorted'+SEP+'Rs '+Math.round(x.amt)+' as '+cat)})}
+/* payment lines for a report: date (Partner day), time, amount, who or what, [tag], his note */
+function spLines(from,to){return spAll().filter(x=>x.ts>=from&&x.ts<=to).sort((a,b)=>a.ts-b.ts).map(x=>spDayK(x)+' '+tH(x.ts)+'  Rs '+Math.round(x.amt)+'  '+(x.to||'(no name)')+'  ['+(x.cat||'Unsorted')+']'+(x.note?'  note: '+x.note:'')+(x.src==='manual'||x.src==='voice'?'  (told by me)':''))}
+function spBlock(from,to,label){const L=spAll().filter(x=>x.ts>=from&&x.ts<=to);if(!L.length)return '(no payments recorded for '+label+')';const tot=L.reduce((a,x)=>a+x.amt,0),days={};L.forEach(x=>{const k=spDayK(x);days[k]=(days[k]||0)+x.amt});
+ return 'Total Rs '+Math.round(tot)+' in '+L.length+(L.length===1?' payment':' payments')+'. By tag: '+spSumBy(L).map(([c,v])=>c+' Rs '+Math.round(v)+' ('+Math.round(v/tot*100)+'%)').join(', ')+'.\nBy day: '+Object.keys(days).sort().map(k=>k+' Rs '+Math.round(days[k])).join(', ')+'.\n'+spLines(from,to).slice(-250).join('\n')}
+function spBuildReport(d){const n=Date.now(),from=dayStart(n)-(d-1)*864e5;if(!spAll().some(x=>x.ts>=from))return '';
+ return `# Context (this message is self-contained, you need no earlier chat)
+I use a personal diary app called Partner. Below is ONLY my spending from the last ${d} days. Act as a calm, honest money mentor and analyse it.
+Reply in Hinglish (Roman Hindi), warm but honest, never guilt-tripping. Do not ask me questions first: analyse what is there and say what is missing.
+
+# How to read the data
+- Each payment line: day, time, amount in rupees, who or what it went to, [my tag], and my own note when I wrote one.
+- The data comes from my bank and UPI messages, payment-app notifications and cash I told the app about. It is money going OUT only: salary, credits and refunds are not here.
+- [Unsorted] means I have not tagged that payment yet: treat it as unknown, not as a bad spend.
+- My tags: ${spCats().map(x=>x[0]).join(', ')}. The same person or shop always has the same tag.
+- Days run from when I wake up to the next time I wake up, not midnight.
+
+# What I want from you
+1) Where my money really went, by tag and by person or shop. 2) The 3 clearest patterns with evidence from the lines (weekdays, time of day, small repeated spends, certain people). 3) Spends that look like waste or impulse, using my notes where I wrote one, and spends that look fine. 4) What is missing or unsorted that changes the picture. 5) ONE or TWO concrete changes for the next 7 days, each with a rupee limit. 6) One honest closing sentence.
+Finish with a summary of at most 100 words between ===SAVE=== and ===END===.
+
+# SPENDING (last ${d} days)
+${spBlock(from,n,'the last '+d+' days')}`}
 
 /* ---- Night call rule: warning, lock, calls ended, only allowed contacts ---- */
-const NTD={st:null,pick:false,q:'',list:null};
+const NTD={st:null,pick:false,q:'',list:null,mode:'allow'};
 const ntm=t=>{const [h,m]=String(t||'0:0').split(':');return (+h||0)*60+(+m||0)};
 const ntLast=n=>String(n||'').replace(/\D/g,'').slice(-10);
-const nt=()=>{const s=S.set;if(!s.night||typeof s.night!=='object')s.night={on:false};const n=s.night;if(!n.from)n.from='23:00';if(!n.to)n.to='07:00';if(!n.warn)n.warn='22:45';if(n.warn2===undefined)n.warn2=true;if(!Array.isArray(n.allow))n.allow=[];return n};
-const ntCfg=n=>({on:!!n.on,warn:n.warn||'22:45',warn2:n.warn2!==false,from:n.from||'23:00',to:n.to||'07:00',allow:(n.allow||[]).map(a=>({n:String(a.n||''),num:String(a.num||'')}))});
+const nt=()=>{const s=S.set;if(!s.night||typeof s.night!=='object')s.night={on:false};const n=s.night;if(!n.from)n.from='23:00';if(!n.to)n.to='07:00';if(!n.warn)n.warn='22:45';if(n.warn2===undefined)n.warn2=true;if(!Array.isArray(n.allow))n.allow=[];if(n.rep===undefined)n.rep=true;if(!(+n.repMin>0))n.repMin=15;if(!Array.isArray(n.never))n.never=[];return n};
+const ntCfg=n=>({on:!!n.on,warn:n.warn||'22:45',warn2:n.warn2!==false,from:n.from||'23:00',to:n.to||'07:00',allow:(n.allow||[]).map(a=>({n:String(a.n||''),num:String(a.num||'')})),rep:n.rep!==false,repMin:Math.max(1,Math.min(60,+n.repMin||15)),never:(n.never||[]).map(a=>({n:String(a.n||''),num:String(a.num||'')}))});
 const ntSpan=c=>({s:(ntm(c.from)-720+1440)%1440,e:(ntm(c.to)-720+1440)%1440});
-/* weaker = off, a later start, an earlier end, or one more allowed contact. A weaker change waits 24 hours. While the rule is off nothing counts as weaker. */
-function ntWeaker(a,b){if(!a.on)return false;if(!b.on)return true;const x=ntSpan(a),y=ntSpan(b);if(y.s>x.s||y.e<x.e)return true;const had=new Set((a.allow||[]).map(z=>ntLast(z.num)));return (b.allow||[]).some(z=>!had.has(ntLast(z.num)))}
+/* weaker = off, a later start, an earlier end, one more allowed contact, repeat callers switched on or for longer, or somebody taken off the never list. A weaker change waits 24 hours. While the rule is off nothing counts as weaker. */
+function ntWeaker(a,b){if(!a.on)return false;if(!b.on)return true;const x=ntSpan(a),y=ntSpan(b);if(y.s>x.s||y.e<x.e)return true;const had=new Set((a.allow||[]).map(z=>ntLast(z.num)));if((b.allow||[]).some(z=>!had.has(ntLast(z.num))))return true;
+ if(a.rep===false&&b.rep!==false)return true;if(b.rep!==false&&(+b.repMin||15)>(+a.repMin||15))return true;const hn=new Set((b.never||[]).map(z=>ntLast(z.num)));return (a.never||[]).some(z=>!hn.has(ntLast(z.num)))}
 const ntLocked=()=>!!(LKD.st&&(LKD.st.locked||+LKD.st.nightUntil>Date.now()));
 async function ntPush(){if(!LK||!LK.setNight)return;const n=nt();try{await LK.setNight({cfg:JSON.stringify(ntCfg(n)),pend:n.pend?JSON.stringify(n.pend):'',pendAt:n.pendAt||0})}catch(e){const m=String((e&&e.message)||e);if(!/Lockdown is active/i.test(m))warn('Could not save the night rule: '+m)}}
 async function ntEdit(fn){if(ntLocked()){warn('The night rule or a lockdown is running. Settings are locked until it ends.');return false}
@@ -2175,37 +2281,66 @@ function ntItems(base){const c=ntCfg(nt());if(!c.on)return [];const o=nt(),tf=t1
   a=[{id:760,at:nextAt(c.warn,base).getTime(),title:'Partner',body:'Calls end at '+tf+'. Tell them now and start wrapping up.',text:m1,lang:'hi-IN',repeat:true}];
  if(c.warn2){const m=(ntm(c.from)-2+1440)%1440;a.push({id:761,at:nextAt(pad(Math.floor(m/60))+':'+pad(m%60),base).getTime(),title:'Partner',body:'Two minutes left. Say goodbye.',text:m2,lang:'hi-IN',repeat:true})}
  return a}
-function ntList(){const L=NTD.list||[],q=NTD.q.trim().toLowerCase(),dq=q.replace(/\D/g,''),have=new Set(nt().allow.map(a=>ntLast(a.num)));
+function ntList(){const L=NTD.list||[],q=NTD.q.trim().toLowerCase(),dq=q.replace(/\D/g,''),have=new Set(((nt().pend||ntCfg(nt()))[NTD.mode==='never'?'never':'allow']||[]).map(a=>ntLast(a.num)));
  const rows=[];L.forEach((x,i)=>{if(rows.length>=60)return;if(q&&!x.n.toLowerCase().includes(q)&&!(dq&&ntLast(x.num).includes(dq)))return;rows.push(`<button class="sw" style="width:100%;background:none;border:0;text-align:left;color:var(--tx);font:inherit" data-a="nradd" data-v="${i}"><span style="min-width:0">${esc(x.n)}<small style="display:block">${esc(x.num)}</small></span>${have.has(ntLast(x.num))?'<span class="g">Added</span>':''}</button>`)});
  return rows.join('')||'<p class="g">No contact found.</p>'}
-function ntPickView(){return `<h1 class="h">Allowed contacts</h1><small style="display:block;margin-bottom:10px">Only these people can be called, and can call you, during the night rule. Emergency numbers always work.</small><input class="f" id="ntq" placeholder="Search name or number" value="${esc(NTD.q)}"><div id="ntl">${NTD.list?ntList():'<p class="g">Loading...</p>'}</div><button class="pb" data-a="nrdone">Done</button>`}
+function ntPickView(){const nv=NTD.mode==='never';return `<h1 class="h">${nv?'Never ring through':'Allowed contacts'}</h1><small style="display:block;margin-bottom:10px">${nv?'These people stay blocked during the night rule, even if they call twice. Emergency numbers always work.':'Only these people can be called, and can call you, during the night rule. Emergency numbers always work.'}</small><input class="f" id="ntq" placeholder="Search name or number" value="${esc(NTD.q)}"><div id="ntl">${NTD.list?ntList():'<p class="g">Loading...</p>'}</div><button class="pb" data-a="nrdone">Done</button>`}
 function nightView(){if(NTD.pick)return ntPickView();
  const n=nt(),c=ntCfg(n),v=n.pend||c,su=(SU&&SU.st)||{},lk=ntLocked(),st=NTD.st||{},dis=lk?' disabled':'',
   step=(k,t,d)=>{const ok=su[k];return ok===undefined?'':rw(t,d,ok?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>`)},
   tm=(k,l,val)=>`<div class="sw" style="min-height:48px"><span>${l}</span><input type="time" class="f" style="width:auto;margin:0" data-nt="${k}" value="${val}"${dis}></div>`;
- return `<small style="display:block;margin-bottom:10px">Late at night you cannot stop yourself, so Partner stops it for you. You get a heads-up, then at lock time the phone locks until morning, a running call with anyone not on your list is ended, and only your allowed contacts can be called. There is no exit until the end time.</small>
+ return `${brkNote()}<small style="display:block;margin-bottom:10px">Late at night you cannot stop yourself, so Partner stops it for you. You get a heads-up, then at lock time the phone locks until morning, a running call with anyone not on your list is ended, and only your allowed contacts can be called. There is no exit until the end time.</small>
 ${rw('Night call rule','Chosen by you in advance',tgb('nrtog',v.on,'Night call rule'))}
 ${n.pend?`<small style="display:block;margin:6px 0 10px;color:#ff9500">A weaker change is waiting. It starts on ${new Date(n.pendAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}.</small>`:''}
 ${lk?'<small style="display:block;margin:6px 0 10px;color:#ff9500">The night rule or a lockdown is running, so settings are locked until it ends.</small>':''}
 <p class="lab">Times</p>${tm('warn','Heads-up',v.warn)}${tm('from','Phone locks, calls end',v.from)}${tm('to','Lock ends',v.to)}
 ${rw('Last warning','Two minutes before the lock',tgb('nrw2',v.warn2,'Last warning'))}
+${rw('Repeat callers ring','If someone you blocked calls a second time within '+v.repMin+' minutes, the phone rings, like Samsung Do Not Disturb. It is for calls coming in, not for calls you make.',tgb('nrrep',v.rep,'Repeat callers ring'))}
+${v.rep?`<div class="tgs" style="margin:2px 0 10px">${[5,10,15,30].map(m=>`<button class="chip${v.repMin===m?' on':''}" style="flex:none;padding:0 14px" data-a="nrmin" data-v="${m}"${dis}>${m} min</button>`).join('')}</div>`:''}
 <p class="lab">Who can be called</p>${v.allow.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick"${dis}>+ Add from contacts</button><small style="display:block;margin-top:6px">Adding someone later waits 24 hours, so you cannot add a name in the middle of a bad night.</small>
+${v.rep?`<p class="lab">Never ring through</p><small style="display:block;margin-bottom:6px">People who stay blocked even if they call twice, for example someone you are trying to stop talking to late at night. Taking someone off this list waits 24 hours.</small>${v.never.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrnrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick" data-v="never"${dis}>+ Add from contacts</button>`:''}
 <p class="lab">What it needs</p>${step('acc','Accessibility','Locks the phone and counts the time')}${step('cn','Contacts and calls','Choose contacts and end calls')}${step('scr','Call screening','Rejects calls from and to other people')}${step('nl','Notification access','Hangs up WhatsApp calls')}${step('adm','Prevent uninstall','So the app cannot simply be removed at night')}
+${st.nightLastRepeat?`<small style="display:block;margin-top:12px">Last repeat caller let through: ${new Date(+st.nightLastRepeat).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small>`:''}
 ${st.nightLastCut?`<small style="display:block;margin-top:12px">Last call ended by this rule: ${new Date(+st.nightLastCut).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small>`:''}
 <small style="display:block;margin-top:14px">Without Call screening, normal calls are not touched at all (so an emergency call can never be cut). WhatsApp calls are matched by the contact name shown on the call. On Samsung you can add a second layer: Settings, Modes and Routines, Sleep, allow calls only from favourite contacts.</small>`}
 Object.assign(A,{
  nrtog:()=>ntEdit(c=>({...c,on:!c.on})),
  nrw2:()=>ntEdit(c=>({...c,warn2:!c.warn2})),
  nrrm:i=>ntEdit(c=>{c.allow.splice(+i,1);return c}),
+ nrnrm:i=>ntEdit(c=>{c.never.splice(+i,1);return c}),
+ nrrep:()=>ntEdit(c=>({...c,rep:c.rep===false})),
+ nrmin:m=>ntEdit(c=>({...c,repMin:+m||15})),
  nrallow:async k=>{const x=SUS.find(y=>y[0]===k);if(!x)return;try{await x[3]()}catch(e){warn(x[1]+': '+((e&&e.message)||e))}setTimeout(()=>suStatus().then(()=>{if(V==='s-night')render()}),1500)},
- nrpick:async()=>{if(!SPN){warn('Contacts need the APK.');return}let st=await spStatus();if(!(st&&st.calls)){try{await SPN.requestCalls()}catch(e){}st=await spStatus()}
+ nrpick:async m=>{NTD.mode=m==='never'?'never':'allow';if(!SPN){warn('Contacts need the APK.');return}let st=await spStatus();if(!(st&&st.calls)){try{await SPN.requestCalls()}catch(e){}st=await spStatus()}
   if(!(st&&st.calls)){warn('Allow Contacts and calls first.');return}try{NTD.list=((await SPN.contacts()).items)||[]}catch(e){warn('Could not read contacts: '+((e&&e.message)||e));return}NTD.pick=true;NTD.q='';render()},
- nradd:async i=>{const x=(NTD.list||[])[+i];if(!x)return;const k=ntLast(x.num);if(nt().allow.some(a=>ntLast(a.num)===k)&&(nt().pend?nt().pend.allow:nt().allow).some(a=>ntLast(a.num)===k))return;
-  const wait=await ntEdit(c=>{if(!c.allow.some(a=>ntLast(a.num)===k))c.allow.push({n:x.n,num:x.num});return c});if(wait)toast(x.n+' will be allowed in 24 hours.')},
+ nradd:async i=>{const x=(NTD.list||[])[+i];if(!x)return;const k=ntLast(x.num),md=NTD.mode==='never'?'never':'allow',od=md==='never'?'allow':'never',cur=nt().pend||ntCfg(nt());if((cur[md]||[]).some(a=>ntLast(a.num)===k))return;
+  const wait=await ntEdit(c=>{c[md]=c[md]||[];if(!c[md].some(a=>ntLast(a.num)===k))c[md].push({n:x.n,num:x.num});c[od]=(c[od]||[]).filter(a=>ntLast(a.num)!==k);return c});if(wait)toast(x.n+' will be allowed in 24 hours.')},
  nrdone:()=>{NTD.pick=false;render()}
 });
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.nt&&/^\d{2}:\d{2}$/.test(t.value)){const k=t.dataset.nt;ntEdit(c=>{c[k]=t.value;return c})}});
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='ntq'){NTD.q=t.value;const l=$('#ntl');if(l)l.innerHTML=ntList()}});
+
+/* ---- Break mode page: plan days when the whole app stays off ---- */
+let BRF={from:0,to:0},BRC=false;
+const dlStr=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes())};
+const brkNote=()=>{const b=brk();return b&&Date.now()<b.to?`<small style="display:block;margin:0 0 10px;color:#ff9500">${brkNow()?'Break mode is on until '+brkFmt(b.to)+'. The night rule is off until then.':'A break is planned from '+brkFmt(b.from)+' to '+brkFmt(b.to)+'. The night rule is off during it.'}</small>`:''};
+/* returns '' when the break can be planned, otherwise the reason. It has to start 6 hours or more from now, so it cannot be used to skip tonight. */
+function brkCheck(f,t,now){if(!(f>0)||!(t>0))return 'Pick both a start and an end.';if(t<=f)return 'The end has to be after the start.';if(f<now+BRK_LEAD)return 'A break has to start at least 6 hours from now, so it cannot be used to skip tonight. Pick a later start.';if(t-f<36e5)return 'A break has to be at least one hour long.';if(t-f>90*864e5)return 'A break can be at most 90 days.';return ''}
+async function brkPush(){if(!LK||!LK.setBreak)return;const b=brk()||{from:0,to:0};try{await LK.setBreak({from:b.from,to:b.to})}catch(e){warn('Could not save the break: '+((e&&e.message)||e))}}
+async function brkSet(from,to){S.set.brk={from,to};put('set');await brkPush();syncN();render()}
+function breakView(){const b=brk(),on=!!b&&Date.now()<b.to,run=brkNow(),n=Date.now(),lk=ntLocked(),dis=lk?' disabled':'';
+ const f=BRF.from||Math.ceil((n+BRK_LEAD+36e5)/36e5)*36e5,t=BRF.to||f+3*864e5;
+ return `<small style="display:block;margin-bottom:10px">Busy for a few days? Plan a break and Partner switches itself off for it: no reminders, no spoken nudges, no notifications, no lock, no night rule, no call blocking, and Hey Partner stops listening. You can still open the app and write your diary. Everything starts again by itself when the break ends.</small>
+${rw('Break mode',on?(run?'On until '+brkFmt(b.to):'Planned: '+brkFmt(b.from)+' to '+brkFmt(b.to)):'Off',tgb('brtog',on,'Break mode'))}
+${BRC&&on?'<small style="display:block;margin:6px 0 10px;color:#ff9500">Tap the switch again to cancel this break.</small>':''}
+${on?`<p class="lab">Shorten the break</p><div style="display:flex;gap:8px"><input class="f" type="datetime-local" id="bre" value="${dlStr(b.to)}" max="${dlStr(b.to)}" style="flex:1;margin:0"><button class="mn" data-a="brend">Save</button></div><small style="display:block;margin-top:6px">A break can only be made shorter. To go longer, plan a new one.</small>`
+ :`<p class="lab">Plan a break</p>${lk?'<small style="display:block;margin:0 0 8px;color:#ff9500">The night rule or a lockdown is running, so a new break cannot be planned now.</small>':''}<small style="display:block;margin-bottom:4px">From</small><input class="f" type="datetime-local" id="brf" value="${dlStr(f)}" min="${dlStr(n+BRK_LEAD)}" style="margin:0 0 10px"${dis}><small style="display:block;margin-bottom:4px">To</small><input class="f" type="datetime-local" id="brt" value="${dlStr(t)}" style="margin:0"${dis}><button class="pb" data-a="brplan"${dis}>Plan break</button>`}
+<small style="display:block;margin-top:14px">A break has to start at least 6 hours from now. That is on purpose: you cannot switch the app off tonight to get out of the night rule or a lockdown. You can cancel or shorten a break at any time. If the break ends late at night, the night rule starts again at that moment. Reminders that would have come during the break are dropped, not saved up. Payment tracking and screen time keep quietly collecting data so nothing is lost.</small>`}
+Object.assign(A,{
+ brtog:()=>{if(!brkSched()){toast('Pick the start and the end below, then tap Plan break.',0,4200);return}if(!BRC){BRC=true;render();return}BRC=false;brkSet(0,0).then(()=>toast('Break cancelled. Everything is on again.'))},
+ brplan:async()=>{if(ntLocked()){toast('The night rule or a lockdown is running. Plan the break after it ends.',0,4200);return}const f=new Date(($('#brf')||{}).value).getTime(),t=new Date(($('#brt')||{}).value).getTime(),r=brkCheck(f,t,Date.now());if(r){BRF={from:f||0,to:t||0};toast(r,0,5200);return}BRF={from:0,to:0};await brkSet(f,t);toast('Break planned.')},
+ brend:async()=>{const b=brk();if(!b)return;const t=new Date(($('#bre')||{}).value).getTime(),n=Date.now();if(!(t>0)){toast('Pick the new end.');return}if(t>=b.to){toast('A break can only be made shorter. To go longer, plan a new one.',0,4200);return}if(t<=Math.max(n,b.from)+6e4){toast('Pick an end after now. To stop it now, use the switch.',0,4200);return}await brkSet(b.from,t);toast('Break shortened.')}
+});
 
 const ORDER=['chat','diary','habits','health','patterns','identity','spend'];let IS='patterns';
 const insSeg=()=>`<div class="seg"><button class="${V==='patterns'?'on':''}" data-a="go" data-v="patterns">Patterns</button><button class="${V==='identity'?'on':''}" data-a="go" data-v="identity">Identity</button><button class="${V==='spend'?'on':''}" data-a="go" data-v="spend">Spending</button></div>`;

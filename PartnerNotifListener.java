@@ -42,6 +42,9 @@ public class PartnerNotifListener extends NotificationListenerService {
     )
   );
   private final Map<String, Long> hung = new HashMap<>();
+  // when a call notification was last seen (a gap of 8 seconds or more means a new call), and callers let through as repeat callers
+  private final Map<String, Long> seenAt = new HashMap<>();
+  private final Map<String, Long> passed = new HashMap<>();
 
   @Override
   public void onListenerConnected() {
@@ -152,6 +155,16 @@ public class PartnerNotifListener extends NotificationListenerService {
     return s.contains("hang up") || s.contains("hangup") || s.contains("decline") || s.contains("end call") || s.contains("reject") || s.contains("leave call") || s.equals("end") || s.contains("disconnect");
   }
 
+  /** The name of the person on a call notification, or an empty text when the notification only says "incoming call". */
+  private static String callerName(String title, String text) {
+    String t = title == null ? "" : title.trim().toLowerCase(Locale.ROOT);
+    String x = text == null ? "" : text.trim().toLowerCase(Locale.ROOT);
+    boolean tBad = t.isEmpty() || t.contains("call") || t.equals("whatsapp") || t.equals("telegram");
+    if (!tBad) return t;
+    boolean xBad = x.isEmpty() || x.contains("call");
+    return xBad ? "" : x;
+  }
+
   /** Finds the Hang up or Decline button of a call notification and presses it, when the person is not on the allowed list. */
   private void nightHang(StatusBarNotification sbn, long now) {
     if (sbn == null) return;
@@ -162,6 +175,7 @@ public class PartnerNotifListener extends NotificationListenerService {
     boolean call = Notification.CATEGORY_CALL.equals(n.category) || VOIP.contains(pkg);
     if (!call) return;
     if (NightRule.activeEnd(this, now) == 0) return;
+    if (NightRule.breakNow(this, now)) return; // a planned break: nothing is hung up
     Notification.Action hang = null;
     for (Notification.Action a : n.actions) {
       if (a != null && a.title != null && isHangWord(a.title.toString())) {
@@ -175,6 +189,30 @@ public class PartnerNotifListener extends NotificationListenerService {
     // a name that is on his list is left alone; messages that only look like calls have no Hang up button, so they never get here
     if (NightRule.allowedName(this, title) || NightRule.allowedName(this, text)) return;
     String k = sbn.getKey();
+    // a second call from the same person within a few minutes rings (repeat callers), unless he is on the never list
+    String who = callerName(title, text);
+    boolean never = NightRule.neverName(this, title) || NightRule.neverName(this, text);
+    Long prev = seenAt.get(k);
+    boolean fresh = prev == null || now - prev > 8000L;
+    seenAt.put(k, now);
+    if (seenAt.size() > 60) {
+      for (String old : new java.util.ArrayList<>(seenAt.keySet())) {
+        Long v = seenAt.get(old);
+        if (v != null && now - v > 60000L) seenAt.remove(old);
+      }
+    }
+    if (!never && who.length() >= 3) {
+      Long ps = passed.get(who);
+      if (ps != null && now - ps < 20000L) {
+        passed.put(who, now); // the call that was let through is still showing
+        return;
+      }
+      if (fresh && NightRule.repeatPass(this, "w" + who, now)) {
+        passed.put(who, now);
+        NightRule.sp(this).edit().putLong("nightLastRepeat", now).apply();
+        return;
+      }
+    }
     Long last = hung.get(k);
     if (last != null && now - last < 4000L) return;
     hung.put(k, now);

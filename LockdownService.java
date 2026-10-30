@@ -323,6 +323,16 @@ public class LockdownService extends AccessibilityService {
   private void onTick() {
     long now = System.currentTimeMillis();
     applyPending(now);
+    // a planned break (set in advance): every lock, the night rule, app limits and nudges are off until it ends
+    if (NightRule.breakNow(this, now)) {
+      if (sp.getLong("until", 0) != 0 || sp.getLong("nightUntil", 0) != 0 || sp.getLong("exitAt", 0) != 0) {
+        sp.edit().putLong("until", 0).putLong("nightUntil", 0).putLong("exitAt", 0).apply();
+      }
+      nightRun = false;
+      hideOverlay();
+      lastTick = now;
+      return;
+    }
     schedTick(now);
     nightTick(now);
     long until = sp.getLong("until", 0);

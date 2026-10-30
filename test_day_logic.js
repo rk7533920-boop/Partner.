@@ -159,7 +159,7 @@ q2('backup, state defaults and quick-mode keys know the new data',[/BKEYS=\[[^\]
 {const names={};(src.match(/\bA\.[A-Za-z0-9_]+\s*=(?!=)/g)||[]).forEach(x=>{const k=x.replace(/^A\./,'').replace(/\s*=$/,'');names[k]=(names[k]||0)+1});
  const dup=Object.keys(names).filter(k=>names[k]>1&&!['go','tab','mic','review'].includes(k));
  q2('no click handler name is defined twice',dup,[]);
- q2('Back up now and Banking mode use different handlers',[/data-a="bknow">Back up now/.test(src),/data-a="bkbank">Banking mode now/.test(src)],[true,true])}
+ q2('Back up now and Banking mode use different handlers',[/data-a="bknow"><span><b>Save on this phone/.test(src),/data-a="bkbank">Banking mode now/.test(src)],[true,true])}
 }
 
 /* ---- new: health score, identities, boredom training, spending, night call rule ---- */
@@ -204,5 +204,14 @@ const W=(a,b)=>ntWeaker(Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n
 t3('night rule: only a weaker change waits 24 hours',[W({},{}),W({},{on:false}),W({on:false},{on:false,from:'23:59'}),W({},{from:'23:30'}),W({},{from:'22:30'}),W({},{to:'06:00'}),W({},{to:'08:00'}),W({},{allow:[{n:'Papa',num:'9876543210'},{n:'Friend',num:'9000000001'}]}),W({},{allow:[]})],[false,true,false,true,false,true,false,true,false]);
 t3('night rule: wired into lockdown, calls, notifications, settings and permissions',[/setNight/.test(fs.readFileSync('LockdownPlugin.java','utf8')),/nightTick\(now\)/.test(fs.readFileSync('LockdownService.java','utf8')),/tm\.endCall\(\)/.test(fs.readFileSync('LockdownService.java','utf8')),/CallScreeningService/.test(fs.readFileSync('NightCallScreen.java','utf8')),/NotificationListenerService/.test(fs.readFileSync('PartnerNotifListener.java','utf8')),/case's-night':return nightView\(\)/.test(src),/'s-night':'Night call rule'/.test(src),/\['scr','Call screening'/.test(src),/id:760/.test(src)],[true,true,true,true,true,true,true,true,true]);
 t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
+
+{const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
+const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
+q2('settings: 6 groups, 24 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[24,24,24,true]);
+q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
+q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
+q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
+q2('backup: one Back up and one Restore button',[/data-a="bkopt" data-v="save">Back up</.test(src),/data-a="bkopt" data-v="restore">Restore</.test(src),!/Export and share a copy</.test(src)],[true,true,true]);
+q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src),/cmShow\(/.test(src)],[true,true]);}
 }
 console.log(ok,'passed',bad,'failed');

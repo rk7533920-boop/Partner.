@@ -71,6 +71,7 @@ public class LockdownPlugin extends Plugin {
     o.put("nightLastCut", p.getLong("nightLastCut", 0));
     o.put("nightLastBlock", p.getLong("nightLastBlock", 0));
     o.put("nightLastRepeat", p.getLong("nightLastRepeat", 0));
+    o.put("detox", Detox.list(getContext()).toString());
     o.put("brkFrom", p.getLong("brkFrom", 0));
     o.put("brkTo", p.getLong("brkTo", 0));
     call.resolve(o);
@@ -153,6 +154,51 @@ public class LockdownPlugin extends Plugin {
     p.edit().putLong("until", until).putString("reason", call.getString("reason", "Lockdown")).putLong("exitAt", 0).apply();
     if (LockdownService.inst != null) LockdownService.inst.poke();
     call.resolve();
+  }
+
+  /**
+   * App detox: block apps for hours or days. The list is kept here and cannot be shortened (see Detox). It works only while the
+   * accessibility service is on, because that is what sends a blocked app back to the home screen.
+   */
+  @PluginMethod
+  public void detoxAdd(PluginCall call) {
+    Double u = call.getDouble("until");
+    JSArray apps = call.getArray("apps");
+    if (u == null || apps == null || apps.length() == 0) {
+      call.reject("Pick the apps and the end time");
+      return;
+    }
+    if (!accOn()) {
+      if (LockdownAcc.granted(getContext())) {
+        LockdownAcc.endBank(getContext()); // switches the service back on, it connects within a second
+      } else {
+        call.reject("Turn on the accessibility service first");
+        return;
+      }
+    }
+    String err = Detox.add(getContext(), apps, u.longValue());
+    if (!err.isEmpty()) {
+      call.reject(err);
+      return;
+    }
+    if (LockdownService.inst != null) LockdownService.inst.poke();
+    JSObject o = new JSObject();
+    o.put("detox", Detox.list(getContext()).toString());
+    call.resolve(o);
+  }
+
+  /** Takes an app off the detox. Only works in the first 10 minutes after it was added. */
+  @PluginMethod
+  public void detoxCancel(PluginCall call) {
+    String err = Detox.cancel(getContext(), call.getString("id", ""));
+    if (!err.isEmpty()) {
+      call.reject(err);
+      return;
+    }
+    if (LockdownService.inst != null) LockdownService.inst.poke();
+    JSObject o = new JSObject();
+    o.put("detox", Detox.list(getContext()).toString());
+    call.resolve(o);
   }
 
   @PluginMethod

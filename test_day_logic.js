@@ -203,7 +203,7 @@ t3('categories by shop name, unknown names stay unsorted',[spCat('Swiggy'),spCat
 const W=(a,b)=>ntWeaker(Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'+91 98765 43210'}]},a),Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'09876543210'}]},b));
 t3('night rule: only a weaker change waits 24 hours',[W({},{}),W({},{on:false}),W({on:false},{on:false,from:'23:59'}),W({},{from:'23:30'}),W({},{from:'22:30'}),W({},{to:'06:00'}),W({},{to:'08:00'}),W({},{allow:[{n:'Papa',num:'9876543210'},{n:'Friend',num:'9000000001'}]}),W({},{allow:[]})],[false,true,false,true,false,true,false,true,false]);
 t3('night rule: wired into lockdown, calls, notifications, settings and permissions',[/setNight/.test(fs.readFileSync('LockdownPlugin.java','utf8')),/nightTick\(now\)/.test(fs.readFileSync('LockdownService.java','utf8')),/tm\.endCall\(\)/.test(fs.readFileSync('LockdownService.java','utf8')),/CallScreeningService/.test(fs.readFileSync('NightCallScreen.java','utf8')),/NotificationListenerService/.test(fs.readFileSync('PartnerNotifListener.java','utf8')),/case's-night':return nightView\(\)/.test(src),/'s-night':'Night call rule'/.test(src),/\['scr','Call screening'/.test(src),/id:760/.test(src)],[true,true,true,true,true,true,true,true,true]);
-t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
+t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend','prog'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
 
 // ---- 2026-10-30: spending tags and notes, identities, repeat callers, break mode ----
 {globalThis.put=()=>{};globalThis.pad=n=>String(n).padStart(2,'0');globalThis.dayK=dayK;
@@ -242,11 +242,34 @@ t3('break: reminders, chat nudges and error notifications are held back; mentor 
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 25 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[25,25,25,true]);
+q2('settings: 6 groups, 27 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[27,27,27,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
 q2('backup: one Back up and one Restore button',[/data-a="bkopt" data-v="save">Back up</.test(src),/data-a="bkopt" data-v="restore">Restore</.test(src),!/Export and share a copy</.test(src)],[true,true,true]);
 q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src),/cmShow\(/.test(src)],[true,true]);}
+}
+
+/* ---- app detox and transformation (added 2026-11-05) ---- */
+{const t4=(n,a,b)=>{if(JSON.stringify(a)===JSON.stringify(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',JSON.stringify(a),'want',JSON.stringify(b))}};
+ const dxLeft=eval('('+between('const dxLeft=','\n').replace('const dxLeft=','').replace(/;\s*$/,'')+')');
+ t4('detox: time left reads in days, hours, minutes',[dxLeft(2*864e5+3*36e5),dxLeft(5*36e5+20*6e4),dxLeft(40*6e4),dxLeft(1000)],['2 d 3 h','5 h 20 min','40 min','1 min']);
+ const DXNEVER=eval(between('const DXNEVER=','\n').replace('const DXNEVER=','').replace(/;\s*$/,''));
+ t4('detox: calls, Settings, system UI and Partner cannot be picked; Snapchat can',[DXNEVER.test('com.android.settings'),DXNEVER.test('com.samsung.android.dialer'),DXNEVER.test('com.partner.diary'),DXNEVER.test('com.snapchat.android')],[true,true,true,false]);
+ // weight progress, both directions
+ var S4={wt:[{ts:1,kg:63.8},{ts:2,kg:67},{ts:3,kg:69}],set:{goalWt:75}};
+ const sb=between('const trGoalKg=','function trSum').replace(/const trSub=[^\n]*\n/,'');
+ const f=new Function('S','lastWt','trd',sb+';return {trProg,trMiles}');
+ const lastWt4=()=>[...S4.wt].sort((a,b)=>a.ts-b.ts).pop(),trd4=()=>({});
+ let r=f(S4,lastWt4,trd4);let p=r.trProg();
+ t4('transformation: gaining 63.8 to 75, now 69',[p.pct,p.left,p.up],[46,6,true]);
+ t4('transformation: milestones reached are 63.8 and 67 (quarter), not halfway or beyond',r.trMiles().map(m=>!!m.hit),[true,true,false,false,false]);
+ S4.wt=[{ts:1,kg:90},{ts:2,kg:84}];S4.set.goalWt=80;r=f(S4,lastWt4,trd4);p=r.trProg();
+ t4('transformation: losing 90 to 80, now 84',[p.pct,p.left,p.up],[60,4,false]);
+ S4.wt=[{ts:1,kg:70},{ts:2,kg:76}];S4.set.goalWt=75;p=f(S4,lastWt4,trd4).trProg();
+ t4('transformation: past the goal never shows over 100 percent or negative to go',[p.pct,p.left],[100,0]);
+ S4.set.goalWt=0;t4('transformation: no target weight means no progress bar',f(S4,lastWt4,trd4).trProg(),null);
+ t4('detox and transformation are wired into settings, backup, native service and workflow',[/'g-self':\{[^}]*'detox'/.test(src),/'g-health':\{[^}]*'trans'/.test(src),/'wsess','audio','bore','spend','prog'\]/.test(src),/by\('prog',x=>x\.id\)/.test(src),/Detox\.java/.test(fs.readFileSync('.github/workflows/android.yml','utf8')),/Detox\.until\(this, p\)/.test(fs.readFileSync('LockdownService.java','utf8')),/detoxTick\(now\); \/\/ a break never pauses/.test(fs.readFileSync('LockdownService.java','utf8'))],[true,true,true,true,true,true,true]);
+ t4('detox: no cancel after 10 minutes and no shortening, in the native code',[/now - o\.optLong\("from", 0\) > REGRET/.test(fs.readFileSync('Detox.java','utf8')),/if \(until > o\.optLong\("until", 0\)\) o\.put\("until", until\)/.test(fs.readFileSync('Detox.java','utf8'))],[true,true]);
 }
 console.log(ok,'passed',bad,'failed');

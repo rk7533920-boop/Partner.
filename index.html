@@ -93,6 +93,7 @@ input.f,textarea.f,select.f{width:100%;height:46px;border:0;border-radius:14px;b
 .tfs{position:fixed;inset:0;z-index:70;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0)) 24px calc(24px + env(safe-area-inset-bottom,0));animation:fin .2s}
 .tfs .tt{font-size:clamp(72px,26vw,150px);font-weight:200;letter-spacing:-2px;font-variant-numeric:tabular-nums;line-height:1}
 .tfs .tl{font-size:17px;color:var(--mu);margin-bottom:28px;text-align:center;max-width:82%}
+.tr2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.tr3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.trp{position:relative;aspect-ratio:3/4;border-radius:16px;background:var(--s2);overflow:hidden;display:flex;align-items:center;justify-content:center}.trp img{width:100%;height:100%;object-fit:cover;display:block}.trad{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--mu);font-size:13px;border:1.5px dashed var(--ln);border-radius:16px;background:none}.trt{display:block;text-align:center;min-width:0;padding:0}.trt small{display:block;margin-top:4px;font-size:11px}
 .tfs .tfx{position:absolute;top:calc(14px + env(safe-area-inset-top,0));left:16px;border:0;font-size:22px}
 .tfp{width:min(70%,320px);height:3px;border-radius:2px;background:var(--s2);margin-top:36px;overflow:hidden}.tfp i{display:block;height:100%;background:var(--tx);transition:width 1s linear}
 .tfs .tfd{position:absolute;bottom:calc(36px + env(safe-area-inset-bottom,0));height:48px;padding:0 28px}
@@ -111,6 +112,8 @@ input.f,textarea.f,select.f{width:100%;height:46px;border:0;border-radius:14px;b
 <input type="file" id="wfile" accept=".json,.txt,text/plain,application/json" hidden>
 <input type="file" id="afile" accept="audio/*" hidden>
 <input type="file" id="cmfile" accept="image/*,video/*" multiple hidden>
+<input type="file" id="ppcam" accept="image/*" capture="environment" hidden>
+<input type="file" id="ppfile" accept="image/*" hidden>
 <script>
 const BUILD='dev';
 const $=s=>document.querySelector(s),NP=(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())?Capacitor.Plugins:null;
@@ -118,7 +121,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const pad=n=>String(n).padStart(2,'0'),dayK=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 const t12=t=>new Date(t).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:true}).toUpperCase();
 const dur=m=>m>=60?Math.floor(m/60)+'h '+pad(m%60)+'m':(m||0)+'m';
-const D={set:{key:'',goal:'Gain 10 kg in 3 months',cal:3000,pro:120,tone:'gentle',notif:true,mute:0,rev:'22:00',lastBackup:0,autoBk:true,swipe:true,goalsAsked:false,revAsked:'',autoMic:false,idle:true,idleMin:120,qs:'23:30',qe:'07:00',lockBtn:false,hotword:false,effort:'high',maxTok:0,model:'claude-haiku-5-5'},mem:[],routines:[],rrun:{},foods:[],entries:[],sleep:[],usage:[],targets:[],chat:[],fu:[],ana:null,notes:[],tags:[],tl:[],habits:[],hlog:{},gym:[],wt:[],open:[],rx:[],timers:[],errs:[],wplans:[],wsess:[],audio:[],bore:[],spend:[]};
+const D={set:{key:'',goal:'Gain 10 kg in 3 months',cal:3000,pro:120,tone:'gentle',notif:true,mute:0,rev:'22:00',lastBackup:0,autoBk:true,swipe:true,goalsAsked:false,revAsked:'',autoMic:false,idle:true,idleMin:120,qs:'23:30',qe:'07:00',lockBtn:false,hotword:false,effort:'high',maxTok:0,model:'claude-haiku-5-5'},mem:[],routines:[],rrun:{},foods:[],entries:[],sleep:[],usage:[],targets:[],chat:[],fu:[],ana:null,notes:[],tags:[],tl:[],habits:[],hlog:{},gym:[],wt:[],open:[],rx:[],timers:[],errs:[],wplans:[],wsess:[],audio:[],bore:[],spend:[],prog:[]};
 let HD=0,MD=null;
 let S=JSON.parse(JSON.stringify(D)),db,busy=false,typing=false,V='diary',vd=0,ED='',memBusy=false,LIST=[],TREF=[],RREF=[],HREF=[],QK=false,QR='',FQ=false,PV='',stOpen=false,TG={open:false,off:0,t:'',n:'',u:''};
 const TONE={gentle:'warm, encouraging, never shaming',strict:'firm and direct, short sentences, expects discipline',brutal:'brutally honest, no sugar-coating, never insulting his worth'};
@@ -511,7 +514,7 @@ ${CALTXT||'(not available)'}
 ${rv?(RVD?'THIS REVIEW IS FOR AN EARLIER DAY, '+new Date(RVD.a).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+'. He is doing it late (he slept early or forgot). Review that day only, say which day it is, and do not judge today.\nFull diary of that day (every entry, phone and YPT usage, sleep):\n'+diaryText(RVD.a-1,RVD.b)+'\n':'Full diary of today for the review (every entry, phone and YPT usage, sleep):\n'+diaryText(st-1)+'\n'):''}Current date (his day starts when he wakes): ${tk}, ${wd}. Open targets (refer by T number):
 ${tl}
 Targets done today: ${td}
-Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}
+Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}${dxPrompt()?'\n'+dxPrompt():''}
 ${S.routines.length?'Routines (refer by RT number; a routine marked RUNNING is happening now):\n'+rtText()+'\n':''}${(TMREF=S.timers.filter(t=>t.end>Date.now()),TMREF.length)?'Timers running (refer by TM number): '+TMREF.map((t,i)=>'TM'+(i+1)+' '+t.text+' (ends '+t12(t.end)+')').join('; ')+'\n':''}His usual durations (reference only): ${usual()||'(not enough data)'}
 ${(HREF=S.habits.slice(0,30),HREF.length)?'Habits he is building (refer by H number; each one done is a vote for his identity):\n'+HREF.map((h,i)=>'H'+(i+1)+' '+h.name+' | cue: '+(whenText(h)||'none')+(h.step?' | smallest step: '+h.step:'')+(h.mins?' | '+h.mins+' min':'')+(h.where?' | where: '+h.where:'')+(h.reward?' | reward: '+h.reward:'')+' | '+(hl(h.id,tk)>1?'done today':hl(h.id,tk)===1?'tiny step today':'not yet today')).join('\n')+'\n':''}
 Gym status:${lastWt()?' Last weigh-in: '+lastWt().kg+' kg ('+ago(lastWt().ts)+').':' He has not logged his weight yet.'}${S.set.goalWt?' Goal weight: '+S.set.goalWt+' kg.':''} Gym goal: ${S.set.gymDays||4} days a week. If the last weigh-in is over 7 days old, remind him once to weigh in.${S.gym.length?'\nGym history per exercise:\n'+exPrompt():''}${QK?'\nThe phone is locked, so it may not be him. Log only what he says now and answer in one short sentence. Never reveal, summarise or read out anything stored or from earlier, such as memory, diary, targets, goals, reviews or screen time. If asked, tell him to open the full app.':''}`;
@@ -642,9 +645,9 @@ async function lkStart(min,reason){if(!LK){warn('Lockdown needs the APK.');retur
 const PRESET=[['com.snapchat.android','Snapchat'],['com.instagram.android','Instagram'],['com.google.android.youtube','YouTube'],['com.facebook.katana','Facebook'],['com.twitter.android','X'],['com.reddit.frontpage','Reddit'],['com.whatsapp','WhatsApp'],['org.telegram.messenger','Telegram']];
 PRESET.forEach(([p,n])=>LKD.map[p]=n);
 function appsHtml(){const q=LKD.q.toLowerCase(),src=LKD.apps&&LKD.apps.length?LKD.apps:PRESET.map(([pkg,name])=>({pkg,name}));
- return src.filter(a=>!q||a.name.toLowerCase().includes(q)).slice(0,80).map(a=>`<button class="r" data-a="${LKD.pm==='nz'?'nzpick':'lkpick'}" data-v="${esc(a.pkg)}"><span><b>${esc(a.name)}</b></span><i>+</i></button>`).join('')||'<small>No apps found.</small>'}
+ return src.filter(a=>(!q||a.name.toLowerCase().includes(q))&&!(LKD.pm==='dx'&&DXNEVER.test(a.pkg))).slice(0,80).map(a=>`<button class="r" data-a="${LKD.pm==='nz'?'nzpick':LKD.pm==='dx'?'dxpick':'lkpick'}" data-v="${esc(a.pkg)}"><span><b>${esc(a.name)}</b></span><i>${LKD.pm==='dx'&&DX.sel.includes(a.pkg)?'\u2713':'+'}</i></button>`).join('')||'<small>No apps found.</small>'}
 function appsRender(){const el=$('#lkl');if(el)el.innerHTML=appsHtml()}
-async function loadApps(){if(!LK||LKD.apps)return;try{const r=await LK.apps();LKD.apps=(r&&r.apps)||[];LKD.apps.forEach(a=>LKD.map[a.pkg]=a.name);if(V==='s-apps')appsRender()}catch(e){}}
+async function loadApps(){if(!LK||LKD.apps)return;try{const r=await LK.apps();LKD.apps=(r&&r.apps)||[];LKD.apps.forEach(a=>LKD.map[a.pkg]=a.name);if(V==='s-apps')appsRender();else if(V==='s-detox')render()}catch(e){}}
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='lkq'){LKD.q=e.target.value;appsRender()}});
 document.addEventListener('change',e=>{if(e.target&&e.target.id==='bkpk'){bkd().pkgs=e.target.value;put('set');bkPush()}});
 document.addEventListener('change',e=>{const t=e.target,z=t&&t.id&&/^nz(msg|from|to)$/.test(t.id)?nz():null;if(!z)return;if(t.id==='nzmsg')z.msg=t.value.trim().slice(0,200)||NZMSG;else if(/^\d{1,2}:\d{2}$/.test(t.value))z[t.id==='nzfrom'?'from':'to']=t.value;put('set');nzPush()});
@@ -887,20 +890,20 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Da
 /* ---------- views ---------- */
 const greet=()=>{const h=new Date().getHours();return h<5?'It is very late.':h<12?'Good morning.':h<17?'Good afternoon.':h<22?'Good evening.':'Good night.'};
 const row=(a,b,v)=>`<button class="r" data-a="go" data-v="${v}"><span><b>${a}</b><small>${esc(b)}</small></span><i>›</i></button>`;
-const SUB={'s-us':'Screen time','s-night':'Night call rule','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
+const SUB={'s-us':'Screen time','s-night':'Night call rule','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-detox':'App detox','s-trans':'Transformation','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
 /* ---- Settings home: 6 groups, search, "needs you" (redesign approved 2026-10-29) ---- */
 const GRPS={'g-mentor':{t:'Mentor',d:'How Partner talks and listens.',k:['tone','voice','mtog','mem','key']},
- 'g-health':{t:'Health and food',d:'Targets, workouts and your food list.',k:['goals','wplan','food','mtxt']},
+ 'g-health':{t:'Health and food',d:'Targets, workouts, photos and your food list.',k:['goals','trans','wplan','food','mtxt']},
  'g-daily':{t:'Daily plan',d:'Your routines and your ideal day.',k:['rt','ideal','cont','aud']},
- 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['lock','night','nz','us','brk']},
+ 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['lock','detox','night','nz','us','brk']},
  'g-phone':{t:'Phone',d:'What Partner may do on this phone.',k:['perm','notif','acc']},
  'g-data':{t:'Data and app',d:'Backups, reports and app behaviour.',k:['bak','ana','err','swtog']}};
-const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-night':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
+const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-detox':'g-self','s-trans':'g-health','s-night':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
 const RET={};let SQ='',HLG=false,WXALL=false,BKO='';
 const foodSum=()=>S.foods.length+(S.foods.length===1?' food':' foods')+(S.foods.some(f=>f.nw)?'  ·  '+S.foods.filter(f=>f.nw).length+' to check':'');
 const voiceSum=()=>natP()==='gg'?'Google voice':natP()==='el'?'ElevenLabs voice':natP()==='of'?'Offline voice':'Phone voice';
 const gSum={'g-mentor':()=>({gentle:'Gentle',strict:'Strict',brutal:'Brutally honest'}[S.set.tone]||'')+'  ·  '+voiceSum(),'g-health':()=>wpSum(),'g-daily':()=>idSum(),
- 'g-self':()=>brkSched()?(brkNow()?'Break mode on':'Break planned'):LK?(lkd().on?'Lockdown on  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Lockdown off'):'APK only',
+ 'g-self':()=>{const b=brkSched()?(brkNow()?'Break mode on':'Break planned'):LK?(lkd().on?'Lockdown on  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Lockdown off'):'APK only';return dxN()?'Detox on  ·  '+b:b},
  'g-phone':()=>PH?(paS().alarm?'Alarms on':'Alarms off')+'  ·  '+(paS().cal?'Calendar on':'Calendar off'):'APK only','g-data':()=>bkSum()};
 /* each entry: [title, search words, page it opens (null = a switch), html of the row] */
 function SETR(k){const s=S.set;return({
@@ -922,6 +925,8 @@ function SETR(k){const s=S.set;return({
  voice:['Voice','voice speech google elevenlabs offline','s-voice',()=>row('Voice',voiceSum(),'s-voice')],
  mtog:['Listen in Mentor tab','listen hey partner hands-free hotword mentor',null,()=>rw('Listen in Mentor tab','Hands-free \"Hey Partner\" while the Mentor tab is open',tgb('mtog',S.set.mentorAuto!==false,'Listen in Mentor tab'))],
  acc:['Alarms and calendar','phone access alarms calendar reminders clock events','g-phone',()=>PH?rw('Alarms','“Wake me at 7” sets the alarm in your Clock app',tgb('atog',paS().alarm,'Alarms'))+rw('Calendar and reminders','Add events and read what is planned today',tgb('ctog',paS().cal,'Calendar')):'<p class="g">Alarms and calendar need the APK. In a browser they do nothing.</p>'],
+ detox:['App detox','app detox block apps social media snapchat instagram youtube facebook quit hours days','s-detox',()=>row('App detox',dxSum(),'s-detox')],
+ trans:['Transformation','transformation progress photos future goal physique target weight quotes body','s-trans',()=>row('Transformation',trSum(),'s-trans')],
  lock:['Lockdown','lockdown lock apps limit uninstall','s-lock',()=>row('Lockdown',LK?(lkd().on?'On  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Off'):'APK only','s-lock')],
  nz:['Focus nudges','focus nudges allowed apps distraction','s-nz',()=>row('Focus nudges',LK?(nz().on?'On  ·  '+nz().allow.length+(nz().allow.length===1?' allowed app':' allowed apps'):'Off'):'APK only','s-nz')],
  key:['API key','api key claude model','s-key',()=>row('API key',s.key?'Claude  ·  '+(MN[CM()]||''):'Not set','s-key')],
@@ -1196,7 +1201,7 @@ async function doExport(){const txt=JSON.stringify(bkData()),name=bkName(Date.no
   else{const f=new File([txt],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f]});else{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;a.click()}}}catch(e){if(e&&/cancel|abort/i.test(String(e.message||e.name||'')))return;fail('Export failed: '+((e&&e.message)||e),{where:'Backup'});return}
  S.set.lastBackup=Date.now();put('set');render()}
 const A={
- go:v=>{if(cv.on&&v!=='chat')stopC();if(v==='diary')vd=0;if(v==='patterns'||v==='identity'||v==='spend')IS=v;if(v==='s-night')NTD.pick=false;if(v==='spend'){spSync(true).then(()=>{if(V==='spend')render()});spStatus().then(()=>{if(V==='spend')render()})}if(v==='s-night'){lkSync().then(()=>suStatus()).then(()=>{if(V==='s-night')render()})}if(v==='settings'&&V!=='settings'&&!SUB[V]){PV=V;SQ=''}{const hub=V==='settings'||/^g-/.test(V);if(v==='s-setup'){if(V==='health'||V==='spend'||(inSet(V)&&!hub&&V!=='s-setup'))RET[v]=V;else if(hub)delete RET[v]}else if(v==='s-equip'){if(V==='health')RET[v]='health';else delete RET[v]}else if(v==='s-goals'||v==='s-food'||v==='s-wplan'){if(V==='health')RET[v]='health';else if(hub)delete RET[v]}}V=v;render();if(v==='s-lock')lkSync().then(()=>{if(V==='s-lock')render()});if(v==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});if(v==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})},tab:v=>{if(v==='insights')v=IS;A.go(v);if(v==='chat'&&!typing&&!cv.on)startC()},stog:()=>{stOpen=!stOpen;render()},tgopen:()=>{tgSync();TG.open=!TG.open;render()},tgday:o=>{tgSync();TG.off=+o;render()},tgadd:()=>{tgSync();const t=TG.t.trim();if(!t)return;const b=new Date(dayStart(Date.now()));b.setDate(b.getDate()+TG.off);if(!applyT({act:'add',text:t,date:dayK(b),goal:+TG.n||0,unit:TG.u.trim()})){warn('This target already exists.');return}put('targets');TG={open:false,off:0,t:'',n:'',u:''};render()},usopen:()=>{US&&US.openSettings()},ussync:async()=>{$('#usst').textContent='Syncing the last 7 days...';await syncUsage(true);usCheck()},ttog:id=>{const t=S.targets.find(x=>x.id===id);if(!t)return;if(t.status==='done'){t.status='open';t.done=0;t.pct=0}else{t.status='done';t.doneTs=Date.now();if(t.goal)t.done=t.goal;t.pct=100}put('targets');render()},tdel:id=>{S.targets=S.targets.filter(x=>x.id!==id);put('targets');render()},lockbtn:async()=>{if(!NP||!NP.Quick){warn('This works only in the APK.');return}S.set.lockBtn=!S.set.lockBtn;try{if(S.set.lockBtn&&NP.LocalNotifications)await NP.LocalNotifications.requestPermissions();await NP.Quick.setEnabled({enabled:S.set.lockBtn})}catch(e){warn('Could not set the lock screen button: '+((e&&e.message)||e))}put('set');render()},hotword:async()=>{if(!HW){warn('This works only in the APK.');return}const on=!S.set.hotword;
+ go:v=>{if(cv.on&&v!=='chat')stopC();if(v==='diary')vd=0;if(v==='patterns'||v==='identity'||v==='spend')IS=v;if(v==='s-night')NTD.pick=false;if(v==='spend'){spSync(true).then(()=>{if(V==='spend')render()});spStatus().then(()=>{if(V==='spend')render()})}if(v==='s-night'){lkSync().then(()=>suStatus()).then(()=>{if(V==='s-night')render()})}if(v==='settings'&&V!=='settings'&&!SUB[V]){PV=V;SQ=''}{const hub=V==='settings'||/^g-/.test(V);if(v==='s-setup'){if(V==='health'||V==='spend'||(inSet(V)&&!hub&&V!=='s-setup'))RET[v]=V;else if(hub)delete RET[v]}else if(v==='s-equip'){if(V==='health')RET[v]='health';else delete RET[v]}else if(v==='s-goals'||v==='s-food'||v==='s-wplan'){if(V==='health')RET[v]='health';else if(hub)delete RET[v]}else if(v==='s-trans'){if(V==='health'||V==='trans')RET[v]=V;else if(hub)delete RET[v]}else if(v==='trans'){if(V==='s-trans')RET[v]='s-trans';else delete RET[v]}}V=v;render();if(v==='s-lock')lkSync().then(()=>{if(V==='s-lock')render()});if(v==='s-detox'){lkSync().then(()=>{if(V==='s-detox')render()});loadApps()}if(v==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});if(v==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})},tab:v=>{if(v==='insights')v=IS;A.go(v);if(v==='chat'&&!typing&&!cv.on)startC()},stog:()=>{stOpen=!stOpen;render()},tgopen:()=>{tgSync();TG.open=!TG.open;render()},tgday:o=>{tgSync();TG.off=+o;render()},tgadd:()=>{tgSync();const t=TG.t.trim();if(!t)return;const b=new Date(dayStart(Date.now()));b.setDate(b.getDate()+TG.off);if(!applyT({act:'add',text:t,date:dayK(b),goal:+TG.n||0,unit:TG.u.trim()})){warn('This target already exists.');return}put('targets');TG={open:false,off:0,t:'',n:'',u:''};render()},usopen:()=>{US&&US.openSettings()},ussync:async()=>{$('#usst').textContent='Syncing the last 7 days...';await syncUsage(true);usCheck()},ttog:id=>{const t=S.targets.find(x=>x.id===id);if(!t)return;if(t.status==='done'){t.status='open';t.done=0;t.pct=0}else{t.status='done';t.doneTs=Date.now();if(t.goal)t.done=t.goal;t.pct=100}put('targets');render()},tdel:id=>{S.targets=S.targets.filter(x=>x.id!==id);put('targets');render()},lockbtn:async()=>{if(!NP||!NP.Quick){warn('This works only in the APK.');return}S.set.lockBtn=!S.set.lockBtn;try{if(S.set.lockBtn&&NP.LocalNotifications)await NP.LocalNotifications.requestPermissions();await NP.Quick.setEnabled({enabled:S.set.lockBtn})}catch(e){warn('Could not set the lock screen button: '+((e&&e.message)||e))}put('set');render()},hotword:async()=>{if(!HW){warn('This works only in the APK.');return}const on=!S.set.hotword;
   if(on){try{if(NP.SpeechRecognition)await NP.SpeechRecognition.requestPermissions()}catch(e){}try{if(NP.LocalNotifications)await NP.LocalNotifications.requestPermissions()}catch(e){}}
   try{await HW.setEnabled({enabled:on});S.set.hotword=on}catch(e){S.set.hotword=false;HW.setEnabled({enabled:false}).catch(()=>{});warn('Could not turn on Hey Partner: '+((e&&e.message)||e))}
   put('set');await hwSync();render()},hwsens:async()=>{if(!HW)return;const n=(((HWS.st&&HWS.st.sens)||0)+1)%3;try{await HW.setSensitivity({level:n})}catch(e){}await hwSync();render()},hwoverlay:()=>hwOpen('requestOverlay'),hwbatt:()=>hwOpen('requestBattery'),hwfsi:()=>hwOpen('requestFullScreen'),hwassist:()=>hwOpen('openAssistantSettings'),
@@ -1535,7 +1540,7 @@ const wAlts=x=>(x.alt||[]).map(a=>WLIBM[a]).filter(Boolean);
 
 /* ---- workout UI: Health tabs, Today's workout, history, guided session ---- */
 let HTAB='nut',WP={tab:'my',pid:''},WDS={did:'',eid:'',f:null},WRX=-1,WH={f:'all'},WDK='',WL=null,REST={end:0,sec:0},WSUMID='';
-const NEWP={'s-wplan':'g-health','s-wday':'s-wplan','s-wex':'s-wday','s-equip':'s-wplan','s-wimp':'s-wplan','s-ideal':'g-daily','s-ided':'s-ideal','s-cont':'g-daily','s-aud':'g-daily','s-audedit':'s-aud','w-run':'health','w-sum':'health','w-hist':'health','w-det':'w-hist'};
+const NEWP={'trans':'health','s-wplan':'g-health','s-wday':'s-wplan','s-wex':'s-wday','s-equip':'s-wplan','s-wimp':'s-wplan','s-ideal':'g-daily','s-ided':'s-ideal','s-cont':'g-daily','s-aud':'g-daily','s-audedit':'s-aud','w-run':'health','w-sum':'health','w-hist':'health','w-det':'w-hist'};
 const wSel=()=>S.wplans.find(x=>x.id===WP.pid&&!x.arch)||wActivePlan()||wPlans()[0]||null;
 const rr=()=>{const m=$('#main'),y=m?m.scrollTop:0;render();if(m)m.scrollTop=y};
 const nv=v=>v===''||v==null?'':String(v);
@@ -1545,7 +1550,7 @@ A.ht=v=>{HTAB=v;render()};
 function wtView(ctl){const W=[...S.wt].sort((a,b)=>a.ts-b.ts),g=+S.set.goalWt||0;
  const hist=[...W].reverse().slice(0,12).map((w,i,a)=>{const o=a[i+1],d=o?Math.round((w.kg-o.kg)*10)/10:0;return `<div class="sw" style="min-height:48px"><span>${new Date(w.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</span><span><b style="font-weight:400">${w.kg} kg</b>${o?`<small style="margin-left:10px">${d>0?'+':''}${d} kg</small>`:''}</span></div>`}).join('');
  const sp=W.length>1?`<div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Weight trend</span><span class="g">${g?'goal '+g+' kg':''}</span></div>${sparkline(W.slice(-12).map(x=>x.kg),300,70,'var(--tx)')}</div>`:'';
- return ctl+sp+(hist?'<p class="lab">History</p>'+hist:'')}
+ return ctl+row('My transformation','Photos, goal picture and progress','trans')+sp+(hist?'<p class="lab">History</p>'+hist:'')}
 /* ---- Workout tab ---- */
 function woToday(p,k,as){
  if(as){const c=wsCounts(as),prior=as.dk!==k;return `<div class="card" style="display:block"><p class="lab" style="margin:0 0 6px">${prior?'Unfinished workout':'Workout in progress'}</p><div style="font-size:24px;font-weight:600">${esc(as.name)}</div><small style="display:block">${esc(as.focus||'')}</small><small style="display:block;margin-top:6px">${c.ds} of ${c.ps} sets  ·  ${c.dx} of ${c.ex} exercises  ·  started ${prior?fdd(as.dk)+', ':''}${t12(as.t0)}</small><div class="pbar"><i style="width:${c.ps?Math.round(c.ds/c.ps*100):0}%"></i></div><button class="pb" style="margin-top:14px" data-a="wresume">Resume workout</button><div class="two" style="margin-top:10px"><button class="mn" data-a="wfin">Finish</button><button class="mn" style="color:#e5645f" data-a="wdiscard">Discard</button></div></div>`}
@@ -1559,7 +1564,7 @@ function woView(){
  const per=wk.map(d=>{let n=0;S.gym.forEach(r=>{if(dayK(dayStart(r.ts))===d)n+=wFlat(r).length});return n}),mx=Math.max(1,...per);
  const bars=wk.map((d,i)=>`<div style="flex:1;text-align:center"><div style="height:56px;display:flex;align-items:flex-end"><div style="width:100%;border-radius:5px;height:${days.has(d)?Math.max(8,Math.round(per[i]/mx*56)):4}px;background:${days.has(d)?'var(--tx)':'var(--s2)'}"></div></div><small style="font-size:10px;${d===k?'color:var(--tx);font-weight:600':''}">${'MTWTFSS'[i]}</small></div>`).join('');
  const tile=(l,v)=>`<div class="tile" style="padding:12px 8px;text-align:center;min-width:0"><small>${l}</small><b style="font-size:19px;margin-top:2px">${v}</b></div>`;
- return woToday(p,k,as)+(!as?`<button class="lk2" data-a="wlog" style="color:var(--tx)">Did something else? Log it ›</button>`:'')+(p?row('Plan',wpSum(),'s-wplan'):'')+row('Equipment',eqSum(),'s-equip')+`<div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Training this week</span><span>${days.size} of ${tgt} workouts</span></div><div class="pbar" style="height:8px"><i style="width:${Math.min(100,Math.round(days.size/Math.max(1,tgt)*100))}%"></i></div><div style="display:flex;gap:6px;margin-top:14px">${bars}</div><div class="mt" style="margin-top:12px"><small>${st.sets} sets  ·  ${st.reps} reps  ·  ${st.vol.toLocaleString('en-IN')} kg</small><button class="lk2" data-a="whist" style="color:var(--tx)">History ›</button></div></div>
+ return trCard()+woToday(p,k,as)+(!as?`<button class="lk2" data-a="wlog" style="color:var(--tx)">Did something else? Log it ›</button>`:'')+(p?row('Plan',wpSum(),'s-wplan'):'')+row('Equipment',eqSum(),'s-equip')+`<div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Training this week</span><span>${days.size} of ${tgt} workouts</span></div><div class="pbar" style="height:8px"><i style="width:${Math.min(100,Math.round(days.size/Math.max(1,tgt)*100))}%"></i></div><div style="display:flex;gap:6px;margin-top:14px">${bars}</div><div class="mt" style="margin-top:12px"><small>${st.sets} sets  ·  ${st.reps} reps  ·  ${st.vol.toLocaleString('en-IN')} kg</small><button class="lk2" data-a="whist" style="color:var(--tx)">History ›</button></div></div>
 <p class="lab">Recent exercises</p>${exList().slice(0,WXALL?20:3).map(r=>`<button class="r" data-a="gopen" data-v="${esc(exKey(r.ex))}" style="min-height:56px"><span style="min-width:0;text-align:left"><div>${esc(r.ex)}</div><small>${esc(setsStr(r.sets)||'Note only')}</small></span><span class="g">${ago(r.ts)}</span></button>`).join('')||'<p class="g" style="margin:0">Nothing logged yet.</p>'}${exList().length>3?`<button class="lk2" data-a="wxall">${WXALL?'Show less':'See all exercises ›'}</button>`:''}`}
 /* ---- history of workouts: sessions and plain logged exercises, one row per Partner day ---- */
 function wHistDays(){const m={};S.gym.forEach(r=>{if(!(r.sets||[]).length)return;const k=dayK(dayStart(r.ts));(m[k]=m[k]||{k,recs:[],ses:[]}).recs.push(r)});S.wsess.filter(s=>s.st==='done').forEach(s=>{const k=s.dk;(m[k]=m[k]||{k,recs:[],ses:[]}).ses.push(s)});
@@ -1812,7 +1817,7 @@ A.wimp=()=>{const t=($('#wimt')||{}).value||'';WIM.txt=t;const p=wParseImport(t)
 function newMain(){switch(V){case'w-run':return runView();case'w-sum':return sumView();case'w-hist':return histView();case'w-det':return detView();case's-wplan':return wpView();case's-wday':return wdayView();case's-wex':return wexView();case's-equip':return eqView();case's-wimp':return impView();default:return typeof newMain2==='function'?newMain2():null}}
 function newTop(){if(V==='w-run'){const s=wsActive();return `<button class="ic" data-a="wback" aria-label="Back to Health">‹</button><div style="font-size:17px;font-weight:600">Workout</div><button class="pill" data-a="wfin">Finish</button>`}
  if(V==='w-sum')return '<div></div><div></div>';
- if(V==='w-hist'||V==='w-det')return `<button class="ic" data-a="go" data-v="${V==='w-det'?'w-hist':'health'}" aria-label="Back">‹</button><div style="font-size:17px;font-weight:600">${V==='w-det'?'Workout':'Workout history'}</div><div style="width:44px"></div>`;return null}
+ if(V==='w-hist'||V==='w-det')return `<button class="ic" data-a="go" data-v="${V==='w-det'?'w-hist':'health'}" aria-label="Back">‹</button><div style="font-size:17px;font-weight:600">${V==='w-det'?'Workout':'Workout history'}</div><div style="width:44px"></div>`;if(V==='trans')return `<button class="ic" data-a="go" data-v="${parentOf('trans')||'health'}" aria-label="Back">\u2039</button><div style="font-size:17px;font-weight:600">My transformation</div><div style="width:44px"></div>`;return null}
 
 /* ---- late daily review: any past day can be reviewed ---- */
 let RVD=null;
@@ -1924,7 +1929,7 @@ function tfTick(){if(!TF)return;const t=S.timers.find(x=>x.id===TF);if(!t){TF=''
 function tfRelease(){try{TFW&&TFW.release()}catch(e){}TFW=null}
 A.tfull=id=>{TF=id;tfDraw()};A.tclose=()=>{TF='';tfRelease();$('#ring').innerHTML=''};
 A.tdone=id=>{const t=S.timers.find(x=>x.id===id);TF='';tfRelease();$('#ring').innerHTML='';if(!t)return;if(t.oid&&S.open.some(o=>o.id===t.oid))openDone(t.oid);else{S.timers=S.timers.filter(x=>x.id!==id);put('timers');syncN();render()}};
-function newMain2(){switch(V){case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-brk':return breakView();default:return null}}
+function newMain2(){switch(V){case's-detox':return detoxView();case's-trans':return transSetView();case'trans':return trView();case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-brk':return breakView();default:return null}}
 
 /* ---------- failures, timers, backup, goals, navigation ---------- */
 const trimChat=()=>{const c=Date.now()-60*864e5;S.chat=S.chat.filter(m=>m.ts>c);if(S.chat.length>4000)S.chat=S.chat.slice(-4000)};
@@ -1945,7 +1950,7 @@ function tickTimers(){if(QK||!S.timers.length)return;const now=Date.now(),dn=S.t
   if(now-t.end<120000)showRing(t)});
  fixData();put('timers');put('open');put('entries');syncN();render()}
 /* backup */
-const BKEYS=['mem','entries','sleep','usage','targets','chat','fu','ana','notes','tags','tl','habits','hlog','gym','wt','open','rx','timers','errs','routines','rrun','foods','wplans','wsess','audio','bore','spend'],BKDIR='Partner';
+const BKEYS=['mem','entries','sleep','usage','targets','chat','fu','ana','notes','tags','tl','habits','hlog','gym','wt','open','rx','timers','errs','routines','rrun','foods','wplans','wsess','audio','bore','spend','prog'],BKDIR='Partner';
 const bkData=()=>{const o={app:'partner',v:3,at:Date.now(),set:S.set};BKEYS.forEach(k=>{o[k]=S[k]});return o};
 const bkName=t=>{const d=new Date(t);return 'partner-backup_'+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'_'+pad(d.getHours())+'-'+pad(d.getMinutes())+'.json'};
 const bkSum=()=>S.set.autoBk===false?'Auto backup is off':(S.set.lastBackup?'Last: '+new Date(S.set.lastBackup).toLocaleDateString('en-IN',{day:'numeric',month:'short'})+' '+t12(S.set.lastBackup):'Not yet');
@@ -1959,6 +1964,7 @@ async function autoBackup(force){const FS=NP&&NP.Filesystem;if(QK||!FS||!db)retu
   try{await FS.writeFile({path:BKDIR+'/'+name,data:txt,directory:'DOCUMENTS',encoding:'utf8',recursive:true})}
   catch(e1){dirn='EXTERNAL';note='The Documents folder was not allowed ('+((e1&&e1.message)||e1)+'), so the backup was saved in the app folder instead.';await FS.writeFile({path:BKDIR+'/'+name,data:txt,directory:'EXTERNAL',encoding:'utf8',recursive:true})}
   await bkPrune(FS,dirn,name,now);
+  ppBackup().catch(()=>{});
   S.set.bkLast=now;S.set.lastBackup=now;S.set.bkWhere=dirn;S.set.bkName=name;S.set.bkErr=note;await put('set');
   if(note)fail(note,{where:'Backup'});
   if(force)toast('Backup saved: '+(dirn==='DOCUMENTS'?'Documents/':'app folder/')+BKDIR+'/'+name,0,5000);
@@ -1966,7 +1972,7 @@ async function autoBackup(force){const FS=NP&&NP.Filesystem;if(QK||!FS||!db)retu
  catch(e){const m=(e&&e.message)||String(e);S.set.bkErr=m;put('set');fail('Auto backup failed: '+m+'. Your data is not backed up on this phone right now.',{where:'Backup',bg:true});if(V==='s-bak')render();return false}
  finally{autoBackup.run=false}}
 function mergeBackup(j,c){const by=(k,key)=>{const have=new Set(S[k].map(key));let n=0;(j[k]||[]).forEach(x=>{const id=key(x);if(!have.has(id)){have.add(id);S[k].push(x);n++}});c[k]=(c[k]||0)+n};
- by('entries',x=>x.id);by('targets',x=>x.id);by('sleep',x=>x.id);by('mem',x=>x.id);by('notes',x=>x.ts);by('habits',x=>x.id);by('gym',x=>x.id);by('wt',x=>x.ts);by('chat',x=>x.id+'|'+x.ts);by('usage',x=>x.p+'|'+x.s+'|'+x.e);by('tags',x=>x.n);by('tl',x=>x.t+'|'+x.g);by('rx',x=>x.act+'|'+x.p);by('routines',x=>x.id);by('foods',x=>norm(x.name));by('wplans',x=>x.id);by('wsess',x=>x.id);by('audio',x=>x.id);by('bore',x=>x.id);by('spend',x=>x.id);
+ by('entries',x=>x.id);by('targets',x=>x.id);by('sleep',x=>x.id);by('mem',x=>x.id);by('notes',x=>x.ts);by('habits',x=>x.id);by('gym',x=>x.id);by('wt',x=>x.ts);by('chat',x=>x.id+'|'+x.ts);by('usage',x=>x.p+'|'+x.s+'|'+x.e);by('tags',x=>x.n);by('tl',x=>x.t+'|'+x.g);by('rx',x=>x.act+'|'+x.p);by('routines',x=>x.id);by('foods',x=>norm(x.name));by('wplans',x=>x.id);by('wsess',x=>x.id);by('audio',x=>x.id);by('bore',x=>x.id);by('spend',x=>x.id);by('prog',x=>x.id);
  {const now=Date.now(),hf=new Set(S.fu.map(x=>x.id));(j.fu||[]).forEach(x=>{if(!x.done&&x.at>now&&!hf.has(x.id)){S.fu.push(x);c.fu=(c.fu||0)+1}});
   (j.open||[]).forEach(x=>{if(now-x.ts<16*36e5&&!S.open.some(y=>y.id===x.id))S.open.push(x)});
   const ht=new Set(S.timers.map(x=>x.id));(j.timers||[]).forEach(x=>{if(x.end>now&&!ht.has(x.id))S.timers.push(x)})}
@@ -1980,8 +1986,8 @@ async function importFiles(list){let ok=0;const bad=[],parsed=[],c={};
  list.forEach(f=>{try{const j=JSON.parse(f.text);if(j.app!=='partner')throw 0;parsed.push([j.at||0,j])}catch(e){bad.push(f.name)}});
  parsed.sort((a,b)=>a[0]-b[0]);
  try{parsed.forEach(([,j])=>{mergeBackup(j,c);ok++});
-  if(ok){fixData();usClean();await Promise.all(['set',...BKEYS].map(put));syncN();render();
-   const L=[['entries','entries'],['sleep','sleep records'],['chat','chat messages'],['mem','notes'],['habits','habits'],['gym','gym logs'],['wplans','workout plans'],['wsess','workout sessions'],['usage','screen-time blocks'],['targets','targets']].filter(([k])=>c[k]).map(([k,l])=>c[k]+' '+l);
+  if(ok){fixData();usClean();await Promise.all(['set',...BKEYS].map(put));ppRestore().then(n=>{if(n){toast(n+(n===1?' photo':' photos')+' brought back from the Partner folder.');render()}}).catch(()=>{});syncN();render();
+   const L=[['entries','entries'],['sleep','sleep records'],['chat','chat messages'],['mem','notes'],['habits','habits'],['gym','gym logs'],['wplans','workout plans'],['wsess','workout sessions'],['usage','screen-time blocks'],['targets','targets'],['prog','progress photos']].filter(([k])=>c[k]).map(([k,l])=>c[k]+' '+l);
    toast('Restored from '+ok+' file'+(ok>1?'s':'')+': '+(L.length?L.join(', '):'everything in it was already here')+'.',0,8000)}
   if(bad.length)fail(bad.length+' file'+(bad.length>1?'s':'')+' could not be read as a Partner backup: '+bad.slice(0,3).join(', '),{where:'Import'})}
  catch(e){fail('Import failed: '+((e&&e.message)||e),{where:'Import'})}}
@@ -2342,10 +2348,159 @@ Object.assign(A,{
  brend:async()=>{const b=brk();if(!b)return;const t=new Date(($('#bre')||{}).value).getTime(),n=Date.now();if(!(t>0)){toast('Pick the new end.');return}if(t>=b.to){toast('A break can only be made shorter. To go longer, plan a new one.',0,4200);return}if(t<=Math.max(n,b.from)+6e4){toast('Pick an end after now. To stop it now, use the switch.',0,4200);return}await brkSet(b.from,t);toast('Break shortened.')}
 });
 
+/* ---- App detox: block apps for hours or days. The list lives in the phone service (Detox.java); this page only shows it and asks to add to it ---- */
+const DX={sel:[],len:864e5,cust:false,cn:'2',cu:'d',busy:false};
+const DXNEVER=/^(android|com\.android\.(settings|dialer|phone|contacts|incallui|emergency|systemui|server\.telecom|packageinstaller)|com\.google\.android\.(dialer|contacts|packageinstaller)|com\.samsung\.android\.(dialer|incallui|app\.contacts|settings)|com\.partner\.diary)$/;
+const DXLEN=[['3 hours',3*36e5],['6 hours',6*36e5],['12 hours',12*36e5],['1 day',864e5],['2 days',2*864e5],['3 days',3*864e5],['7 days',7*864e5]];
+const DXREG=10*6e4,DXMAX=30*864e5;
+function dxList(){try{return JSON.parse((LKD.st&&LKD.st.detox)||'[]').filter(x=>x&&x.until>Date.now()).sort((a,b)=>a.until-b.until)}catch(e){return[]}}
+const dxN=()=>LK?dxList().length:0;
+const dxLeft=ms=>{const m=Math.max(1,Math.ceil(ms/6e4)),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mi=m%60;return d?d+' d'+(h?' '+h+' h':''):h?h+' h'+(mi?' '+mi+' min':''):mi+' min'};
+const dxWhen=ts=>new Date(ts).toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+const dxSum=()=>!LK?'APK only':dxN()?dxN()+(dxN()===1?' app':' apps')+' blocked':'Off';
+const dxName=p=>LKD.map[p]||p;
+function dxLenMs(){if(!DX.cust)return DX.len;return Math.max(0,Math.round(+DX.cn||0))*(DX.cu==='h'?36e5:864e5)}
+function dxSumText(){const len=dxLenMs();if(!DX.sel.length)return 'Pick the apps you want to block.';if(len<36e5)return 'Pick how long. The shortest detox is 1 hour.';if(len>DXMAX)return 'A detox can be at most 30 days.';
+ return esc(DX.sel.map(dxName).join(', '))+' will be blocked until <b>'+dxWhen(Date.now()+len)+'</b>. You will not be able to open '+(DX.sel.length>1?'them':'it')+' or end this early.'}
+function dxPrompt(){const L=dxList();if(!LK||!L.length)return '';return 'APP DETOX: he blocked these apps himself and cannot open them until the time shown: '+L.map(x=>(x.name||dxName(x.pkg))+' until '+dxWhen(x.until)).join('; ')+'. Support it, never help him get around it, and do not treat the missing app time as a failure. You cannot start or change a detox.'}
+function detoxView(){
+ if(!LK)return '<p class="g" style="margin-top:0">App detox needs the APK.</p>';
+ const st=LKD.st||{},L=dxList(),n=Date.now(),su=(typeof SU!=='undefined'&&SU.st)||{},len=dxLenMs();
+ const pre=(LKD.apps&&LKD.apps.length?PRESET.filter(([p])=>LKD.apps.some(a=>a.pkg===p)):PRESET),extra=DX.sel.filter(p=>!pre.some(x=>x[0]===p));
+ const chips=[...pre,...extra.map(p=>[p,dxName(p)])].map(([p,nm])=>`<button class="chip${DX.sel.includes(p)?' on':''}" style="flex:none;padding:0 16px" data-a="dxtog" data-v="${esc(p)}">${esc(nm)}</button>`).join('');
+ const act=L.map(x=>{const tot=Math.max(1,x.until-x.from),done=Math.min(100,Math.round((n-x.from)/tot*100)),reg=n-x.from<=DXREG;
+  return `<div class="card" style="display:block"><div class="sw" style="min-height:28px"><b style="font-weight:600">${esc(x.name||dxName(x.pkg))}</b><span class="g">${dxLeft(x.until-n)} left</span></div><small style="display:block">Blocked until ${dxWhen(x.until)}</small><div class="pbar" style="margin-top:10px"><i style="width:${done}%"></i></div>${reg?`<button class="ub" data-a="dxundo" data-v="${esc(x.id)}">Undo (${Math.max(1,Math.ceil((DXREG-(n-x.from))/6e4))} min left to undo)</button>`:''}</div>`}).join('');
+ const step=(t,d,ok,go)=>rw(t,d,ok?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="go" data-v="s-setup">Permissions \u203a</button>`);
+ return `<small style="display:block;margin-bottom:6px">Pick apps like Snapchat or Instagram and a time, from 1 hour up to 30 days. Until it ends the apps cannot be opened: Partner sends them straight back to the home screen. There is no way to end it early, so choose a time you can keep.</small>
+${act?`<p class="lab">Running now</p>${act}`:''}
+<p class="lab">Apps to block</p><div class="tgs">${chips}<button class="chip" style="flex:none;padding:0 16px" data-a="dxadd">+ Other app</button></div>
+<p class="lab">For how long</p><div class="tgs">${DXLEN.map(([l,ms])=>`<button class="chip${!DX.cust&&DX.len===ms?' on':''}" style="flex:none;padding:0 16px" data-a="dxlen" data-v="${ms}">${l}</button>`).join('')}<button class="chip${DX.cust?' on':''}" style="flex:none;padding:0 16px" data-a="dxcust">Custom</button></div>
+${DX.cust?`<div style="display:flex;gap:8px;margin-top:10px;align-items:center"><input class="f" id="dxcn" type="number" inputmode="numeric" min="1" max="720" value="${esc(DX.cn)}" style="width:90px;margin:0;text-align:center"><div class="two" style="flex:1"><button class="chip${DX.cu==='h'?' on':''}" data-a="dxcu" data-v="h">hours</button><button class="chip${DX.cu==='d'?' on':''}" data-a="dxcu" data-v="d">days</button></div></div>`:''}
+<small id="dxsum" style="display:block;margin-top:14px">${dxSumText()}</small>
+<button class="pb" style="margin-top:14px" data-a="dxstart"${DX.sel.length&&len>=36e5&&len<=DXMAX?'':' disabled'}>Start detox</button>
+<p class="lab">What it needs</p>${step('Accessibility service','Watches which app is open and sends blocked apps home',st.accessibility)}${step('Prevent uninstall','So Partner cannot simply be removed during a detox',st.admin)}${su.nl===undefined?'':step('Notification access','Hides notifications of blocked apps',su.nl)}
+<small style="display:block;margin-top:14px">Good to know: a longer detox can be added at any time, a shorter one cannot. The first 10 minutes after you add an app you can still undo it. Calls, the home screen, Settings and Partner itself can never be blocked. While a detox runs, the Settings pages for Accessibility and Partner stay closed, so the service cannot be switched off. Banking mode still works but pauses for 15 minutes at most. Break mode does not pause a detox. This blocks the apps, not their websites: the same site in a browser still opens.</small>`}
+Object.assign(A,{
+ dxtog:p=>{if(DXNEVER.test(p)){toast('This app cannot be blocked.');return}DX.sel=DX.sel.includes(p)?DX.sel.filter(x=>x!==p):[...DX.sel,p];render()},
+ dxlen:ms=>{DX.cust=false;DX.len=+ms;render()},
+ dxcust:()=>{DX.cust=true;render()},
+ dxcu:u=>{DX.cu=u;render()},
+ dxadd:()=>{LKD.q='';LKD.pm='dx';V='s-apps';render();loadApps()},
+ dxpick:p=>{if(DXNEVER.test(p)){toast('This app cannot be blocked.');return}if(!DX.sel.includes(p))DX.sel.push(p);LKD.pm='';V='s-detox';render()},
+ dxstart:async()=>{if(DX.busy)return;if(!LK||!LK.detoxAdd){warn('App detox needs the new APK. Build it from GitHub first.',{where:'Detox'});return}
+  const len=dxLenMs();if(!DX.sel.length){toast('Pick at least one app.');return}if(len<36e5){toast('The shortest detox is 1 hour.');return}if(len>DXMAX){toast('A detox can be at most 30 days.');return}
+  const end=Date.now()+len,nm=DX.sel.map(dxName).join(', ');
+  if(!confirm('Block '+nm+' until '+dxWhen(end)+'?\n\nYou will not be able to open '+(DX.sel.length>1?'these apps':'this app')+' or end this early. You can undo only in the first 10 minutes.'))return;
+  DX.busy=true;
+  try{await lkSync();const r=await LK.detoxAdd({apps:DX.sel.map(p=>({pkg:p,name:dxName(p)})),until:end});if(r&&r.detox!==undefined){LKD.st=LKD.st||{};LKD.st.detox=r.detox}DX.sel=[];toast('Detox started. '+nm+' blocked until '+dxWhen(end)+'.',0,4500)}
+  catch(e){warn('Could not start the detox: '+((e&&e.message)||e),{where:'Detox'})}
+  DX.busy=false;await lkSync();render()},
+ dxundo:async id=>{if(!LK||!LK.detoxCancel)return;try{const r=await LK.detoxCancel({id});if(r&&r.detox!==undefined){LKD.st=LKD.st||{};LKD.st.detox=r.detox}toast('Removed from the detox.')}catch(e){warn('Could not undo: '+((e&&e.message)||e),{where:'Detox'})}await lkSync();render()}
+});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='dxcn'){DX.cn=t.value;const el=$('#dxsum');if(el)el.innerHTML=dxSumText();const b=document.querySelector('[data-a="dxstart"]'),len=dxLenMs();if(b)b.disabled=!(DX.sel.length&&len>=36e5&&len<=DXMAX)}});
+
+/* ---- Transformation: photos of now, a picture of the future self, and weight progress. Pictures stay on this phone (never sent to the AI) ---- */
+const TR_Q=['Discipline today, the physique you imagine tomorrow.','Same person. Stronger habits. Better version.',"You don't need to be perfect. You just need to be consistent.",'Small steps still count. Keep going.','Show up today. The mirror will catch up.','Your future self is watching what you do today.'];
+const ANG=[['f','Front'],['s','Side'],['b','Back']],PPD='photos';
+const CAM='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const trd=()=>{const s=S.set;if(!s.tr||typeof s.tr!=='object')s.tr={};const t=s.tr;if(t.on===undefined)t.on=true;if(t.wgt===undefined)t.wgt=true;if(t.quo===undefined)t.quo=true;if(!t.goal||typeof t.goal!=='object')t.goal={};return t};
+const prL=()=>{if(!Array.isArray(S.prog))S.prog=[];return S.prog};
+const prAng=a=>prL().filter(p=>p.ang===a&&!p.g).sort((x,y)=>y.ts-x.ts);
+const prGoal=a=>{const id=trd().goal[a];return id?prL().find(p=>p.id===id)||null:null};
+const trQuote=t=>TR_Q[Math.floor((t||Date.now())/864e5)%TR_Q.length];
+const trGoalKg=()=>+S.set.goalWt||0;
+const trSub=p=>p?new Date(p.ts).toLocaleDateString('en-IN',{month:'short',year:'numeric'})+(p.kg?'  \u00b7  '+p.kg+' kg':''):'';
+function trStart(){const t=trd();if(t.start&&t.start.kg)return t.start;const W=[...S.wt].sort((a,b)=>a.ts-b.ts);return W.length?{ts:W[0].ts,kg:W[0].kg}:null}
+/* progress from where he started to the goal weight, in either direction; never below 0 or above 100 */
+function trProg(){const st=trStart(),lw=lastWt(),g=trGoalKg();if(!st||!lw||!(g>0))return null;const span=g-st.kg,up=g>=st.kg;let pct=span?Math.round((lw.kg-st.kg)/span*100):(lw.kg===g?100:0);pct=Math.max(0,Math.min(100,pct));return{st,cur:lw.kg,g,up,pct,left:Math.max(0,Math.round((up?g-lw.kg:lw.kg-g)*10)/10)}}
+function trMiles(){const p=trProg();if(!p)return[];const W=[...S.wt].sort((a,b)=>a.ts-b.ts).filter(w=>w.ts>=p.st.ts-864e5),span=p.g-p.st.kg,nm=['Where you started','A quarter of the way','Halfway','Three quarters','Your goal'];
+ return [0,.25,.5,.75,1].map((f,i)=>{const v=Math.round((p.st.kg+span*f)*10)/10,hit=i===0?W[0]:W.find(w=>p.up?w.kg>=v:w.kg<=v);return{v,i,hit:hit?hit.ts:0,lab:nm[i]}})}
+function trSum(){const g=prGoal('f'),n=prL().filter(p=>!p.g).length;return (g?'Goal picture set':'No goal picture')+'  \u00b7  '+n+(n===1?' photo':' photos')}
+function trTile(p,lab,sub,a,addLab){return `<div style="min-width:0;text-align:center"><div class="trp">${p?`<img data-pp="${p.id}" alt="${esc(lab)}">`:(a?`<button class="trad" data-a="${a}">${CAM}<span>${esc(addLab)}</span></button>`:'')}</div><div style="margin-top:8px;font-weight:600">${esc(lab)}</div><small style="display:block;min-height:18px">${esc(sub||'')}</small></div>`}
+const PPU={};
+async function ppFill(root){for(const el of (root||document).querySelectorAll('[data-pp]')){if(el.dataset.ok)continue;const id=el.dataset.pp;try{let u=PPU[id];if(!u){const b=await dbGet('pp_'+id);if(!b){const m=document.createElement('small');m.className='g';m.textContent='Picture missing on this phone';el.replaceWith(m);continue}u=PPU[id]=URL.createObjectURL(b)}el.src=u;el.dataset.ok='1'}catch(e){}}}
+function ppShrink(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{try{const k=Math.min(1,1280/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.max(1,Math.round(im.naturalWidth*k)),h=Math.max(1,Math.round(im.naturalHeight*k)),c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);c.toBlob(b=>{URL.revokeObjectURL(u);b?ok(b):no(new Error('Could not read this picture'))},'image/jpeg',.86)}catch(e){URL.revokeObjectURL(u);no(e)}};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('the phone could not open this file as a picture'))};im.src=u})}
+async function ppDrop(id){const L=prL(),i=L.findIndex(p=>p.id===id);if(i<0)return;L.splice(i,1);try{await dbDel('pp_'+id)}catch(e){}if(PPU[id]){URL.revokeObjectURL(PPU[id]);delete PPU[id]}const FS=NP&&NP.Filesystem;if(FS){for(const d of ['DOCUMENTS','EXTERNAL'])FS.deleteFile({path:BKDIR+'/'+PPD+'/'+id+'.jpg',directory:d}).catch(()=>{})}put('prog')}
+async function ppAdd(f,ang,goal){
+ if(!f||!/^image\//.test(f.type||'image/')){toast('Pick a picture.');return false}
+ if(f.size>40*1048576){toast('That picture is larger than 40 MB.');return false}
+ let b;try{b=await ppShrink(f)}catch(e){toast('Could not use this picture: '+((e&&e.message)||e),0,4200);return false}
+ const id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
+ try{await dbPut('pp_'+id,b)}catch(err){toast('Could not store the picture: '+((err&&err.message)||err),0,4200);return false}
+ const lw=lastWt(),now=Date.now(),t=trd(),p={id,ts:now,ang,kg:lw&&now-lw.ts<=14*864e5?lw.kg:0};
+ if(goal){p.g=1;const old=t.goal[ang];t.goal[ang]=id;prL().push(p);if(old&&old!==id)await ppDrop(old)}
+ else{prL().push(p);if(!t.start&&p.kg)t.start={ts:now,kg:p.kg}}
+ put('prog');put('set');return true}
+async function ppBlobB64(b){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]||'');r.onerror=()=>no(r.error);r.readAsDataURL(b)})}
+/* pictures are copied once into Documents/Partner/photos so a reinstall or a new phone can get them back; best effort, never blocks the normal backup */
+async function ppBackup(){const FS=NP&&NP.Filesystem;if(!FS||QK||ppBackup.run)return;ppBackup.run=true;let n=0,bad='';
+ try{for(const p of prL()){if(p.bk)continue;const b=await dbGet('pp_'+p.id);if(!b)continue;let data;try{data=await ppBlobB64(b)}catch(e){continue}let done=false;
+   for(const d of ['DOCUMENTS','EXTERNAL']){try{await FS.writeFile({path:BKDIR+'/'+PPD+'/'+p.id+'.jpg',data,directory:d,recursive:true});done=true;break}catch(e){bad=(e&&e.message)||String(e)}}
+   if(done){p.bk=1;n++}}
+  if(n)put('prog');if(bad&&!n)logErr('Photo backup',bad)}
+ finally{ppBackup.run=false}}
+async function ppRestore(){const FS=NP&&NP.Filesystem;if(!FS)return 0;let n=0;
+ for(const p of prL()){try{if(await dbGet('pp_'+p.id))continue}catch(e){continue}
+  for(const d of ['DOCUMENTS','EXTERNAL']){try{const r=await FS.readFile({path:BKDIR+'/'+PPD+'/'+p.id+'.jpg',directory:d});const b=r.data instanceof Blob?r.data:await (await fetch('data:image/jpeg;base64,'+r.data)).blob();await dbPut('pp_'+p.id,b);p.bk=1;n++;break}catch(e){}}}
+ if(n)put('prog');return n}
+/* the card on the Health workout tab */
+function trCard(){const t=trd();if(t.on===false||QK)return '';const cur=prAng('f')[0],gl=prGoal('f'),p=trProg();
+ if(!cur&&!gl)return `<div class="card" style="display:block"><b style="font-weight:600">My transformation</b><small style="display:block;margin-top:4px">Add a photo of today and a picture of the body you are building. Seeing both keeps you going. Pictures stay on this phone.</small><button class="pb" style="margin-top:14px" data-a="go" data-v="s-trans">Set it up</button></div>`;
+ setTimeout(()=>ppFill(),0);
+ return `<div class="card" style="display:block"><div class="sw" style="min-height:28px"><b style="font-weight:600">My transformation</b><button class="ub" style="text-decoration:none;padding:0" data-a="go" data-v="trans">See more \u203a</button></div><div class="tr2" style="margin-top:10px">${trTile(cur,'Current',trSub(cur),'trcur','Add photo')}${trTile(gl,'Goal',trGoalKg()?trGoalKg()+' kg':'','trgoal','Add goal picture')}</div>${p&&t.wgt!==false?`<div class="pbar" style="margin-top:12px"><i style="width:${p.pct}%"></i></div><div class="sw" style="min-height:30px"><small>${p.left>0?p.left+' kg to go':'Goal weight reached'}</small><small>${p.pct}%</small></div>`:''}${t.quo!==false?`<small style="display:block;margin-top:4px;font-style:italic">\u201c${esc(trQuote())}\u201d</small>`:''}</div>`}
+/* the full screen: Progress and Photos */
+let TRT='pr',PPA='f',PPT=null;
+function trDue(){const L=prL().filter(p=>!p.g).sort((a,b)=>b.ts-a.ts);if(!L.length)return 'Start with one photo today. It is the first step of your timeline.';const d=Math.floor((Date.now()-L[0].ts)/864e5);return d>=28?'It has been '+d+' days since your last photo. A new one this month shows the real change.':''}
+function trProgress(){const t=trd(),cur=prAng('f')[0],gl=prGoal('f'),p=trProg(),due=trDue(),W=[...S.wt].sort((a,b)=>a.ts-b.ts);
+ let h=`<div class="tr2" style="margin-top:14px">${trTile(cur,'Now',trSub(cur),'trcur','Add photo')}${trTile(gl,'Future me',trGoalKg()?trGoalKg()+' kg':'','trgoal','Add goal picture')}</div>`;
+ if(t.quo!==false)h+=`<div class="card" style="display:block;text-align:center"><div class="hq" style="font-size:19px;margin:0">\u201c${esc(trQuote())}\u201d</div></div>`;
+ if(due)h+=`<small style="display:block;margin-top:12px;text-align:center">${esc(due)}</small>`;
+ if(t.wgt===false)return h;
+ if(!p)return h+`<div class="card" style="display:block"><b style="font-weight:600">Weight progress</b><small style="display:block;margin-top:4px">${trGoalKg()?'Log your weight once to see your progress here.':'Set a target weight to see how far you have come.'}</small><button class="pb" style="margin-top:12px" data-a="go" data-v="s-trans">${trGoalKg()?'Open settings':'Set target weight'}</button></div>`;
+ const tile=(l,v)=>`<div class="tile" style="padding:12px 6px;text-align:center;min-width:0"><small>${l}</small><b style="font-size:19px;margin-top:2px">${v}</b></div>`,mo=+S.set.trMonths>0?(()=>{const d=new Date(p.st.ts);d.setMonth(d.getMonth()+Math.round(+S.set.trMonths));return d.toLocaleDateString('en-IN',{month:'short',year:'numeric'})})():'';
+ h+=`<p class="lab">Weight progress</p><div class="tiles" style="gap:8px;margin-top:0">${tile('Current',p.cur+' kg')}${tile('Target',p.g+' kg')}${tile('To go',p.left>0?p.left+' kg':'Done')}</div><div class="pbar" style="margin-top:14px"><i style="width:${p.pct}%"></i></div><div class="sw" style="min-height:30px"><small>${p.pct}% of the way${mo?'  \u00b7  target '+mo:''}</small><small>from ${p.st.kg} kg</small></div>`;
+ if(W.length>1)h+=`<div class="card" style="display:block">${sparkline(W.slice(-20).map(x=>x.kg),300,70,'var(--tx)')}</div>`;
+ h+=`<p class="lab">Milestones</p>`+trMiles().map(m=>`<div class="trw"><div class="tc${m.hit?' on':''}">${m.hit?'\u2713':''}</div><div style="flex:1;min-width:0"><div>${m.v} kg</div><small>${m.lab}${m.hit?'  \u00b7  '+new Date(m.hit).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):''}</small></div></div>`).join('');
+ return h}
+function trPhotos(){const L=prAng(PPA),first=L[L.length-1],last=L[0],an=(ANG.find(x=>x[0]===PPA)||[0,''])[1],due=trDue();
+ const seg=`<div class="seg" style="margin-top:6px">${ANG.map(([k,n])=>`<button class="${PPA===k?'on':''}" data-a="tra" data-v="${k}">${n}</button>`).join('')}</div>`;
+ const cmp=L.length>=2?`<div class="tr2" style="margin-top:12px">${trTile(first,'First',trSub(first),'','')}${trTile(last,'Latest',trSub(last),'','')}</div><small style="display:block;text-align:center;margin-top:8px">${Math.max(1,Math.round((last.ts-first.ts)/864e5))} days apart${first.kg&&last.kg?'  \u00b7  '+(last.kg-first.kg>0?'+':'')+Math.round((last.kg-first.kg)*10)/10+' kg':''}</small>`:'';
+ const add=`<div class="two" style="margin-top:16px"><button class="chip" style="height:48px" data-a="ppcam">Take photo</button><button class="chip" style="height:48px" data-a="ppgal">Choose photo</button></div>`;
+ const grid=L.length?`<p class="lab">All ${an.toLowerCase()} photos</p><div class="tr3">${L.map(p=>`<button class="trt" data-a="ppview" data-v="${p.id}"><div class="trp"><img data-pp="${p.id}" alt=""></div><small>${new Date(p.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${p.kg?'  \u00b7  '+p.kg+' kg':''}</small></button>`).join('')}</div>`:`<p class="g" style="margin-top:18px">No ${an.toLowerCase()} photos yet. Use the same light, spot and pose each time so the change is easy to see.</p>`;
+ return seg+(due?`<small style="display:block;margin-top:10px;text-align:center">${esc(due)}</small>`:'')+cmp+add+grid+`<small style="display:block;margin-top:16px">Pictures stay on this phone and are never sent to the AI.</small>`}
+function trView(){setTimeout(()=>ppFill(),0);return `<div class="seg">${[['pr','Progress'],['ph','Photos']].map(([k,n])=>`<button class="${TRT===k?'on':''}" data-a="trt" data-v="${k}">${n}</button>`).join('')}</div>${TRT==='ph'?trPhotos():trProgress()}`}
+function ppShow(id){const p=prL().find(x=>x.id===id);if(!p)return;let d=$('#ppv');if(!d){d=document.createElement('div');d.id='ppv';document.body.appendChild(d)}d.className='tfs';d.style.cssText='justify-content:flex-start;overflow:auto;padding-top:calc(64px + env(safe-area-inset-top,0px));z-index:80';
+ d.innerHTML=`<button class="tfx ic" data-a="ppclose" aria-label="Close">\u00d7</button><div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;padding-bottom:40px"><img data-pp="${p.id}" alt="" style="width:100%;border-radius:14px;max-height:72vh;object-fit:contain;background:#000"><div class="sw" style="min-height:30px"><span>${new Date(p.ts).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}${p.kg?'  \u00b7  '+p.kg+' kg':''}</span><button class="pill" style="color:#e5645f" data-a="ppdel" data-v="${p.id}">Delete</button></div></div>`;ppFill(d)}
+/* Settings > Transformation */
+function transSetView(){const t=trd(),st=trStart(),slot=([a,n])=>{const g=prGoal(a);return `<div style="min-width:0;text-align:center"><div class="trp">${g?`<img data-pp="${g.id}" alt="">`:`<button class="trad" data-a="trgset" data-v="${a}">${CAM}<span>Add</span></button>`}</div><div style="margin-top:6px">${n}</div>${g?`<div class="two" style="gap:6px;margin-top:6px"><button class="chip" style="height:34px;font-size:13px" data-a="trgset" data-v="${a}">Change</button><button class="chip" style="height:34px;font-size:13px" data-a="trgrm" data-v="${a}">Remove</button></div>`:''}</div>`};
+ setTimeout(()=>ppFill(),0);
+ return `<small style="display:block;margin-bottom:4px">Keep a picture of the body you are building next to a photo of today. Partner cannot draw your future self: make the picture in ChatGPT or any image app (or choose a physique you admire) and pick it here. The front picture is the one shown on Health.</small>
+<p class="lab">Future me</p><div class="tr3">${ANG.map(slot).join('')}</div>
+<p class="lab">Your current photos</p><div class="tr3">${ANG.map(([a,n])=>{const p=prAng(a)[0];return `<div style="min-width:0;text-align:center"><div class="trp">${p?`<img data-pp="${p.id}" alt="">`:''}</div><div style="margin-top:6px">${n}</div><small style="display:block;font-size:11px;min-height:16px">${p?esc(trSub(p)):'No photo yet'}</small></div>`}).join('')}</div>
+<button class="pb" style="margin-top:12px" data-a="trphotos">Add or update photos</button>
+<p class="lab">Target</p><div class="sw" style="min-height:48px"><span>Target weight (kg)</span><input class="f" type="number" inputmode="decimal" step="0.1" style="width:96px;text-align:right;margin:0" data-f="goalWt" value="${S.set.goalWt||''}" placeholder="kg"></div>
+<div class="sw" style="min-height:48px"><span>Timeline (months)</span><input class="f" type="number" inputmode="numeric" step="1" style="width:96px;text-align:right;margin:0" data-f="trMonths" value="${S.set.trMonths||''}" placeholder="12"></div>
+${st?`<div class="sw" style="min-height:48px"><span>Journey started<small style="display:block">${new Date(st.ts).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}  \u00b7  ${st.kg} kg</small></span>${lastWt()?'<button class="pill" data-a="trrestart">Restart today</button>':''}</div>`:'<small style="display:block;margin:6px 0">Your start is set from your first weigh-in or first photo.</small>'}
+<p class="lab">Show</p>${rw('Transformation on Health','The card on the Workout tab',tgb('trtog',t.on!==false,'Transformation on Health'))}${rw('Weight progress','Bar, milestones and weight chart',tgb('trwg',t.wgt!==false,'Weight progress'))}${rw('Motivational lines','A different line each day',tgb('trqu',t.quo!==false,'Motivational lines'))}
+<small style="display:block;margin-top:14px">Update your photos about once a month to see real change. Pictures are stored on this phone only and are never sent to the AI. They are also copied once to Documents/Partner/photos, so a restore on a new phone can bring them back.</small>`}
+Object.assign(A,{
+ trt:v=>{TRT=v;render()},tra:v=>{PPA=v;render()},
+ trcur:()=>{TRT='ph';PPA='f';A.go('trans')},trgoal:()=>A.go('s-trans'),trphotos:()=>{TRT='ph';A.go('trans')},
+ ppcam:()=>{PPT={ang:PPA,goal:false};$('#ppcam').click()},ppgal:()=>{PPT={ang:PPA,goal:false};$('#ppfile').click()},
+ trgset:a=>{PPT={ang:a,goal:true};$('#ppfile').click()},
+ trgrm:async a=>{const t=trd(),id=t.goal[a];if(!id)return;if(!confirm('Remove this future picture?'))return;delete t.goal[a];await ppDrop(id);put('set');render()},
+ trrestart:()=>{const lw=lastWt();if(!lw)return;if(!confirm('Start your journey again from today at '+lw.kg+' kg? Your photos and weigh-ins stay.'))return;trd().start={ts:Date.now(),kg:lw.kg};put('set');render()},
+ trtog:()=>{const t=trd();t.on=t.on===false;put('set');render()},trwg:()=>{const t=trd();t.wgt=t.wgt===false;put('set');render()},trqu:()=>{const t=trd();t.quo=t.quo===false;put('set');render()},
+ ppview:id=>ppShow(id),
+ ppclose:()=>{const d=$('#ppv');if(d)d.remove()},
+ ppdel:async id=>{if(!confirm('Delete this photo? It cannot be brought back.'))return;const d=$('#ppv');if(d)d.remove();await ppDrop(id);render()}
+});
+{const done=async e=>{const f=(e.target.files||[])[0];e.target.value='';const t=PPT;PPT=null;if(!f||!t)return;if(await ppAdd(f,t.ang,t.goal)){toast(t.goal?'Future picture saved.':'Photo saved.');render();ppBackup().catch(()=>{})}};$('#ppcam').onchange=done;$('#ppfile').onchange=done}
+
 const ORDER=['chat','diary','habits','health','patterns','identity','spend'];let IS='patterns';
 const insSeg=()=>`<div class="seg"><button class="${V==='patterns'?'on':''}" data-a="go" data-v="patterns">Patterns</button><button class="${V==='identity'?'on':''}" data-a="go" data-v="identity">Identity</button><button class="${V==='spend'?'on':''}" data-a="go" data-v="spend">Spending</button></div>`;
 const inSet=v=>v==='settings'||!!SUB[v]||!!NEWP[v];
-const parentOf=v=>v==='settings'?null:(RET[v]&&V===v)?RET[v]:NEWP[v]?NEWP[v]:((v==='s-setup'&&!S.set.setupDone)||(v==='s-goals'&&GF))?null:v==='s-medit'?'s-mem':v==='s-rtedit'?'s-rt':v==='s-foodedit'?'s-food':v==='s-apps'&&LKD.pm==='nz'?'s-nz':(v==='s-rule'||v==='s-apps')?'s-lock':(GP[v]||'settings');
+const parentOf=v=>v==='settings'?null:(RET[v]&&V===v)?RET[v]:NEWP[v]?NEWP[v]:((v==='s-setup'&&!S.set.setupDone)||(v==='s-goals'&&GF))?null:v==='s-medit'?'s-mem':v==='s-rtedit'?'s-rt':v==='s-foodedit'?'s-food':v==='s-apps'&&LKD.pm==='nz'?'s-nz':v==='s-apps'&&LKD.pm==='dx'?'s-detox':(v==='s-rule'||v==='s-apps')?'s-lock':(GP[v]||'settings');
 let G=false,IGN=false;
 function guard(){if(QK||G)return;try{history.pushState({g:1},'');G=true}catch(e){}}
 function unguard(){if(!G)return;G=false;IGN=true;setTimeout(()=>{IGN=false},700);try{history.back()}catch(e){IGN=false}}

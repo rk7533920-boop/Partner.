@@ -24,6 +24,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -63,6 +64,9 @@ public class LockdownService extends AccessibilityService {
   private long nzOff = 0, nzAway = 0, nzLast = 0, shadeAt = 0, usedSave = 0;
   // the late-night call rule is running (see NightRule)
   private boolean nightRun = false;
+  // app detox: an app he blocked for hours or days is sent back to the home screen (see Detox)
+  private boolean dxRun = false;
+  private long dxHome = 0, dxToast = 0;
 
   private final Runnable tick = new Runnable() {
     @Override
@@ -72,7 +76,7 @@ public class LockdownService extends AccessibilityService {
       } catch (Exception e) {
         // keep ticking
       }
-      h.postDelayed(this, shown ? 1000 : (nightRun ? 2000 : 5000));
+      h.postDelayed(this, shown ? 1000 : ((nightRun || dxRun) ? 2000 : 5000));
     }
   };
 
@@ -188,6 +192,12 @@ public class LockdownService extends AccessibilityService {
     // smart banking mode: a listed bank or payment app opened, so pause this service for a while
     if (!isLocked() && sp.getBoolean("smartbank", false) && isBankPkg(p)) {
       if (LockdownAcc.startBank(this, sp.getInt("bankmin", 10))) return;
+    }
+    // app detox: a blocked app (or a Settings page that could switch the detox off) goes straight back to the home screen
+    if (!ignore.contains(p) && !p.equals(getPackageName()) && detoxHit(p, c, textOf(e))) {
+      curPkg = p;
+      fgAllowed = false;
+      return;
     }
     if (ignore.contains(p)) return;
     curPkg = p;
@@ -330,6 +340,7 @@ public class LockdownService extends AccessibilityService {
       }
       nightRun = false;
       hideOverlay();
+      detoxTick(now); // a break never pauses a detox: that would be a way around it
       lastTick = now;
       return;
     }
@@ -355,7 +366,55 @@ public class LockdownService extends AccessibilityService {
       trackUsage(now);
     }
     nudgeTick(now);
+    detoxTick(now);
     lastTick = now;
+  }
+
+  private String textOf(AccessibilityEvent e) {
+    try {
+      return e.getText() == null ? "" : e.getText().toString();
+    } catch (Exception ex) {
+      return "";
+    }
+  }
+
+  /**
+   * App detox. When the app in front is blocked, press Home and say why. Returns true when it was blocked.
+   * The same goes for the Settings pages that could switch the service off while a detox runs.
+   */
+  private boolean detoxHit(String p, String c, String t) {
+    long now = System.currentTimeMillis();
+    String msg = null;
+    long until = Detox.until(this, p);
+    if (until > now) msg = Detox.name(this, p) + " is blocked for " + Detox.left(until - now) + " more.";
+    else if (Detox.settingsGuard(this, p, c, t)) msg = "This setting is closed until your detox ends.";
+    if (msg == null) return false;
+    if (now - dxHome > 300L) {
+      dxHome = now;
+      try {
+        performGlobalAction(GLOBAL_ACTION_HOME);
+      } catch (Exception ex) {
+        // the tick tries again
+      }
+    }
+    if (now - dxToast > 3000L) {
+      dxToast = now;
+      try {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+      } catch (Exception ex) {
+        // ignore
+      }
+    }
+    return true;
+  }
+
+  /** Backup for the event: if a blocked app is still in front (the home press was missed), press Home again. */
+  private void detoxTick(long now) {
+    dxRun = Detox.any(this);
+    if (!dxRun || curPkg.isEmpty()) return;
+    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+    if (pm != null && !pm.isInteractive()) return;
+    if (Detox.until(this, curPkg) > now) detoxHit(curPkg, "", "");
   }
 
   /** The limit day changes at 5 AM, so late-night use still counts for the day that is ending. */

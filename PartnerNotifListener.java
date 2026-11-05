@@ -111,6 +111,19 @@ public class PartnerNotifListener extends NotificationListenerService {
     long now = System.currentTimeMillis();
     nightHang(sbn, now);
     if (PAY.contains(pkg)) keepPayment(sbn, pkg);
+    detoxQuiet(sbn, pkg);
+  }
+
+  /** App detox: notifications of a blocked app are removed, so they do not pull him back. Calls and ongoing notifications stay. */
+  private void detoxQuiet(StatusBarNotification sbn, String pkg) {
+    if (Detox.until(this, pkg) <= System.currentTimeMillis()) return;
+    Notification n = sbn.getNotification();
+    if (n == null || Notification.CATEGORY_CALL.equals(n.category) || sbn.isOngoing()) return;
+    try {
+      cancelNotification(sbn.getKey());
+    } catch (Exception e) {
+      // ignore
+    }
   }
 
   // ---- payments ----

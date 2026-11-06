@@ -169,7 +169,7 @@ const SPC=eval(between('const SPC=','const sT=').replace(/^const SPC=/,'').repla
 const normf=eval('('+between('const norm=','function addMem').replace(/^const norm=/,'').replace(/;\s*$/,'')+')');
 globalThis.norm=normf;globalThis.SPC=SPC;
 let S3={habits:[],hlog:{},spend:[],bore:[],set:{}};globalThis.S=S3;globalThis.votes=id=>Object.values(S3.hlog[id]||{}).filter(v=>v>0).length;
-globalThis.esc=x=>x;
+globalThis.esc=x=>x;globalThis.dayK=dayK;globalThis.hk=()=>'2026-11-06';globalThis.dayStart=ts=>{const d=new Date(ts);d.setHours(0,0,0,0);return d.getTime()};globalThis.tagOf=e=>e.tag||'Other';S3.entries=[];S3.sleep=[];
 (0,eval)(grab('const dayScore=','/* ---- Identity'));
 (0,eval)(grab('const idKey=','function idVotesView'));
 (0,eval)(grab('const boL=','const BO={'));
@@ -179,10 +179,35 @@ const j=x=>JSON.stringify(x),t3=(n,a,b)=>{if(j(a)===j(b)){ok++;console.log('PASS
 t3('graph %: calories and protein only, each capped at 100',[dayScore(3000,120,3000,120),dayScore(1500,60,3000,120),dayScore(4000,30,3000,120),dayScore(0,0,3000,120),dayScore(2400,0,3000,120),dayScore(0,60,3000,120)],[100,50,63,null,80,50]);
 t3('graph % ignores carbs and fat (healthView uses dayScore with calories and protein only)',[/dayScore\(kc\[k\],pr\[k\],MQ\(\)\.cal,MQ\(\)\.p\)/.test(src),!/kc\[k\]\/\(s\.cal\|\|1\)\*100/.test(src)],[true,true]);
 S3.habits=[{id:'a',name:'Gym',ident:'takes care of his body',c:'#fff'},{id:'b',name:'Diet',ident:'Takes care of his body.',c:'#fff'},{id:'c',name:'Read',ident:'reads daily',c:'#fff'},{id:'d',name:'Walk',ident:'',c:'#fff'}];
-S3.hlog={a:{x1:1,x2:2},b:{x1:1},c:{}};
+S3.hlog={a:{'2026-11-05':1,'2026-11-06':2},b:{'2026-11-05':1},c:{}};
 const g=idGroups();
 t3('two habits with the same identity are one identity and their votes add up',[g.length,g[0].hs.map(h=>h.name),g[0].v,g[1].v],[2,['Gym','Diet'],3,0]);
 t3('habits form offers existing identities as choices',idChoices(),['takes care of his body','reads daily']);
+/* growth: identity strength that fades, lifetime that does not, vote rules, care due dates, reflection compare */
+{const dk=n=>{const d=new Date(2026,10,6-n,12);return dayK(d)},todayK='2026-11-06',mk=(arr)=>{const m=new Map();arr.forEach(n=>m.set(dk(n),2));return m};
+ const full=Array.from({length:28},(_,i)=>i+3),f7=idStrength(mk(Array.from({length:28},(_,i)=>i)),2,todayK,7);
+ t3('strength: 28 days in a row with 2 actions a day is 100%, lifetime counts every vote',[f7.pct,f7.life,f7.today],[100,56,2]);
+ t3('strength fast (7): 2 days off = 82%, 7 days off = 50%, lifetime unchanged',[idStrength(mk(full.map(n=>n-1)),2,todayK,7).pct,idStrength(mk(Array.from({length:28},(_,i)=>i+7)),2,todayK,7).pct,idStrength(mk(Array.from({length:28},(_,i)=>i+7)),2,todayK,7).life],[82,50,56]);
+ t3('strength medium (14) fades slower than fast; slow (30) slower still',[idStrength(mk(Array.from({length:56},(_,i)=>i+14)),2,todayK,14).pct,idStrength(mk(Array.from({length:120},(_,i)=>i+30)),2,todayK,30).pct],[50,50]);
+ t3('new identity: one day = 19%, a week of days = 100%, nothing = 0%',[idStrength(mk([0]),2,todayK,7).pct,idStrength(mk([0,1,2,3,4,5,6]),2,todayK,7).pct,idStrength(new Map(),0,todayK,7).pct],[19,100,0]);
+ t3('one action identity: a single vote a day is a full day',idStrength(new Map(Array.from({length:10},(_,i)=>[dk(i),1])),1,todayK,7).pct,100);
+ t3('long gap then one vote: strength is low but not zero, and goes up with each new vote',[idStrength(new Map([[dk(60),2],[dk(0),1]]),2,todayK,7).pct<15,idStrength(new Map([[dk(60),2],[dk(0),2],[dk(1),2]]),2,todayK,7).pct>idStrength(new Map([[dk(60),2],[dk(0),2]]),2,todayK,7).pct],[true,true]);
+ t3('fade speed: Fast by default, Medium and Slow when chosen',[(()=>{S3.set={};return idH()})(),(()=>{S3.set={idFade:14};return idH()})(),(()=>{S3.set={idFade:30};return idH()})(),(()=>{S3.set={idFade:99};return idH()})()],[7,14,30,7]);
+ S3.set={};S3.entries=[{id:'1',ts:new Date(2026,10,5,9).getTime(),kind:'done',text:'Took a bath',tag:'Other'},{id:'2',ts:new Date(2026,10,6,8).getTime(),kind:'gym',text:'Chest day',dur:60},{id:'3',ts:new Date(2026,10,4,8).getTime(),kind:'plan',text:'bath later'},{id:'4',ts:new Date(2026,10,3,8).getTime(),kind:'done',text:'Nahaya aur shower',tag:'Other'}];
+ S3.looks={log:{'2026-11-06':{s1:1},'2026-11-05':{s1:0}}};S3.rlog=[{ts:new Date(2026,10,2,22).getTime()}];S3.refl=[{k:'2026-11-01'}];
+ const days=r=>[...ruleDays(r)].sort();
+ t3('vote rules: a word rule finds bath and nahaya, ignores plans',days({t:'word',v:'bath, nahaya'}),['2026-11-03','2026-11-05']);
+ t3('vote rules: a tag rule (kind gym has tag Other here, so Exercise finds nothing; Other finds the done ones)',[days({t:'tag',v:'Exercise'}),days({t:'tag',v:'other'})],[[],['2026-11-03','2026-11-05','2026-11-06']]);
+ t3('vote rules: looks counts only days with a step ticked; reading and reflection count their days',[days({t:'looks'}),days({t:'read'}),days({t:'refl'})],[['2026-11-06'],['2026-11-02'],['2026-11-01']]);
+ {S3.set={ida:[{id:'r1',k:'takescareofhisbody',t:'word',v:'bath'}]};S3.habits=[{id:'a',name:'Gym',ident:'takes care of his body',c:'#fff'}];S3.hlog={a:{'2026-11-06':1}};const g=idGroups()[0];
+  t3('identity: habit vote and rule vote add up, today is shown, labels carry through',[g.v,g.today,g.acts.map(a=>a.label),g.acts.map(a=>a.on)],[2,1,['Gym','Diary: bath'],[true,false]]);
+  S3.set={};}
+ const NOW=new Date(2026,10,6,15).getTime(),D2=n=>new Date(2026,10,6-n,10).getTime();
+ t3('care due: never done, today, in N days, due now',[carDue({ev:7,h:[]},NOW).d,carDue({ev:7,h:[D2(0)]},NOW).d,carDue({ev:7,h:[D2(2)]},NOW).d,carDue({ev:7,h:[D2(9)]},NOW).d,carDue({ev:5,h:[D2(9),D2(2)]},NOW).d],[null,7,5,-2,3]);
+ {const R=[...[5,4,5,4].map(m=>({mood:m,s:1})),...[2,3,2,3].map(m=>({mood:m,s:0}))];const c=reflCmp(R,'mood',r=>r.s?true:false);
+  t3('reflection compare: needs 3 days each side, then gives both averages',[c&&c.yes,c&&c.no,reflCmp(R.slice(0,5),'mood',r=>!!r.s)],[4.5,2.5,null]);}
+ S3.habits=[];S3.hlog={};S3.entries=[];S3.looks=null;S3.rlog=[];S3.refl=[];
+}
 t3('boredom target: first 2 min, grows after a finished sit, stays after an early stop',[(()=>{S3.bore=[];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:130,goal:2}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:600,goal:10}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:1200,goal:20}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:100,goal:5}];return boNext()})(),(()=>{S3.bore=[{ts:1,secs:10,goal:2}];return boNext()})()],[2,3,11,22,5,2]);
 const P=x=>{const r=spParse(x);return r?[r.amt,r.to]:null};
 t3('payment texts: amount and shop from bank messages',[
@@ -203,7 +228,7 @@ t3('categories by shop name, unknown names stay unsorted',[spCat('Swiggy'),spCat
 const W=(a,b)=>ntWeaker(Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'+91 98765 43210'}]},a),Object.assign({on:true,from:'23:00',to:'07:00',allow:[{n:'Papa',num:'09876543210'}]},b));
 t3('night rule: only a weaker change waits 24 hours',[W({},{}),W({},{on:false}),W({on:false},{on:false,from:'23:59'}),W({},{from:'23:30'}),W({},{from:'22:30'}),W({},{to:'06:00'}),W({},{to:'08:00'}),W({},{allow:[{n:'Papa',num:'9876543210'},{n:'Friend',num:'9000000001'}]}),W({},{allow:[]})],[false,true,false,true,false,true,false,true,false]);
 t3('night rule: wired into lockdown, calls, notifications, settings and permissions',[/setNight/.test(fs.readFileSync('LockdownPlugin.java','utf8')),/nightTick\(now\)/.test(fs.readFileSync('LockdownService.java','utf8')),/tm\.endCall\(\)/.test(fs.readFileSync('LockdownService.java','utf8')),/CallScreeningService/.test(fs.readFileSync('NightCallScreen.java','utf8')),/NotificationListenerService/.test(fs.readFileSync('PartnerNotifListener.java','utf8')),/case's-night':return nightView\(\)/.test(src),/'s-night':'Night call rule'/.test(src),/\['scr','Call screening'/.test(src),/id:760/.test(src)],[true,true,true,true,true,true,true,true,true]);
-t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend','prog'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
+t3('new data is in backup, defaults, tools and prompt',[/'wsess','audio','bore','spend','prog','books','rlog','refl','looks'\]/.test(src),/audio:\[\],bore:\[\],spend:\[\]/.test(src),/mkT\('log_spend'/.test(src)&&/mkT\('tag_spend'/.test(src),/spendApply\(out,FB,t0\)/.test(src),/spRight\(\)\.trim\(\)/.test(src),/by\('spend',x=>x\.id\)/.test(src)],[true,true,true,true,true,true]);
 
 // ---- 2026-10-30: spending tags and notes, identities, repeat callers, break mode ----
 {globalThis.put=()=>{};globalThis.pad=n=>String(n).padStart(2,'0');globalThis.dayK=dayK;
@@ -242,7 +267,7 @@ t3('break: reminders, chat nudges and error notifications are held back; mentor 
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 28 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[28,28,28,true]);
+q2('settings: 6 groups, 29 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[29,29,29,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
@@ -269,7 +294,7 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  S4.wt=[{ts:1,kg:70},{ts:2,kg:76}];S4.set.goalWt=75;p=f(S4,lastWt4,trd4).trProg();
  t4('transformation: past the goal never shows over 100 percent or negative to go',[p.pct,p.left],[100,0]);
  S4.set.goalWt=0;t4('transformation: no target weight means no progress bar',f(S4,lastWt4,trd4).trProg(),null);
- t4('detox and transformation are wired into settings, backup, native service and workflow',[/'g-self':\{[^}]*'detox'/.test(src),/'g-health':\{[^}]*'trans'/.test(src),/'wsess','audio','bore','spend','prog'\]/.test(src),/by\('prog',x=>x\.id\)/.test(src),/Detox\.java/.test(fs.readFileSync('.github/workflows/android.yml','utf8')),/Detox\.until\(this, p\)/.test(fs.readFileSync('LockdownService.java','utf8')),/detoxTick\(now\); \/\/ a break never pauses/.test(fs.readFileSync('LockdownService.java','utf8'))],[true,true,true,true,true,true,true]);
+ t4('detox and transformation are wired into settings, backup, native service and workflow',[/'g-self':\{[^}]*'detox'/.test(src),/'g-health':\{[^}]*'trans'/.test(src),/'wsess','audio','bore','spend','prog','books','rlog','refl','looks'\]/.test(src),/by\('prog',x=>x\.id\)/.test(src),/Detox\.java/.test(fs.readFileSync('.github/workflows/android.yml','utf8')),/Detox\.until\(this, p\)/.test(fs.readFileSync('LockdownService.java','utf8')),/detoxTick\(now\); \/\/ a break never pauses/.test(fs.readFileSync('LockdownService.java','utf8'))],[true,true,true,true,true,true,true]);
  t4('detox: no cancel after 10 minutes and no shortening, in the native code',[/now - o\.optLong\("from", 0\) > REGRET/.test(fs.readFileSync('Detox.java','utf8')),/if \(until > o\.optLong\("until", 0\)\) o\.put\("until", until\)/.test(fs.readFileSync('Detox.java','utf8'))],[true,true]);
 }
 

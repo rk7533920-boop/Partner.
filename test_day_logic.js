@@ -237,12 +237,12 @@ t3('night rule: repeat callers on, longer, or somebody off the never list is wea
 {const n=Date.now(),H=36e5;
 t3('break: must start 6 h or more ahead, end after start, 1 h to 90 days',[brkCheck(n+2*H,n+50*H,n)!==''&&brkCheck(n+7*H,n+50*H,n)==='',brkCheck(n+25*H,n+24*H,n)!=='',brkCheck(n+25*H,n+25.5*H,n)!=='',brkCheck(n+25*H,n+100*H,n),brkCheck(n+25*H,n+200*864e5,n)!==''],[true,true,true,'',true])}
 t3('break: only the planned hours count as a break',[(()=>{const n=Date.now();S3.set.brk={from:n-1e3,to:n+1e5};return [brkNow(),brkSched(),brkNow(n+2e5)]})(),(()=>{S3.set.brk={from:0,to:0};return [brkNow(),brkSched()]})()],[[true,true,false],[false,false]]);
-t3('break: reminders, chat nudges and error notifications are held back; mentor is told',[/function checkDue\(\)\{\s*if\(brkNow\(\)\)/.test(src),/nudgeSlots0\(now\)\.filter/.test(src),/function ntfNote\(title,body\)\{if\(brkNow\(\)\)return/.test(src),/brkPrompt\(\)\?/.test(src),/'bkErr','usSync','brk'\]/.test(src)],[true,true,true,true,true]);
+t3('break: reminders, chat nudges and error notifications are held back; mentor is told',[/function checkDue\(\)\{\s*if\(brkNow\(\)\)/.test(src),/nudgeSlots0\(now\)\.filter/.test(src),/function ntfNote\(title,body\)\{if\(brkNow\(\)\)return/.test(src),/brkPrompt\(\)\?/.test(src),/'bkErr','usSync','brk'(,'wk')?\]/.test(src)],[true,true,true,true,true]);
 }
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 27 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[27,27,27,true]);
+q2('settings: 6 groups, 28 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[28,28,28,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
@@ -271,5 +271,49 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  S4.set.goalWt=0;t4('transformation: no target weight means no progress bar',f(S4,lastWt4,trd4).trProg(),null);
  t4('detox and transformation are wired into settings, backup, native service and workflow',[/'g-self':\{[^}]*'detox'/.test(src),/'g-health':\{[^}]*'trans'/.test(src),/'wsess','audio','bore','spend','prog'\]/.test(src),/by\('prog',x=>x\.id\)/.test(src),/Detox\.java/.test(fs.readFileSync('.github/workflows/android.yml','utf8')),/Detox\.until\(this, p\)/.test(fs.readFileSync('LockdownService.java','utf8')),/detoxTick\(now\); \/\/ a break never pauses/.test(fs.readFileSync('LockdownService.java','utf8'))],[true,true,true,true,true,true,true]);
  t4('detox: no cancel after 10 minutes and no shortening, in the native code',[/now - o\.optLong\("from", 0\) > REGRET/.test(fs.readFileSync('Detox.java','utf8')),/if \(until > o\.optLong\("until", 0\)\) o\.put\("until", until\)/.test(fs.readFileSync('Detox.java','utf8'))],[true,true]);
+}
+
+/* ---- wake-up alarm and sleep schedule (added 2026-11-06) ---- */
+{const t5=(n,a,b)=>{if(JSON.stringify(a)===JSON.stringify(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',JSON.stringify(a),'want',JSON.stringify(b))}};
+ const J=fs.readFileSync('WakeAlarm.java','utf8'),JS=fs.readFileSync('WakeService.java','utf8'),JR=fs.readFileSync('WakeReceiver.java','utf8'),LSV=fs.readFileSync('LockdownService.java','utf8'),DX=fs.readFileSync('Detox.java','utf8'),WF=fs.readFileSync('.github/workflows/android.yml','utf8'),MA=fs.readFileSync('MainActivity.java','utf8');
+ const blk=between('const WK=NP','/* ---- the task screen');
+ const S5={set:{}};
+ const mk=new Function('S','pad','isNight','t12','nextAt','NP','put','warn','syncN','render','nt','ntCfg','SU',blk+';return {wk,wkBed,wkWind,wkCfg,wkWeaker,wkM,wkT,wkStats,wkDays,wkPrompt,wkItems}');
+ const W=mk(S5,pad,()=>true,x=>String(x),()=>new Date(0),null,()=>{},()=>{},()=>{},()=>{},()=>({}),()=>({}),{st:{}});
+ const w=W.wk();w.on=true;
+ t5('schedule: 7:00 wake, 8 h sleep, 15 min to fall asleep -> bed 22:45, wind-down 22:00',[W.wkBed(w),W.wkWind(w)],['22:45','22:00']);
+ w.need=7.5;w.time='06:30';t5('schedule: 6:30 wake, 7.5 h -> bed 22:45',W.wkBed(w),'22:45');
+ w.need=9;w.time='05:30';t5('schedule: bedtime wraps over midnight the right way (5:30 wake, 9 h -> 20:15)',W.wkBed(w),'20:15');
+ w.need=8;w.time='07:00';w.wind=0;t5('schedule: no wind-down means no heads-up item, bedtime item stays',W.wkItems(new Date(0).getTime()).map(x=>x.id),[781]);
+ w.wind=45;t5('reminders: wind-down and bedtime are daily and spoken',W.wkItems(0).map(x=>[x.id,x.repeat]),[[780,true],[781,true]]);
+ const a=W.wkCfg(w);
+ const ch=f=>{const b=W.wkCfg({...w,...f});return W.wkWeaker(a,b)};
+ t5('weaker (waits 24 h): off, later wake time, a day removed, easier task, fewer sums, guard off, check off, quieter, shorter wind-down',
+  [ch({on:false}),ch({time:'08:00'}),ch({days:[1,2,3,4,5]}),ch({mission:'shake'}),ch({diff:1}),ch({count:2}),ch({guard:false}),ch({check:false}),ch({vol:70}),ch({wind:15})],[true,true,true,true,true,true,true,true,true,true]);
+ t5('stronger changes apply at once: earlier wake time, harder task, more sums, longer wind-down, louder, check sooner',
+  [ch({time:'06:00'}),ch({diff:3}),ch({count:8}),ch({mission:'type'}),ch({wind:60}),ch({checkMin:5})],[false,false,false,false,false,false]);
+ t5('turning the alarm on is never weaker, while it is off nothing is weaker',[W.wkWeaker({on:false},W.wkCfg({...w,on:true})),W.wkWeaker({on:false,time:'07:00'},{on:false,time:'11:00'})],[false,false]);
+ t5('typing task: a shorter line is weaker, the same line is not',[W.wkWeaker(W.wkCfg({...w,mission:'type',text:'a long sentence that is hard to type early'}),W.wkCfg({...w,mission:'type',text:'short line here'})),W.wkWeaker(W.wkCfg({...w,mission:'type',text:'same line text'}),W.wkCfg({...w,mission:'type',text:'same line text'}))],[true,false]);
+ S5.sleep=[];const T6=(d,h,m)=>new Date(2026,10,d,h,m).getTime();
+ t5('last 7 nights: no nights logged gives an empty summary',W.wkStats(w).n,0);
+ // pure task logic
+ const tk=between('function wkProb','const WKSHAKE').replace(/function (\w+)/g,'var $1=function $1').replace(/const /g,'var ');
+ eval(tk);
+ let bad6=0;for(let d=1;d<=3;d++)for(let i=0;i<300;i++){const p=wkProb(d);const m=p.q.match(/^(\d+) ([+−×]) (\d+)(?: \+ (\d+))?$/);if(!m){bad6++;continue}const x=+m[1],y=+m[3];let r=m[2]==='+'?x+y:m[2]==='−'?x-y:x*y;if(m[4])r+=+m[4];if(r!==p.a||p.a<0||!Number.isInteger(p.a))bad6++}
+ t5('maths task: 900 sums, every answer correct, whole and never negative',bad6,0);
+ t5('typing task: capitals, spaces and punctuation do not matter, a wrong word does',[wkNorm('I wake up,  on TIME!')===wkNorm('i wake up on time'),wkNorm('i wake up late')===wkNorm('i wake up on time')],[true,false]);
+ // native rules
+ t5('native: the ring has a safety limit of 60 minutes and is then counted as missed',[/RING_MAX = 60 \* 60000L/.test(J),/System\.currentTimeMillis\(\) - r > RING_MAX/.test(J),/giveUp\(c\)/.test(J),/"wakeMiss"/.test(J)],[true,true,true,true]);
+ t5('native: no snooze anywhere, the alarm only stops through done() or the safety limit',[!/snooze/i.test(J+JS+JR),/static void done\(Context c\)/.test(J)],[true,true]);
+ t5('native: the alarm is an exact alarm-clock alarm, put back after restart and app update, and skips planned breaks',[/setAlarmClock/.test(J),/ACTION_MY_PACKAGE_REPLACED/.test(JR),/WakeAlarm\.restore/.test(fs.readFileSync('SpeakBootReceiver.java','utf8')),/NightRule\.breakNow\(c, at\)/.test(J),/NightRule\.breakNow\(c, now\)/.test(JR)],[true,true,true,true,true]);
+ t5('native: a weaker change waits and never lands during the guard window or a ring',[/wakePendAt/.test(J),/!guard\(c, now\) && p\.getLong\("wakeRing", 0\) == 0/.test(J)],[true,true]);
+ t5('native: settings cannot be changed from the page while the guard or a ring runs',[/WakeAlarm\.guard\(c, now\) \|\| WakeAlarm\.ringStart\(c\) > 0/.test(fs.readFileSync('WakePlugin.java','utf8'))],[true]);
+ t5('native: the guard closes removal pages, the power menu and the uninstall question; the shade stays shut only while ringing',[/WakeAlarm\.guard\(c, System\.currentTimeMillis\(\)\)/.test(DX),/s\.contains\("uninstall"\)/.test(DX),/WakeAlarm\.guard\(this, System\.currentTimeMillis\(\)\)/.test(LSV),/WakeAlarm\.ringing\(this\)/.test(LSV)],[true,true,true,true]);
+ t5('native: while ringing, the night lock steps aside and anything but the task or a call is sent back to the task',[/!fgAllowed && !ringNow/.test(LSV),/WakeAlarm\.openMission\(this\)/.test(LSV),/allow\.contains\(nzPkg\)/.test(LSV)],[true,true,true]);
+ t5('native: the task opens over the lock screen and keeps the screen on',[/getBooleanExtra\("wake", false\)/.test(MA),/registerPlugin\(WakePlugin\.class\)/.test(MA),/setFullScreenIntent/.test(JS),/ACQUIRE_CAUSES_WAKEUP/.test(JS),/USAGE_ALARM/.test(JS)],[true,true,true,true,true]);
+ t5('workflow: the four new Java files and their manifest entries are in the build',[/cp WakeAlarm\.java WakeReceiver\.java WakeService\.java WakePlugin\.java/.test(WF),/com\.partner\.diary\.WakeService/.test(WF),/grep -q "WakeReceiver"/.test(WF)],[true,true,true]);
+ t5('page: settings row, group, back target, title, permissions and prompt are wired',[/wake:\['Wake-up and sleep'/.test(src),/'g-self':\{[^}]*'wake'/.test(src),/'s-wake':'g-self'/.test(src),/case's-wake':return wakeView\(\)/.test(src),/\['fsi','Full-screen alarm'/.test(src),/wkPrompt\(\)\?/.test(src),/wkItems\(base\)/.test(src),/'brk','wk'\]/.test(src)],[true,true,true,true,true,true,true,true]);
+ t5('page: the task screen has no way to dismiss it other than finishing (no close or skip button)',[!/data-a="wk(close|skip|dismiss|off)"/.test(src),/id="wk"/.test(html)],[true,true]);
+ t5('page: only a finished first task logs a wake-up; a test or a check does not',[/if\(k==='wake'\)\{const r=wakeAt\(Date\.now\(\),0\)/.test(src)],[true]);
 }
 console.log(ok,'passed',bad,'failed');

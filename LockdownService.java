@@ -67,6 +67,9 @@ public class LockdownService extends AccessibilityService {
   // app detox: an app he blocked for hours or days is sent back to the home screen (see Detox)
   private boolean dxRun = false;
   private long dxHome = 0, dxToast = 0;
+  // wake-up alarm: while it rings (or the evening guard runs) the mission is kept in front and the pages that could remove it are closed (see WakeAlarm)
+  private boolean wkRun = false;
+  private long wkOpen = 0;
 
   private final Runnable tick = new Runnable() {
     @Override
@@ -76,7 +79,7 @@ public class LockdownService extends AccessibilityService {
       } catch (Exception e) {
         // keep ticking
       }
-      h.postDelayed(this, shown ? 1000 : ((nightRun || dxRun) ? 2000 : 5000));
+      h.postDelayed(this, shown ? 1000 : ((nightRun || dxRun || wkRun) ? 2000 : 5000));
     }
   };
 
@@ -180,12 +183,13 @@ public class LockdownService extends AccessibilityService {
     String p = e.getPackageName().toString();
     String c = e.getClassName() == null ? "" : e.getClassName().toString().toLowerCase(Locale.ROOT);
     if (!ignore.contains(p) || p.equals(getPackageName())) nzPkg = p;
-    if (isLocked() && protect() && (c.contains("globalactions") || c.contains("powermenu") || c.contains("shutdown") || c.contains("reboot"))) {
+    if ((c.contains("globalactions") || c.contains("powermenu") || c.contains("shutdown") || c.contains("reboot"))
+      && ((isLocked() && protect()) || WakeAlarm.guard(this, System.currentTimeMillis()))) {
       performGlobalAction(GLOBAL_ACTION_BACK);
       return;
     }
     // during a lockdown the notification shade stays shut: notifications (even inline replies) are a way around the lock
-    if (isLocked() && "com.android.systemui".equals(p) && isShade(c, e)) {
+    if ((isLocked() || WakeAlarm.ringing(this)) && "com.android.systemui".equals(p) && isShade(c, e)) {
       closeShade();
       return;
     }
@@ -339,6 +343,7 @@ public class LockdownService extends AccessibilityService {
         sp.edit().putLong("until", 0).putLong("nightUntil", 0).putLong("exitAt", 0).apply();
       }
       nightRun = false;
+      wkRun = false;
       hideOverlay();
       detoxTick(now); // a break never pauses a detox: that would be a way around it
       lastTick = now;
@@ -358,8 +363,10 @@ public class LockdownService extends AccessibilityService {
       until = 0;
       exitAt = 0;
     }
+    boolean ringNow = WakeAlarm.ringing(this);
     if (until > now) {
-      if (!fgAllowed) showOverlay(now, until, exitAt);
+      // while the wake-up alarm rings the night lock steps aside, so the mission can be done; everything else stays out
+      if (!fgAllowed && !ringNow) showOverlay(now, until, exitAt);
       else hideOverlay();
     } else {
       hideOverlay();
@@ -367,7 +374,23 @@ public class LockdownService extends AccessibilityService {
     }
     nudgeTick(now);
     detoxTick(now);
+    wakeTick(now);
     lastTick = now;
+  }
+
+  /**
+   * Wake-up alarm. While it rings, anything but the mission (and calls) is sent back to the mission. Outside the ring the
+   * service only remembers that the evening guard is running, so it ticks every 2 seconds and closes the removal pages.
+   */
+  private void wakeTick(long now) {
+    WakeAlarm.applyPending(this, now);
+    boolean ring = WakeAlarm.ringing(this);
+    wkRun = ring || WakeAlarm.guard(this, now);
+    if (!ring) return;
+    if (nzPkg.equals(getPackageName()) || allow.contains(nzPkg)) return;
+    if (now - wkOpen < 2500L) return;
+    wkOpen = now;
+    WakeAlarm.openMission(this);
   }
 
   private String textOf(AccessibilityEvent e) {
@@ -387,7 +410,7 @@ public class LockdownService extends AccessibilityService {
     String msg = null;
     long until = Detox.until(this, p);
     if (until > now) msg = Detox.name(this, p) + " is blocked for " + Detox.left(until - now) + " more.";
-    else if (Detox.settingsGuard(this, p, c, t)) msg = "This setting is closed until your detox ends.";
+    else if (Detox.settingsGuard(this, p, c, t)) msg = Detox.any(this) ? "This setting is closed until your detox ends." : "This is closed until your wake-up task is done.";
     if (msg == null) return false;
     if (now - dxHome > 300L) {
       dxHome = now;

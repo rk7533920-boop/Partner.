@@ -105,9 +105,14 @@ input.f,textarea.f,select.f{width:100%;height:46px;border:0;border-radius:14px;b
 .gt b{font-size:16px;font-weight:600}.gt small{font-size:12.5px;color:var(--mu);line-height:1.35}
 .gt em{margin-top:auto;font-style:normal;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mu)}
 .lk2{background:none;border:0;color:var(--mu);font:inherit;font-size:13px;min-height:44px;padding:0 2px}
+.wks{position:fixed;inset:0;z-index:95;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;align-items:center;padding:calc(28px + env(safe-area-inset-top,0)) 22px calc(22px + env(safe-area-inset-bottom,0));overflow:auto;animation:fin .2s}
+.wkc{font-family:Georgia,serif;font-size:56px;margin-top:8px}.wkh{font-size:13px;letter-spacing:1.6px;text-transform:uppercase;color:var(--mu);margin-top:6px}
+.wkq{font-family:Georgia,serif;font-size:46px;text-align:center;margin:8px 0}.wka{font-size:34px;min-height:48px;border-bottom:1px solid var(--ln);min-width:160px;text-align:center;margin:6px 0 10px}
+.wkp{text-align:center;margin:6px 0 14px}.wkk{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:320px}.wkk button{height:58px;border-radius:14px;border:1px solid var(--ln);font-size:22px}
+.wke{margin-top:auto;padding-top:18px;color:var(--mu);font-size:13px}.wkbad{animation:wkb .35s}@keyframes wkb{0%,100%{transform:none}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 </style></head><body>
 <div id="warn"></div><div id="top"></div><main id="main"></main><div id="foot"></div><div id="sheet"></div><div id="toast"></div>
-<div id="ring"></div>
+<div id="ring"></div><div id="wk"></div>
 <input type="file" id="file" accept="application/json,.json" multiple hidden>
 <input type="file" id="wfile" accept=".json,.txt,text/plain,application/json" hidden>
 <input type="file" id="afile" accept="audio/*" hidden>
@@ -216,7 +221,7 @@ async function boot(){
   if(!QK&&!S.entries.length&&!S.chat.length)await migrate();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
  catch(e){warn('Could not open storage. Data will be lost after this session. ('+((e&&e.message)||e)+')')}
  if(QK){render();startC();return}
- ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();brkPush();
+ ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();brkPush();wkSync().then(()=>{wkCheck();syncN()});
  if(!NP&&'serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
@@ -514,7 +519,7 @@ ${CALTXT||'(not available)'}
 ${rv?(RVD?'THIS REVIEW IS FOR AN EARLIER DAY, '+new Date(RVD.a).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+'. He is doing it late (he slept early or forgot). Review that day only, say which day it is, and do not judge today.\nFull diary of that day (every entry, phone and YPT usage, sleep):\n'+diaryText(RVD.a-1,RVD.b)+'\n':'Full diary of today for the review (every entry, phone and YPT usage, sleep):\n'+diaryText(st-1)+'\n'):''}Current date (his day starts when he wakes): ${tk}, ${wd}. Open targets (refer by T number):
 ${tl}
 Targets done today: ${td}
-Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}${dxPrompt()?'\n'+dxPrompt():''}
+Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}${dxPrompt()?'\n'+dxPrompt():''}${wkPrompt()?'\n'+wkPrompt():''}
 ${S.routines.length?'Routines (refer by RT number; a routine marked RUNNING is happening now):\n'+rtText()+'\n':''}${(TMREF=S.timers.filter(t=>t.end>Date.now()),TMREF.length)?'Timers running (refer by TM number): '+TMREF.map((t,i)=>'TM'+(i+1)+' '+t.text+' (ends '+t12(t.end)+')').join('; ')+'\n':''}His usual durations (reference only): ${usual()||'(not enough data)'}
 ${(HREF=S.habits.slice(0,30),HREF.length)?'Habits he is building (refer by H number; each one done is a vote for his identity):\n'+HREF.map((h,i)=>'H'+(i+1)+' '+h.name+' | cue: '+(whenText(h)||'none')+(h.step?' | smallest step: '+h.step:'')+(h.mins?' | '+h.mins+' min':'')+(h.where?' | where: '+h.where:'')+(h.reward?' | reward: '+h.reward:'')+' | '+(hl(h.id,tk)>1?'done today':hl(h.id,tk)===1?'tiny step today':'not yet today')).join('\n')+'\n':''}
 Gym status:${lastWt()?' Last weigh-in: '+lastWt().kg+' kg ('+ago(lastWt().ts)+').':' He has not logged his weight yet.'}${S.set.goalWt?' Goal weight: '+S.set.goalWt+' kg.':''} Gym goal: ${S.set.gymDays||4} days a week. If the last weigh-in is over 7 days old, remind him once to weigh in.${S.gym.length?'\nGym history per exercise:\n'+exPrompt():''}${QK?'\nThe phone is locked, so it may not be him. Log only what he says now and answer in one short sentence. Never reveal, summarise or read out anything stored or from earlier, such as memory, diary, targets, goals, reviews or screen time. If asked, tell him to open the full app.':''}`;
@@ -790,7 +795,7 @@ function checkDue(){
  if(n>=rt.getTime()&&S.set.revAsked!==dayK(n)){S.set.revAsked=dayK(n);S.chat.push({id:'r'+n,role:'assistant',c:'Time for your daily review. Shall we go through today? Tap Start now in the Today tab.',ts:n});put('set');ch=true;if(n-rt.getTime()<6e5)say.push('डेली रिव्यू का टाइम। आज का दिन देखें?')}
  if(ch){put('chat');put('fu');if(V==='chat')render()}
  if(say.length&&S.set.nspeak!==false&&!(NP&&NP.Speaker&&NP.Speaker.schedule)&&!cv.on&&!busy)speak(say.join('. '),()=>{if(fq)askListen(300)});else if(fq&&NP&&NP.Speaker&&NP.Speaker.schedule)askListen(fr?9000:800)}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){checkQuick();if(V==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});mergeInbox();checkDue();syncN().then(keepBtn);syncUsage();{const b4=JSON.stringify(LKD.st);lkSync().then(()=>{if((V==='s-lock'||V==='s-setup')&&JSON.stringify(LKD.st)!==b4)render()})}if(V==='s-us')usCheck();if(V==='s-night')suStatus().then(()=>{if(V==='s-night')render()});spSync(false).then(n=>{if(n&&V==='spend')render()});if(V==='spend')spStatus().then(()=>{if(V==='spend')render()});if(SU.on&&SU.wait){SU.wait=null;suRun()}else if(V==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){checkQuick();if(V==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});mergeInbox();checkDue();wkCheck();syncN().then(keepBtn);syncUsage();{const b4=JSON.stringify(LKD.st);lkSync().then(()=>{if((V==='s-lock'||V==='s-setup')&&JSON.stringify(LKD.st)!==b4)render()})}if(V==='s-us')usCheck();if(V==='s-night')suStatus().then(()=>{if(V==='s-night')render()});spSync(false).then(n=>{if(n&&V==='spend')render()});if(V==='spend')spStatus().then(()=>{if(V==='spend')render()});if(SU.on&&SU.wait){SU.wait=null;suRun()}else if(V==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})}});
 async function hwSync(){if(!HW)return;try{HWS.st=await HW.status()}catch(e){}}
 function hwKeep(){if(S.set.hotword&&HW&&HW.setEnabled)HW.setEnabled({enabled:true}).catch(()=>{})}
 function hwOpen(f){if(!HW){warn('This works only in the APK.');return}HW[f]().catch(e=>warn('Could not open the Android page: '+((e&&e.message)||e)))}
@@ -828,6 +833,7 @@ async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&N
    idSlots().forEach((x,i)=>items.push({id:700+i,at:nextAt(x.from,base).getTime(),title:'Partner',body:idLine(x),text:idLine(x),lang:'en-IN',repeat:true}));
    nudgeSlots(Date.now()).filter(z=>z.at>base).forEach((z,i)=>items.push({id:500+i,at:z.at,title:'Partner',body:z.body,text:z.text,lang:'hi-IN'}));
    items.push(...ntItems(base));
+   items.push(...wkItems(base));
    items.push(...tI);
    await ensureAudio(SP,items.filter(i=>!i.ring));
    await SP.schedule({items});
@@ -839,7 +845,7 @@ async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&N
   S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>list.push({id:300+i,title:'Partner',body:habitMsg(h),schedule:{at:nextAt(h.anchor,base),repeats:true,every:'day',allowWhileIdle:true}}));
   idSlots().forEach((x,i)=>list.push({id:700+i,title:'Partner',body:idLine(x),schedule:{at:nextAt(x.from,base),repeats:true,every:'day',allowWhileIdle:true}}));
   nudgeSlots(Date.now()).filter(z=>z.at>base).forEach((z,i)=>list.push({id:500+i,title:'Partner',body:z.body,schedule:{at:new Date(z.at),allowWhileIdle:true}}));
-  ntItems(base).forEach(x=>list.push({id:x.id,title:x.title,body:x.body,schedule:{at:new Date(x.at),repeats:true,every:'day',allowWhileIdle:true}}));
+  ntItems(base).concat(wkItems(base)).forEach(x=>list.push({id:x.id,title:x.title,body:x.body,schedule:{at:new Date(x.at),repeats:true,every:'day',allowWhileIdle:true}}));
   await LN.schedule({notifications:list})}catch(e){fail('Could not schedule reminders: '+((e&&e.message)||e),{where:'Reminders',bg:true})}}
 
 /* ---------- voice ---------- */
@@ -890,15 +896,15 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Da
 /* ---------- views ---------- */
 const greet=()=>{const h=new Date().getHours();return h<5?'It is very late.':h<12?'Good morning.':h<17?'Good afternoon.':h<22?'Good evening.':'Good night.'};
 const row=(a,b,v)=>`<button class="r" data-a="go" data-v="${v}"><span><b>${a}</b><small>${esc(b)}</small></span><i>›</i></button>`;
-const SUB={'s-us':'Screen time','s-night':'Night call rule','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-detox':'App detox','s-trans':'Transformation','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
+const SUB={'s-us':'Screen time','s-night':'Night call rule','s-wake':'Wake-up and sleep','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-detox':'App detox','s-trans':'Transformation','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
 /* ---- Settings home: 6 groups, search, "needs you" (redesign approved 2026-10-29) ---- */
 const GRPS={'g-mentor':{t:'Mentor',d:'How Partner talks and listens.',k:['tone','voice','mtog','mem','key']},
  'g-health':{t:'Health and food',d:'Targets, workouts, photos and your food list.',k:['goals','trans','wplan','food','mtxt']},
  'g-daily':{t:'Daily plan',d:'Your routines and your ideal day.',k:['rt','ideal','cont','aud']},
- 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['lock','detox','night','nz','us','brk']},
+ 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['wake','lock','detox','night','nz','us','brk']},
  'g-phone':{t:'Phone',d:'What Partner may do on this phone.',k:['perm','notif','acc']},
  'g-data':{t:'Data and app',d:'Backups, reports and app behaviour.',k:['bak','ana','err','swtog']}};
-const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-detox':'g-self','s-trans':'g-health','s-night':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
+const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-lock':'g-self','s-detox':'g-self','s-trans':'g-health','s-night':'g-self','s-wake':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
 const RET={};let SQ='',HLG=false,WXALL=false,BKO='';
 const foodSum=()=>S.foods.length+(S.foods.length===1?' food':' foods')+(S.foods.some(f=>f.nw)?'  ·  '+S.foods.filter(f=>f.nw).length+' to check':'');
 const voiceSum=()=>natP()==='gg'?'Google voice':natP()==='el'?'ElevenLabs voice':natP()==='of'?'Offline voice':'Phone voice';
@@ -907,6 +913,7 @@ const gSum={'g-mentor':()=>({gentle:'Gentle',strict:'Strict',brutal:'Brutally ho
  'g-phone':()=>PH?(paS().alarm?'Alarms on':'Alarms off')+'  ·  '+(paS().cal?'Calendar on':'Calendar off'):'APK only','g-data':()=>bkSum()};
 /* each entry: [title, search words, page it opens (null = a switch), html of the row] */
 function SETR(k){const s=S.set;return({
+ wake:['Wake-up and sleep','wake up alarm alarmy sleep schedule bedtime mission snooze uninstall guard morning discipline','s-wake',()=>row('Wake-up and sleep',wkSum(),'s-wake')],
  night:['Night call rule','night call phone locked calls bedtime sleep repeat callers','s-night',()=>row('Night call rule',ntSum(),'s-night')],
  brk:['Break mode','break mode pause stop switch off app busy holiday vacation travel exam away schedule','s-brk',()=>row('Break mode',brkSum(),'s-brk')],
  perm:['Permissions','permissions allow access microphone calendar usage lockdown notifications','s-setup',()=>row('Permissions',NP?'Notifications, mic, calendar, usage, lockdown':'APK only','s-setup')],
@@ -1117,6 +1124,7 @@ const SUS=[['notif','Notifications','Reminders and the lock screen button',()=>N
  ['mic','Microphone','Talk to Partner by voice',()=>NP.SpeechRecognition.requestPermissions()],
  ['cal','Calendar and alarms','Add events and alarms when you ask',async()=>{const r=await PH.requestCalendar();if(r&&r.granted){paS().cal=true;paS().alarm=true;put('set')}}],
  ['us','Screen time','Usage access, opens an Android page',()=>US.openSettings(),1],
+ ['fsi','Full-screen alarm','Lets the wake-up task open over the lock screen, opens an Android page',()=>WK.openFullScreenSettings(),1],
  ['exact','Alarms and reminders','So reminders and timers ring on time, opens an Android page',()=>NP.Speaker.requestExact(),1],
  ['acc','Accessibility','For lockdown, opens an Android page',()=>LK.openAccessibility(),1],
  ['adm','Prevent uninstall','Device admin, opens an Android page',()=>LK.requestAdmin(),1],
@@ -1129,6 +1137,7 @@ async function suStatus(){const st={},LN=NP&&NP.LocalNotifications,SR=NP&&NP.Spe
  try{if(SR&&SR.checkPermissions)st.mic=(await SR.checkPermissions()).speechRecognition==='granted'}catch(e){}
  try{if(PH&&PH.hasCalendar)st.cal=!!(await PH.hasCalendar()).granted}catch(e){}
  try{if(US)st.us=!!(await US.hasAccess()).granted}catch(e){}
+ try{if(NP&&NP.Wake&&NP.Wake.status)st.fsi=!!(await NP.Wake.status()).fsi}catch(e){}
  try{if(NP&&NP.Speaker&&NP.Speaker.canExact)st.exact=!!(await NP.Speaker.canExact()).value}catch(e){}
  try{if(LK){const o=await LK.status();LKD.st=o;st.acc=!!(o&&o.accessibility);st.adm=!!(o&&o.admin)}}catch(e){}
  try{if(SPN){const o=await SPN.status();SPS=o;st.sms=!!o.sms;st.cn=!!o.calls;st.nl=!!o.listener;if(o.sdk>=29)st.scr=!!o.screening}}catch(e){}
@@ -1929,7 +1938,7 @@ function tfTick(){if(!TF)return;const t=S.timers.find(x=>x.id===TF);if(!t){TF=''
 function tfRelease(){try{TFW&&TFW.release()}catch(e){}TFW=null}
 A.tfull=id=>{TF=id;tfDraw()};A.tclose=()=>{TF='';tfRelease();$('#ring').innerHTML=''};
 A.tdone=id=>{const t=S.timers.find(x=>x.id===id);TF='';tfRelease();$('#ring').innerHTML='';if(!t)return;if(t.oid&&S.open.some(o=>o.id===t.oid))openDone(t.oid);else{S.timers=S.timers.filter(x=>x.id!==id);put('timers');syncN();render()}};
-function newMain2(){switch(V){case's-detox':return detoxView();case's-trans':return transSetView();case'trans':return trView();case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-brk':return breakView();default:return null}}
+function newMain2(){switch(V){case's-detox':return detoxView();case's-trans':return transSetView();case'trans':return trView();case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-wake':return wakeView();case's-brk':return breakView();default:return null}}
 
 /* ---------- failures, timers, backup, goals, navigation ---------- */
 const trimChat=()=>{const c=Date.now()-60*864e5;S.chat=S.chat.filter(m=>m.ts>c);if(S.chat.length>4000)S.chat=S.chat.slice(-4000)};
@@ -1979,7 +1988,7 @@ function mergeBackup(j,c){const by=(k,key)=>{const have=new Set(S[k].map(key));l
  Object.entries(j.hlog||{}).forEach(([id,m])=>{S.hlog[id]={...m,...(S.hlog[id]||{})}});Object.entries(j.rrun||{}).forEach(([k,m])=>{S.rrun[k]={...m,...(S.rrun[k]||{})}});
  if(j.ana&&(!S.ana||j.ana.ts>S.ana.ts))S.ana=j.ana;
  S.usage.sort((a,b)=>a.s-b.s);S.chat.sort((a,b)=>a.ts-b.ts);
- if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync','brk'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
+ if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync','brk','wk'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
   if(cur.lk)ns.lk=cur.lk;['key','evKey','ggKey'].forEach(k=>{ns[k]=j.set[k]||cur[k]||''});S.set=ns}
  return c}
 async function importFiles(list){let ok=0;const bad=[],parsed=[],c={};
@@ -2348,6 +2357,147 @@ Object.assign(A,{
  brend:async()=>{const b=brk();if(!b)return;const t=new Date(($('#bre')||{}).value).getTime(),n=Date.now();if(!(t>0)){toast('Pick the new end.');return}if(t>=b.to){toast('A break can only be made shorter. To go longer, plan a new one.',0,4200);return}if(t<=Math.max(n,b.from)+6e4){toast('Pick an end after now. To stop it now, use the switch.',0,4200);return}await brkSet(b.from,t);toast('Break shortened.')}
 });
 
+/* ---- Wake-up and sleep schedule: one wake time, a bedtime worked out from the sleep he needs, an alarm that only stops with a task, and a guard against removing it ----
+   The alarm itself lives in the phone (WakeAlarm.java); this block holds the schedule, the settings page and the task screen. */
+const WK=NP&&NP.Wake,WKD={st:null},MISS=['math','type','shake'];
+let WKS=null;
+const wkM=t=>{const [h,m]=String(t||'0:0').split(':');return(+h||0)*60+(+m||0)};
+const wkT=m=>{m=((Math.round(m)%1440)+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
+const wkF=t=>t12(new Date('2000-01-01T'+t+':00'));
+const wkEv=m=>(m-720+1440)%1440;
+const wk=()=>{const s=S.set;if(!s.wk||typeof s.wk!=='object')s.wk={on:false};const w=s.wk;
+ if(!w.time)w.time='07:00';if(!Array.isArray(w.days)||!w.days.length)w.days=[0,1,2,3,4,5,6];if(!MISS.includes(w.mission))w.mission='math';
+ if(!(+w.diff>0))w.diff=2;if(!(+w.count>0))w.count=w.mission==='shake'?30:3;if(!w.text)w.text='I wake up on time because I keep my word to myself.';
+ if(!(+w.vol>0))w.vol=100;if(w.guard===undefined)w.guard=true;if(w.check===undefined)w.check=true;if(!(+w.checkMin>0))w.checkMin=8;
+ if(!(+w.need>0))w.need=8;if(w.wind===undefined||!(+w.wind>=0))w.wind=45;if(w.windOn===undefined)w.windOn=true;return w};
+/* bedtime = wake time minus the sleep he needs minus 15 minutes to fall asleep; the wind-down starts before that */
+const wkBed=w=>wkT(wkM(w.time)-Math.round((+w.need||8)*60)-15);
+const wkWind=w=>wkT(wkM(wkBed(w))-(+w.wind>=0?+w.wind:45));
+const wkCfg=w=>({on:!!w.on,time:w.time||'07:00',days:(w.days&&w.days.length?w.days:[0,1,2,3,4,5,6]).slice().sort((a,b)=>a-b),mission:MISS.includes(w.mission)?w.mission:'math',diff:+w.diff||2,count:+w.count||3,text:String(w.text||''),vol:+w.vol||100,guard:w.guard!==false,guardFrom:wkWind(w),check:w.check!==false,checkMin:+w.checkMin||8,need:+w.need||8,wind:+w.wind>=0?+w.wind:45,windOn:w.windOn!==false});
+/* weaker = off, a later wake time, a day taken out, an easier task, fewer repeats, a shorter sentence, guard or check off, a longer wait for the check, a quieter alarm, or a later wind-down. A weaker change waits 24 hours. */
+function wkWeaker(a,b){if(!a.on)return false;if(!b.on)return true;
+ if(wkM(b.time)>wkM(a.time))return true;if((a.days||[]).some(d=>!(b.days||[]).includes(d)))return true;
+ const rk={shake:1,math:2,type:3};if((rk[b.mission]||0)<(rk[a.mission]||0))return true;
+ if(b.mission===a.mission){if(b.mission==='math'&&+b.diff<+a.diff)return true;if(b.mission!=='type'&&+b.count<+a.count)return true;if(b.mission==='type'&&String(b.text||'').length<String(a.text||'').length)return true}
+ if(a.guard!==false&&b.guard===false)return true;if(a.check!==false&&b.check===false)return true;if(b.check!==false&&+b.checkMin>+a.checkMin)return true;
+ if(+b.vol<+a.vol)return true;return wkEv(wkM(b.guardFrom))>wkEv(wkM(a.guardFrom))}
+const wkLocked=()=>!!(WKD.st&&(WKD.st.guard||+WKD.st.ring>0));
+async function wkPush(){if(!WK)return;const w=wk();try{await WK.set({cfg:JSON.stringify(wkCfg(w)),pend:w.pend?JSON.stringify(w.pend):'',pendAt:w.pendAt||0})}catch(e){const m=String((e&&e.message)||e);if(!/Wake-up is active/i.test(m))warn('Could not save the wake-up alarm: '+m)}}
+async function wkEdit(fn){if(wkLocked()){warn('The wake-up guard is running (from your wind-down time until the task is done). Settings are locked until then.');return false}
+ const w=wk(),cur=wkCfg(w),base=w.pend||cur,nw=wkCfg(fn(JSON.parse(JSON.stringify(base)))),wait=wkWeaker(cur,nw);
+ if(wait){w.pend=nw;w.pendAt=Date.now()+864e5}else{Object.assign(w,nw);w.pend=null;w.pendAt=0}
+ put('set');await wkPush();syncN();render();return wait}
+/* the phone keeps the real settings: take them back from it (a restored backup or a cleared page can never weaken the alarm) */
+function wkFromStatus(o){WKD.st=o;if(!o)return;const w=wk();if(o.cfg){try{Object.assign(w,JSON.parse(o.cfg))}catch(e){}try{w.pend=o.pend?JSON.parse(o.pend):null}catch(e){w.pend=null}w.pendAt=+o.pendAt||0;put('set')}else if(w.on)wkPush()}
+async function wkSync(){if(!WK)return null;try{const o=await WK.status();wkFromStatus(o);return o}catch(e){return null}}
+const wkSum=()=>{const w=wk();if(!WK)return w.on?'Schedule only (APK rings)':'APK only';return w.on?'On, '+wkF(w.time)+', '+({math:'maths',type:'typing',shake:'shake'}[w.mission])+' task':'Off'};
+const wkDays=w=>{const d=w.days||[];return d.length===7?'every day':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].filter((x,i)=>d.includes(i)).join(', ')};
+/* last 7 nights against the plan */
+function wkStats(w){const tg=wkM(w.time),nights=S.sleep.filter(x=>x.end&&x.start&&isNight(x)).sort((a,b)=>b.end-a.end).slice(0,7).reverse();
+ const rows=nights.map(x=>{const d=new Date(x.end),m=d.getHours()*60+d.getMinutes();return{end:x.end,h:(x.end-x.start)/36e5,dev:m-tg,on:m-tg<=15}});
+ const n=rows.length;return{rows,n,avgH:n?rows.reduce((a,r)=>a+r.h,0)/n:0,onTime:rows.filter(r=>r.on).length,avgW:n?Math.round(rows.reduce((a,r)=>a+(new Date(r.end).getHours()*60+new Date(r.end).getMinutes()),0)/n):0}}
+function wkPrompt(){const w=wk();if(!w.on)return '';const st=wkStats(w);
+ return 'SLEEP PLAN (he set it himself and you cannot change it): wake-up '+wkF(w.time)+' '+wkDays(w)+', bed by '+wkF(wkBed(w))+' for about '+w.need+' h of sleep, wind-down from '+wkF(wkWind(w))+'. The alarm only stops with a task ('+({math:'maths',type:'typing a sentence',shake:'shaking the phone'}[w.mission])+') and has no snooze'+(w.check?'; a few minutes later it asks if he is really up':'')+'.'+(st.n?' Last '+st.n+' nights: average sleep '+st.avgH.toFixed(1)+' h, woke on time '+st.onTime+' of '+st.n+'.':'')+' Help him keep to it. Never offer to move, snooze or switch off the alarm; if he wants to skip, remind him it is his own plan. A planned Break (Settings, Self-control, at least 6 h ahead) is the only honest way to take a day off.'}
+/* spoken reminders: wind-down, then bedtime. Daily. */
+function wkItems(base){const w=wk();if(!w.on||!w.windOn)return [];const bed=wkBed(w),wd=wkWind(w),a=[];
+ if(+w.wind>0)a.push({id:780,at:nextAt(wd,base).getTime(),title:'Partner',body:'Wind-down time. Bed at '+wkF(bed)+'. Phone away, lights low.',text:'सोने का समय पास आ रहा है। फोन रख दो और लाइट धीमी कर दो।',lang:'hi-IN',repeat:true});
+ a.push({id:781,at:nextAt(bed,base).getTime(),title:'Partner',body:'Bedtime. Lie down now. Your wake-up task is at '+wkF(w.time)+'.',text:'सोने का समय हो गया। अभी लेट जाओ। सुबह का अलार्म लगा है।',lang:'hi-IN',repeat:true});return a}
+
+/* ---- the task screen (full screen, over everything) ---- */
+function wkProb(d){const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1));let q,a;
+ if(d<=1){const x=r(12,59),y=r(11,49);if(Math.random()<.5){q=x+' + '+y;a=x+y}else{const p=Math.max(x,y),s=Math.min(x,y);q=p+' − '+s;a=p-s}}
+ else if(d===2){const t=r(0,2);if(t===0){const x=r(120,899),y=r(120,899);q=x+' + '+y;a=x+y}else if(t===1){const x=r(12,39),y=r(3,9);q=x+' × '+y;a=x*y}else{const x=r(300,999),y=r(101,299);q=x+' − '+y;a=x-y}}
+ else{const x=r(12,29),y=r(6,13),z=r(11,89);q=x+' × '+y+' + '+z;a=x*y+z}
+ return{q,a}}
+const wkNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9\u0900-\u097f]+/g,' ').trim();
+const WKSHAKE=22;
+function wkClock(){return new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',hour12:true}).toUpperCase()}
+function wkOpen(kind,ring){const w=wk();wkStop();
+ const chk=kind==='check';WKS={kind,ring:ring||0,m:chk?'math':w.mission,diff:chk?1:(+w.diff||2),n:chk?1:(w.mission==='shake'?(+w.count||30):(+w.count||3)),i:0,ans:'',text:w.text,lt:0,seen:0,busy:false,pr:null};
+ WKS.pr=wkProb(WKS.diff);WKS.iv=setInterval(wkTick,4000);if(WKS.m==='shake')wkMotionOn();wkDraw()}
+function wkStop(){if(!WKS)return;clearInterval(WKS.iv);clearTimeout(WKS.mt);if(WKS.mh)window.removeEventListener('devicemotion',WKS.mh);WKS=null}
+function wkClose(){wkStop();const e=$('#wk');if(e)e.innerHTML=''}
+function wkMotionOn(){WKS.mh=e=>{if(!WKS||WKS.m!=='shake')return;const g=e.accelerationIncludingGravity;if(!g||(g.x==null&&g.y==null&&g.z==null))return;WKS.seen=1;const m=Math.sqrt((g.x||0)**2+(g.y||0)**2+(g.z||0)**2),t=Date.now();if(m>WKSHAKE&&t-WKS.lt>300){WKS.lt=t;WKS.i++;if(WKS.i>=WKS.n)wkFinish();else wkUpd()}};
+ window.addEventListener('devicemotion',WKS.mh);WKS.mt=setTimeout(()=>{if(WKS&&WKS.m==='shake'&&!WKS.seen)wkFallback()},4000)}
+/* a task that cannot be done on this phone (no motion sensor) must never trap him: it turns into a maths task */
+function wkFallback(){if(!WKS)return;if(WKS.mh)window.removeEventListener('devicemotion',WKS.mh);WKS.mh=null;WKS.m='math';WKS.n=3;WKS.i=0;WKS.diff=2;WKS.pr=wkProb(2);WKS.note='This phone gave no motion data, so you get a maths task instead.';wkDraw()}
+async function wkTick(){if(!WKS)return;const t=$('#wkc');if(t)t.textContent=wkClock();if(WK&&WKS.ring){const o=await wkSync();if(WKS&&o&&!(+o.ring>0)){wkClose();render()}}}
+function wkDots(){return Array.from({length:Math.min(WKS.n,10)},(_,i)=>`<i style="width:9px;height:9px;border-radius:50%;display:inline-block;margin:0 4px;background:${WKS.m==='shake'?(i<Math.floor(WKS.i/WKS.n*Math.min(WKS.n,10))?'var(--tx)':'var(--ln)'):(i<WKS.i?'var(--tx)':'var(--ln)')}"></i>`).join('')}
+function wkDraw(){if(!WKS)return;const k=WKS.kind,chk=k==='check',tit=chk?'Are you awake?':k==='test'?'Test of your wake-up task':'Wake up',sub=chk?'Solve this one to show you are up.':'Do the task to stop the alarm. There is no snooze.';let body='';
+ if(WKS.m==='math')body=`<div class="wkq" id="wkq">${esc(WKS.pr.q)}</div><div class="wka" id="wka">${esc(WKS.ans)||'&nbsp;'}</div><div class="wkp" id="wkd">${wkDots()}</div><div class="wkk">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-a="wkkey" data-v="${n}">${n}</button>`).join('')}<button data-a="wkkey" data-v="del" aria-label="Delete">⌫</button><button data-a="wkkey" data-v="0">0</button><button data-a="wkkey" data-v="ok" style="background:var(--tx);color:var(--bg)">OK</button></div>`;
+ else if(WKS.m==='type')body=`<div class="wkq" style="font-size:20px;line-height:1.45">${esc(WKS.text)}</div><textarea id="wkt" class="f" rows="3" placeholder="Type it here exactly" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onpaste="return false" ondrop="return false" oncut="return false" style="margin-top:16px;width:100%"></textarea><div class="wkp" id="wkd" style="margin-top:10px"><small id="wkt2">Pasting is switched off.</small></div>`;
+ else body=`<div class="wkq" id="wkq" style="font-size:72px">${WKS.i}<small style="font-size:22px;color:var(--mu)"> / ${WKS.n}</small></div><div class="wkp" id="wkd">${wkDots()}</div><small style="margin-top:14px;display:block;text-align:center">Shake the phone hard, ${WKS.n} times.</small>`;
+ $('#wk').innerHTML=`<div class="wks"><div class="wkc" id="wkc">${wkClock()}</div><div class="wkh">${tit}</div><small style="display:block;text-align:center;margin:4px 0 18px">${esc(WKS.note||sub)}</small>${body}<a class="wke" href="tel:112">Emergency call</a></div>`;
+ if(WKS.m==='type'){const t=$('#wkt');if(t)t.addEventListener('input',()=>{if(!WKS)return;const ok=wkNorm(t.value)===wkNorm(WKS.text);const s=$('#wkt2');if(s)s.textContent=ok?'Done':(wkNorm(WKS.text).startsWith(wkNorm(t.value))?'Good, keep going':'Not the same yet');if(ok)wkFinish()})}}
+function wkUpd(){const d=$('#wkd');if(d&&WKS.m!=='type')d.innerHTML=wkDots();const q=$('#wkq');if(q&&WKS.m==='shake')q.innerHTML=WKS.i+'<small style="font-size:22px;color:var(--mu)"> / '+WKS.n+'</small>'}
+function wkKey(v){if(!WKS||WKS.m!=='math')return;if(v==='del')WKS.ans=WKS.ans.slice(0,-1);else if(v==='ok'){if(String(WKS.pr.a)===WKS.ans){WKS.i++;WKS.ans='';if(WKS.i>=WKS.n){wkFinish();return}WKS.pr=wkProb(WKS.diff);wkDraw();return}
+  WKS.ans='';WKS.pr=wkProb(WKS.diff);const q=$('#wkq');if(q){q.textContent=WKS.pr.q;q.classList.remove('wkbad');void q.offsetWidth;q.classList.add('wkbad')}}
+ else if(WKS.ans.length<7)WKS.ans+=v;const a=$('#wka');if(a)a.innerHTML=esc(WKS.ans)||'&nbsp;'}
+async function wkFinish(){if(!WKS||WKS.busy)return;WKS.busy=true;const k=WKS.kind;
+ try{if(WK&&WKS.ring)await WK.done()}catch(e){if(WKS)WKS.busy=false;warn('Could not stop the alarm: '+((e&&e.message)||e));return}
+ wkClose();
+ if(k==='wake'){const r=wakeAt(Date.now(),0);put('sleep');if(r==='ok'||r==='stale'){resolveFu('wake');put('fu')}syncN();toast(r==='dup'?'Task done. Your wake-up was already logged.':'Task done. Woke up at '+wkClock()+', logged.'+(wk().check?' I will check on you in '+wk().checkMin+' min.':''),0,5200)}
+ else if(k==='check')toast('Good. You are up.');else toast('Test done. No wake-up was logged.');
+ wkSync();render()}
+/* the phone says a ring is running: show the task. The phone says it stopped (done elsewhere, or the safety limit): close it. */
+async function wkCheck(){if(!WK)return;let o;try{o=await WK.status()}catch(e){return}WKD.st=o;
+ if(+o.ring>0){if(!WKS||WKS.ring!==+o.ring)wkOpen(o.kind,+o.ring)}else if(WKS&&WKS.ring){wkClose();render()}
+ if(+o.miss>0){toast('The last wake-up task was not finished within the hour, so the alarm stopped by itself. That counts as a missed wake-up.',0,8000);try{await WK.seenMiss()}catch(e){}}}
+/* ---- the settings page ---- */
+const wkStep=(k,t,d)=>{const ok=(SU&&SU.st||{})[k];return ok===undefined?'':rw(t,d,ok?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>`)};
+const wkChips=(a,list,cur,fmt,dis)=>`<div class="tgs" style="margin:6px 0 10px">${list.map(v=>`<button class="chip${String(cur)===String(v)?' on':''}" style="flex:none;padding:0 14px" data-a="${a}" data-v="${v}"${dis}>${fmt?fmt(v):v}</button>`).join('')}</div>`;
+function wakeView(){const w=wk(),c=wkCfg(w),v=w.pend||c,lk=wkLocked(),dis=lk?' disabled':'',bed=wkBed(v),wd=wkWind(v),st=wkStats(w),n=nt(),nc=ntCfg(n),su=(SU&&SU.st)||{},ls=WKD.st||{};
+ const mism=!nc.on||nc.from!==bed||nc.to!==v.time,adm=LKD.st?!!LKD.st.admin:undefined;
+ const bars=st.rows.map(r=>`<div style="flex:1;text-align:center"><div style="height:64px;display:flex;align-items:flex-end;justify-content:center"><i style="width:60%;border-radius:4px;display:block;height:${Math.max(6,Math.min(100,r.h/10*100))}%;background:${r.on&&r.h>=v.need-.5?'#34c759':'#ff9500'}"></i></div><small style="font-size:10.5px">${['S','M','T','W','T','F','S'][new Date(r.end).getDay()]}</small></div>`).join('');
+ const hasMis=!!(ls.miss&&+ls.miss>0);
+ return `${brkNote()}<small style="display:block;margin-bottom:10px">One wake-up time, every day. Partner works out your bedtime from the sleep you need, reminds you to wind down, and in the morning the alarm only stops when you do a task. There is no snooze, and the guard keeps you from removing the app to get out of it.</small>
+${v.on?`<div class="sw" style="display:block;border:1px solid var(--ln);border-radius:14px;padding:14px 16px;margin:6px 0 12px"><small>Every night</small><div style="font-family:Georgia,serif;font-size:21px;margin:4px 0">Bed ${wkF(bed)} → Wake ${wkF(v.time)}</div><small>${v.need} h of sleep, ${wkDays(v)}. Wind-down from ${wkF(wd)}.</small></div>`:''}
+${rw('Wake-up alarm','Chosen by you in advance',tgb('wktog',v.on,'Wake-up alarm'))}
+${w.pend?`<small style="display:block;margin:6px 0 10px;color:#ff9500">A weaker change is waiting. It starts on ${new Date(w.pendAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}.</small>`:''}
+${lk?'<small style="display:block;margin:6px 0 10px;color:#ff9500">The wake-up guard is running, so settings are locked until the task is done.</small>':''}
+${hasMis?'<small style="display:block;margin:6px 0 10px;color:#ff9500">The last wake-up task was not finished and the alarm stopped by itself after an hour.</small>':''}
+<p class="lab">Schedule</p><div class="sw" style="min-height:48px"><span>Wake-up time</span><input type="time" class="f" style="width:auto;margin:0" data-wk="time" value="${v.time}"${dis}></div>
+<small style="display:block;margin:10px 0 2px">Days</small><div class="tgs" style="margin:6px 0 10px">${['S','M','T','W','T','F','S'].map((d,i)=>`<button class="chip${(v.days||[]).includes(i)?' on':''}" style="flex:none;width:42px;padding:0" data-a="wkday" data-v="${i}"${dis}>${d}</button>`).join('')}</div>
+<small style="display:block;margin:10px 0 2px">Sleep you need</small>${wkChips('wkneed',[7,7.5,8,8.5,9],v.need,x=>x+' h',dis)}
+${rw('Wind-down reminders','Spoken at '+wkF(wd)+' and at bedtime '+wkF(bed),tgb('wkwind',v.windOn,'Wind-down reminders'))}
+${v.windOn?`<small style="display:block;margin:6px 0 2px">Start winding down</small>${wkChips('wkwmin',[0,30,45,60],v.wind,x=>x?x+' min before':'No heads-up',dis)}`:''}
+<p class="lab">Wake-up task</p>${wkChips('wkmis',MISS,v.mission,x=>({math:'Maths',type:'Type a line',shake:'Shake'}[x]),dis)}
+${v.mission==='math'?`<small style="display:block;margin:6px 0 2px">Difficulty</small>${wkChips('wkdiff',[1,2,3],v.diff,x=>['','Easy','Medium','Hard'][x],dis)}<small style="display:block;margin:6px 0 2px">Sums to solve</small>${wkChips('wkcount',[3,5,8],v.count,null,dis)}`:''}
+${v.mission==='shake'?`<small style="display:block;margin:6px 0 2px">Shakes</small>${wkChips('wkcount',[20,30,50],v.count,null,dis)}`:''}
+${v.mission==='type'?`<small style="display:block;margin:6px 0 4px">The line you type</small><input class="f" data-wk="text" value="${esc(v.text)}" maxlength="140" style="margin:0 0 6px"${dis}><small style="display:block">A shorter line waits 24 hours. Pasting does not work on the task screen.</small>`:''}
+${rw('Check that I am up',v.check?'Rings again '+v.checkMin+' min after the task, with one quick sum, so you cannot go back to bed':'Off',tgb('wkchk',v.check,'Check that I am up'))}
+${v.check?wkChips('wkcmin',[5,8,10,15],v.checkMin,x=>x+' min',dis):''}
+<small style="display:block;margin:6px 0 2px">Alarm volume (the sound rises over 20 seconds)</small>${wkChips('wkvol',[70,85,100],v.vol,x=>x+'%',dis)}
+${rw('Guard','From '+wkF(wd)+' until the task is done, the pages that could remove the alarm (device admin, accessibility, Partner\'s app page) and the power menu are closed',tgb('wkguard',v.guard,'Guard'))}
+<div style="display:flex;gap:8px;margin-top:14px"><button class="pill" style="flex:1" data-a="wktest">Try the task now</button></div>
+${mism?`<p class="lab">Night rule</p><small style="display:block;margin-bottom:8px">${nc.on?'Your night lock runs '+wkF(nc.from)+' to '+wkF(nc.to)+'.':'The night lock is off.'} This schedule suggests ${wkF(bed)} to ${wkF(v.time)}.${nc.on&&wkEv(wkM(nc.to))>wkEv(wkM(v.time))?' When the alarm rings, the lock steps aside so you can do the task.':''}</small><button class="pill" data-a="wkalign"${dis}>Match the night rule</button>`:''}
+<p class="lab">What it needs</p>${wkStep('acc','Accessibility','Keeps the task in front and closes the removal pages')}${wkStep('adm','Prevent uninstall','Without this the app can simply be uninstalled')}${wkStep('exact','Alarms and reminders','So the alarm rings on time')}${wkStep('fsi','Full-screen alarm','So the task opens over the lock screen')}${wkStep('notif','Notifications','The alarm shows as a notification')}
+${adm===false?'<small style="display:block;margin-top:8px;color:#ff9500">Prevent uninstall is off. Until you turn it on, Android lets you delete Partner and the alarm with it.</small>':''}
+<p class="lab">Last 7 nights</p>${st.n?`<div style="display:flex;gap:6px;margin:4px 0 8px">${bars}</div><small style="display:block">Average sleep ${st.avgH.toFixed(1)} h of ${v.need} h. Woke on time ${st.onTime} of ${st.n}. Average wake-up ${t12(new Date().setHours(Math.floor(st.avgW/60),st.avgW%60,0,0))}.</small>`:'<small style="display:block">No nights logged yet. Say when you go to bed and when you wake up, or let the alarm log your wake-up.</small>'}
+<small style="display:block;margin-top:14px">Honest limits: switching the phone off, a factory reset or safe mode can still stop an alarm, and no app can prevent that. If the task cannot be finished within an hour, the alarm stops by itself so a fault can never lock you out, and the miss is written down. Calls and emergency calls always work. For a real day off, plan a Break at least 6 hours ahead.</small>`}
+function wkWaitMsg(wait,txt){if(wait)toast((txt||'This change')+' starts in 24 hours.',0,4200)}
+Object.assign(A,{
+ wktog:async()=>{const w=wk();if(!w.on&&!WK)toast('The alarm rings on the APK. The schedule and reminders work here too.',0,4200);const wait=await wkEdit(c=>({...c,on:!c.on}));wkWaitMsg(wait,'Switching it off')},
+ wkday:async i=>{const w=wk(),cur=w.pend||wkCfg(w);i=+i;if((cur.days||[]).includes(i)&&(cur.days||[]).length<=1){toast('Keep at least one day.');return}const wait=await wkEdit(c=>{c.days=c.days.includes(i)?c.days.filter(d=>d!==i):c.days.concat([i]);return c});wkWaitMsg(wait,'Taking a day out')},
+ wkneed:async x=>{const wait=await wkEdit(c=>({...c,need:+x}));wkWaitMsg(wait)},
+ wkwind:()=>wkEdit(c=>({...c,windOn:!c.windOn})),
+ wkwmin:async x=>{const wait=await wkEdit(c=>({...c,wind:+x}));wkWaitMsg(wait)},
+ wkmis:async m=>{const wait=await wkEdit(c=>({...c,mission:m,count:m==='shake'?30:m==='math'?3:c.count}));wkWaitMsg(wait,'An easier task')},
+ wkdiff:async x=>{const wait=await wkEdit(c=>({...c,diff:+x}));wkWaitMsg(wait,'An easier task')},
+ wkcount:async x=>{const wait=await wkEdit(c=>({...c,count:+x}));wkWaitMsg(wait,'An easier task')},
+ wkchk:async()=>{const wait=await wkEdit(c=>({...c,check:!c.check}));wkWaitMsg(wait,'Switching the check off')},
+ wkcmin:async x=>{const wait=await wkEdit(c=>({...c,checkMin:+x}));wkWaitMsg(wait)},
+ wkvol:async x=>{const wait=await wkEdit(c=>({...c,vol:+x}));wkWaitMsg(wait,'A quieter alarm')},
+ wkguard:async()=>{const wait=await wkEdit(c=>({...c,guard:!c.guard}));wkWaitMsg(wait,'Switching the guard off')},
+ wktest:async()=>{if(WK){try{await WK.test()}catch(e){warn('Could not start the test: '+((e&&e.message)||e));return}setTimeout(wkCheck,400)}else wkOpen('test',0)},
+ wkalign:async()=>{const w=wk(),v=w.pend||wkCfg(w),wait=await ntEdit(c=>({...c,on:true,from:wkBed(v),to:v.time}));if(wait)toast('The night rule change starts in 24 hours.',0,4200);render()},
+ wkkey:v=>wkKey(v)
+});
+document.addEventListener('change',e=>{const t=e.target,k=t&&t.dataset&&t.dataset.wk;if(!k)return;if(k==='time'&&/^\d{2}:\d{2}$/.test(t.value)){wkEdit(c=>{c.time=t.value;return c}).then(wait=>wkWaitMsg(wait,'A later wake-up time'))}
+ else if(k==='text'){const s=t.value.trim();if(s.length<8){toast('Use a line of at least 8 characters.');render();return}wkEdit(c=>{c.text=s;return c}).then(wait=>wkWaitMsg(wait,'A shorter line'))}});
+if(WK&&WK.addListener)WK.addListener('wake',wkCheck);
+{const _g2=A.go;A.go=v=>{_g2(v);if(v==='s-wake'){lkSync().then(()=>wkSync()).then(()=>suStatus()).then(()=>{if(V==='s-wake')render()})}}}
+
 /* ---- App detox: block apps for hours or days. The list lives in the phone service (Detox.java); this page only shows it and asks to add to it ---- */
 const DX={sel:[],len:864e5,cust:false,cn:'2',cu:'d',busy:false};
 const DXNEVER=/^(android|com\.android\.(settings|dialer|phone|contacts|incallui|emergency|systemui|server\.telecom|packageinstaller)|com\.google\.android\.(dialer|contacts|packageinstaller)|com\.samsung\.android\.(dialer|incallui|app\.contacts|settings)|com\.partner\.diary)$/;
@@ -2508,7 +2658,7 @@ window.addEventListener('popstate',()=>{if(IGN){IGN=false;return}G=false;if(QK||
 A.hleg=()=>{HLG=!HLG;rr()};A.wxall=()=>{WXALL=!WXALL;rr()};A.wpnewmenu=()=>{WP.nw=!WP.nw;rr()};A.bkopt=v=>{BKO=BKO===v?'':v;rr()};
 A.swtog=()=>{S.set.swipe=S.set.swipe===false;put('set');render()};
 let SWP=null;
-const swOK=()=>S.set.swipe!==false&&!QK&&ORDER.includes(V)&&!$('#sheet').innerHTML&&!$('#ring').innerHTML&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+const swOK=()=>S.set.swipe!==false&&!QK&&ORDER.includes(V)&&!$('#sheet').innerHTML&&!$('#ring').innerHTML&&!$('#wk').innerHTML&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
 document.addEventListener('touchstart',e=>{SWP=null;if(e.touches.length!==1||!swOK())return;const t=e.touches[0];if(t.clientX<32||t.clientX>innerWidth-32)return;if(e.target.closest&&e.target.closest('input,textarea,select,[data-hold]'))return;SWP={x:t.clientX,y:t.clientY,t:Date.now()}},{passive:true});
 document.addEventListener('touchcancel',()=>{SWP=null},{passive:true});
 document.addEventListener('touchend',e=>{const s=SWP;SWP=null;if(!s||!swOK())return;const t=e.changedTouches[0],dx=t.clientX-s.x,dy=t.clientY-s.y;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.7||Date.now()-s.t>800)return;const j=ORDER.indexOf(V)+(dx<0?1:-1);if(j<0||j>=ORDER.length)return;

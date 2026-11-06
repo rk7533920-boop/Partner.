@@ -35,6 +35,15 @@ public class MainActivity extends BridgeActivity {
 
     private void handle(Intent intent) {
         boolean quick = intent != null && intent.getBooleanExtra("quick", false);
+        // the wake-up mission shows over the lock screen and turns the screen on
+        boolean wake = intent != null && intent.getBooleanExtra("wake", false);
+        if (wake) {
+            intent.removeExtra("wake");
+            showOverLock(true);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); // the screen stays on while the task is open
+            WakePlugin.ping();
+            return;
+        }
         showOverLock(quick);
         if (quick) {
             intent.removeExtra("quick");
@@ -62,6 +71,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(LockdownPlugin.class);
         registerPlugin(HotwordPlugin.class);
         registerPlugin(SpendPlugin.class);
+        registerPlugin(WakePlugin.class);
         try {
             // only present when the workflow could bundle the offline voice
             registerPlugin((Class<? extends com.getcapacitor.Plugin>) Class.forName("com.partner.diary.OfflineVoicePlugin"));
@@ -71,6 +81,12 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         registerReceiver(screenOff, new IntentFilter(Intent.ACTION_SCREEN_OFF));
         handle(getIntent());
+    }
+
+    @Override
+    protected void onStop() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        super.onStop();
     }
 
     @Override

@@ -205,9 +205,15 @@ final class Detox {
    * closed while a detox runs. This is a best effort: it looks at the page title and class, and phones word them differently.
    */
   static boolean settingsGuard(Context c, String pkg, String cls, String text) {
-    if (pkg == null || !(pkg.equals("com.android.settings") || pkg.equals("com.samsung.android.settings"))) return false;
-    if (!any(c)) return false;
+    if (pkg == null) return false;
+    boolean settings = pkg.equals("com.android.settings") || pkg.equals("com.samsung.android.settings");
+    boolean installer = pkg.equals("com.google.android.packageinstaller") || pkg.equals("com.android.packageinstaller") || pkg.equals("com.samsung.android.packageinstaller");
+    if (!settings && !installer) return false;
+    // a running detox, or the wake-up guard (evening until the wake-up task is done)
+    if (!any(c) && !WakeAlarm.guard(c, System.currentTimeMillis())) return false;
     String s = ((cls == null ? "" : cls) + " " + (text == null ? "" : text)).toLowerCase(Locale.ROOT);
+    // the uninstall question of the system is closed too (device admin already stops it, this is the second lock)
+    if (installer) return s.contains("uninstall");
     return s.contains("accessibility") || s.contains("deviceadmin") || s.contains("device admin") || s.contains("partner");
   }
 

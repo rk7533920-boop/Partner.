@@ -125,6 +125,15 @@ jobs:
           grep -q "NightCallScreen" $M
           grep -q "PartnerNotifListener" $M
           grep -q "READ_SMS" $M
+      - name: Add wake-up alarm
+        run: |
+          set -e
+          D=android/app/src/main/java/com/partner/diary
+          cp WakeAlarm.java WakeReceiver.java WakeService.java WakePlugin.java $D/
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#</application>#<receiver android:name="com.partner.diary.WakeReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter></receiver><service android:name="com.partner.diary.WakeService" android:exported="false" android:foregroundServiceType="mediaPlayback"/></application>#' $M
+          grep -q "WakeReceiver" $M
+          grep -q "WakeService" $M
       - name: Allow speech engines on Android 11+
         run: |
           sed -i 's#</manifest>#<queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent><intent><action android:name="android.speech.RecognitionService"/></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml

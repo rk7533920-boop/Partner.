@@ -639,6 +639,10 @@ public class HotwordService extends Service {
             buzz(this);
             launchPartner(this);
         });
+        // if Android did not bring the app up within 3 seconds, try once more
+        h.postDelayed(() -> {
+            if (!appVisible && running) launchPartner(this);
+        }, 3000);
         return true;
     }
 
@@ -665,6 +669,7 @@ public class HotwordService extends Service {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         try {
             NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+            nm.cancel(GO_ID); // so a second try is shown as a new alert
             if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(CH_GO) == null) {
                 NotificationChannel ch = new NotificationChannel(CH_GO, "Hey Partner opens the app", NotificationManager.IMPORTANCE_HIGH);
                 ch.setSound(null, null);

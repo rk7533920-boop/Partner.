@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
@@ -32,6 +34,9 @@ public class MainActivity extends BridgeActivity {
     }
 
     private static long lastQuick = 0;
+    // true only while this window really has focus: the microphone can be used by the speech engine only then
+    static volatile boolean focused = false;
+    private final Handler main = new Handler(Looper.getMainLooper());
 
     private void handle(Intent intent) {
         boolean quick = intent != null && intent.getBooleanExtra("quick", false);
@@ -57,7 +62,8 @@ public class MainActivity extends BridgeActivity {
             if (now - lastQuick < 2500) return;
             lastQuick = now;
             QuickPlugin.pending = true;
-            QuickPlugin.ping();
+            // if the window is not in front yet, the ping is sent once it has focus (onWindowFocusChanged)
+            if (hasWindowFocus()) QuickPlugin.ping();
         }
     }
 
@@ -103,7 +109,15 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        focused = hasFocus;
+        if (hasFocus && QuickPlugin.pending) main.postDelayed(QuickPlugin::ping, 300);
+    }
+
+    @Override
     public void onPause() {
+        focused = false;
         HotwordService.appVisible = false;
         HotwordService.afterApp();
         super.onPause();

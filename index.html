@@ -259,7 +259,7 @@ async function migrate(){try{const o=JSON.parse(localStorage.getItem('saathi_v1'
  S.notes=o.notes||[];if(o.set){S.set.key=o.set.key||'';S.set.goal=o.set.goal||S.set.goal;S.set.cal=+o.set.cal||3000;S.set.pro=+o.set.pro||120;S.set.tone=o.set.tone||'gentle'}
  for(const k of['set','entries','notes'])await put(k)}catch(e){}}
 async function checkQuick(){if(!NP||!NP.Quick||!NP.Quick.consume)return;
- try{const r=await NP.Quick.consume();if(r&&r.pending){FQ=true;if(V!=='chat'||typing){V='chat';typing=false;render()}if(!cv.on)startC()}}catch(e){}}
+ try{const r=await NP.Quick.consume();if(r&&r.pending){FQ=true;cv.q=true;if(V!=='chat'||typing){V='chat';typing=false;render()}if(!cv.on)startC()}}catch(e){}}
 async function inboxPush(it){return new Promise((ok,no)=>{const t=db.transaction('kv','readwrite'),st=t.objectStore('kv'),g=st.get('inbox');g.onsuccess=()=>{st.put((g.result||[]).concat([it]),'inbox')};t.oncomplete=ok;t.onerror=t.onabort=()=>no(t.error)})}
 async function mergeInbox(){if(QK||!db)return;
  try{const inb=await new Promise((ok,no)=>{const t=db.transaction('kv','readwrite'),st=t.objectStore('kv'),g=st.get('inbox');g.onsuccess=()=>{st.put([],'inbox');ok(g.result||[])};t.onerror=t.onabort=()=>no(t.error)});
@@ -276,7 +276,7 @@ async function boot(){
   if(!QK&&!S.entries.length&&!S.chat.length)await migrate();if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}
  catch(e){warn('Could not open storage. Data will be lost after this session. ('+((e&&e.message)||e)+')')}
  if(QK){render();startC();return}
- ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();brkPush();wkSync().then(()=>{wkCheck();syncN()});
+ ensureTags();await mergeInbox();migSleep();if(S.set.goal&&!S.set.goalDone){if(!S.mem.some(m=>m.sec==='Goals'))addMem('Goals',S.set.goal,false);S.set.goalDone=true;put('mem');put('set')}fixData();usClean();render();autoStart();checkQuick();setTimeout(checkQuick,1500);ofCheck().then(()=>{if(S.set.vp==='of'&&OFS.ok&&OVP().warmup)OVP().warmup().catch(()=>{})});trimChat();suInit().then(()=>{if(V!=='s-setup')maybeGoals()});if(NP&&NP.Quick&&NP.Quick.addListener)NP.Quick.addListener('quick',checkQuick);checkDue();syncN();syncUsage();spSync(false);if(S.set.lockBtn&&NP&&NP.Quick)NP.Quick.setEnabled({enabled:true}).catch(()=>{});hwKeep();setInterval(checkDue,15000);setInterval(()=>{if(S.timers.length){tickTimers();updTm()}},1000);tickTimers();setTimeout(()=>autoBackup(false),6000);lkSync();brkPush();wkSync().then(()=>{wkCheck();syncN()});
  if(!NP&&'serviceWorker' in navigator&&location.protocol.indexOf('http')===0)navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
@@ -904,7 +904,7 @@ async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&N
   await LN.schedule({notifications:list})}catch(e){fail('Could not schedule reminders: '+((e&&e.message)||e),{where:'Reminders',bg:true})}}
 
 /* ---------- voice ---------- */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;const cv={on:false,n:0,l:false};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;const cv={on:false,n:0,l:false,q:false,bad:0,h:0};
 let ELA=null;
 const hsh=x=>{let h=5381;for(const c of x)h=((h<<5)+h+c.charCodeAt(0))|0;return (h>>>0).toString(36)+x.length};
 const b64=b=>new Promise((ok,no)=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(',')[1]);f.onerror=no;f.readAsDataURL(b)});
@@ -936,14 +936,20 @@ function speakSys(t,cb){const lang=/[\u0900-\u097F]/.test(t)?'hi-IN':'en-IN';
 const isEnd=t=>t.trim().split(/\s+/).length<=4&&(/(^|\s)(bye|stop|ruk|ruko|bas|band|chup|quit)(\s|$)/i.test(t)||/(बस|रुक|बंद|बाय|स्टॉप|चुप)/.test(t));
 function askListen(d){if(QK||busy||cv.on||document.hidden)return;setTimeout(async()=>{if(QK||busy||cv.on||document.hidden)return;if(V!=='chat'){V='chat';render()}await startC();cv.t=setTimeout(()=>{if(cv.on&&cv.l)stopC()},12000)},d||0)}
 function uiMic(){const b=$('#mic');if(b)b.classList.toggle('on',cv.on);const c=$('#cap');if(c)c.textContent=cv.on?(cv.l?'Listening...':'Tap to stop'):(IDL.on?'Say "Hey Partner" or tap':'Tap to talk')}
-function stopC(){setTimeout(()=>{try{idleStart()}catch(e){}},1500);cv.on=false;cv.l=false;clearTimeout(cv.t);try{if(ELA){ELA.pause();ELA=null}if(NP&&NP.Speaker&&NP.Speaker.stopPlay)Promise.resolve(NP.Speaker.stopPlay()).catch(()=>{})}catch(e){}try{speechSynthesis.cancel()}catch(e){}try{NP&&NP.TextToSpeech&&NP.TextToSpeech.stop()}catch(e){}try{rec&&rec.abort()}catch(e){}try{NP&&NP.SpeechRecognition&&NP.SpeechRecognition.stop()}catch(e){}rec=null;uiMic()}
-async function startC(){idleAbort();if(!NP&&!SR){warn('Voice is not supported in this browser. Use Chrome.');return}
- if(NP&&NP.SpeechRecognition){try{await NP.SpeechRecognition.requestPermissions()}catch(e){}}cv.on=true;cv.n=0;listen()}
+function stopC(){setTimeout(()=>{try{idleStart()}catch(e){}},1500);cv.on=false;cv.l=false;cv.q=false;cv.bad=0;clearTimeout(cv.t);clearTimeout(cv.h);try{if(ELA){ELA.pause();ELA=null}if(NP&&NP.Speaker&&NP.Speaker.stopPlay)Promise.resolve(NP.Speaker.stopPlay()).catch(()=>{})}catch(e){}try{speechSynthesis.cancel()}catch(e){}try{NP&&NP.TextToSpeech&&NP.TextToSpeech.stop()}catch(e){}try{rec&&rec.abort()}catch(e){}try{NP&&NP.SpeechRecognition&&NP.SpeechRecognition.stop()}catch(e){}rec=null;uiMic()}
+async function startC(){const wasIdle=idleAbort();if(!NP&&!SR){warn('Voice is not supported in this browser. Use Chrome.');return}
+ if(NP&&NP.SpeechRecognition){try{await NP.SpeechRecognition.requestPermissions()}catch(e){}}if(wasIdle)await new Promise(r=>setTimeout(r,350));cv.on=true;cv.n=0;cv.bad=0;listen()}
 function heard(t){cv.l=false;clearTimeout(cv.t);if(isEnd(t)){stopC();speak('ठीक है, बाद में बात करते हैं।',FQ?()=>A.qclose():undefined);return}if(++cv.n>15){stopC();return}uiMic();send(t,'voice')}
+/* Right after Hey Partner opens the app the recognizer can fail for a moment (screen still waking, the old listener not let go yet). Try again a few times instead of closing on the first miss. */
+function micMiss(m){cv.l=false;m=String(m||'');const quiet=/no match|no speech|didn.?t understand/i.test(m),perm=/permission/i.test(m),first=cv.n===0;
+ const max=perm?0:quiet?(first&&cv.q?2:0):(first?4:2);
+ if(++cv.bad<=max){setTimeout(()=>{if(cv.on&&!cv.l)listen()},quiet?250:500*cv.bad);return}
+ if(!quiet)warn('The microphone could not start: '+(m||'unknown error')+'. Tap the mic to try again.',{where:'Mic'});
+ stopC()}
 function listen(){if(!cv.on||cv.l)return;cv.l=true;uiMic();
- if(NP&&NP.SpeechRecognition){(async()=>{try{const x=await NP.SpeechRecognition.start({language:'hi-IN',maxResults:1,popup:false,partialResults:false});if(!cv.on)return;const t=x&&x.matches&&x.matches[0];t?heard(t):stopC()}catch(e){stopC()}})();return}
+ if(NP&&NP.SpeechRecognition){(async()=>{try{const x=await NP.SpeechRecognition.start({language:'hi-IN',maxResults:1,popup:false,partialResults:false});if(!cv.on)return;const t=x&&x.matches&&x.matches[0];if(t){cv.bad=0;heard(t)}else micMiss('No match')}catch(e){if(cv.on)micMiss(String((e&&e.message)||e||''))}})();return}
  rec=new SR();rec.lang='hi-IN';let got=false;rec.onresult=e=>{got=true;heard(e.results[0][0].transcript)};rec.onend=()=>{rec=null;cv.l=false;if(!got&&cv.on)stopC()};rec.onerror=()=>{};rec.start()}
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&cv.on)stopC()});
+document.addEventListener('visibilitychange',()=>{clearTimeout(cv.h);if(document.hidden&&cv.on)cv.h=setTimeout(()=>{if(document.hidden&&cv.on)stopC()},2500)});
 let hiddenAt=0;
 function autoStart(){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(hiddenAt&&Date.now()-hiddenAt>=30000)autoStart()});
@@ -1913,7 +1919,7 @@ function last7(){const t=new Date(hk()+'T00:00:00');return Array.from({length:7}
 let IDL={on:false,t:0,off:false,fail:0},irec=null;
 const WKR=/(?:hey|hay|hi|hello|ok|okay|हे|हेलो|हाय|ओके)?\s*(?:p[ae]r?t?n[ae]r|पार्टनर|पारटनर)/i,WKG=/(?:hey|hay|hi|hello|ok|okay|हे|हेलो|हाय|ओके)?\s*(?:p[ae]r?t?n[ae]r|पार्टनर|पारटनर)/ig;
 const idleOk=()=>V==='chat'&&!typing&&!cv.on&&!busy&&!document.hidden&&!QK&&S.set.mentorAuto!==false&&!IDL.off&&(NP?!!NP.SpeechRecognition:!!SR)&&!document.querySelector('#sheet .sh');
-function idleAbort(){clearTimeout(IDL.t);const was=IDL.on;IDL.on=false;if(was){try{NP&&NP.SpeechRecognition&&NP.SpeechRecognition.stop()}catch(e){}try{irec&&irec.abort()}catch(e){}irec=null;uiMic()}}
+function idleAbort(){clearTimeout(IDL.t);const was=IDL.on;IDL.on=false;if(was){try{NP&&NP.SpeechRecognition&&NP.SpeechRecognition.stop()}catch(e){}try{irec&&irec.abort()}catch(e){}irec=null;uiMic()}return was}
 function idleStart(){clearTimeout(IDL.t);if(IDL.on||!idleOk())return;IDL.on=true;uiMic();idleOnce()}
 async function idleOnce(){let m=[];
  try{if(NP&&NP.SpeechRecognition){const x=await NP.SpeechRecognition.start({language:'hi-IN',maxResults:3,popup:false,partialResults:false});m=(x&&x.matches)||[];IDL.fail=0}
@@ -1922,7 +1928,7 @@ async function idleOnce(){let m=[];
  const was=IDL.on;IDL.on=false;uiMic();if(!was||cv.on||!idleOk())return;
  if(m.length&&idleWake(m))return;
  IDL.t=setTimeout(idleStart,IDL.fail>3?20000:1500)}
-function idleWake(m){const t=m.find(x=>WKR.test(x));if(!t)return false;const rest=t.replace(WKG,'').replace(/^[\s,.!]+/,'').trim();IDL.fail=0;cv.on=true;cv.n=0;if(rest.length>3)heard(rest);else listen();return true}
+function idleWake(m){const t=m.find(x=>WKR.test(x));if(!t)return false;const rest=t.replace(WKG,'').replace(/^[\s,.!]+/,'').trim();IDL.fail=0;cv.on=true;cv.n=0;cv.q=true;cv.bad=0;if(rest.length>3)heard(rest);else listen();return true}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)idleAbort();else if(V==='chat')setTimeout(idleStart,600)});
 {const _go=A.go,_tab=A.tab;A.go=v=>{if(v!=='chat')idleAbort();_go(v)};A.tab=v=>{if(v==='chat')IDL.off=false;_tab(v)}}
 A.mic=()=>{if(cv.on){IDL.off=true;stopC()}else{IDL.off=false;startC()}};

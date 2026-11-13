@@ -35,8 +35,10 @@ public class QuickPlugin extends Plugin {
     @PluginMethod
     public void consume(PluginCall call) {
         JSObject r = new JSObject();
-        r.put("pending", pending);
-        pending = false;
+        // a talk request is handed over only once the window has focus, otherwise the speech engine cannot use the microphone yet
+        boolean p = pending && MainActivity.focused;
+        if (p) pending = false;
+        r.put("pending", p);
         call.resolve(r);
     }
 

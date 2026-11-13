@@ -61,7 +61,7 @@ public class LockdownService extends AccessibilityService {
   // focus nudges: front app (the app's own window counts, system windows do not), home screen app, time spent on apps that are not allowed
   private String nzPkg = "";
   private String launcherPkg = "";
-  private long nzOff = 0, nzAway = 0, nzLast = 0, shadeAt = 0, usedSave = 0;
+  private long nzOff = 0, nzAway = 0, nzLast = 0, shadeAt = 0, usedSave = 0, lsAt = 0;
   // the late-night call rule is running (see NightRule)
   private boolean nightRun = false;
   // app detox: an app he blocked for hours or days is sent back to the home screen (see Detox)
@@ -365,6 +365,11 @@ public class LockdownService extends AccessibilityService {
     }
     boolean ringNow = WakeAlarm.ringing(this);
     if (until > now) {
+      // notifications cannot be tapped during a lock: they are snoozed until it ends (a tap is a way into another app)
+      if (now - lsAt > 1500L) {
+        lsAt = now;
+        PartnerNotifListener.lockSweep();
+      }
       // while the wake-up alarm rings the night lock steps aside, so the mission can be done; everything else stays out
       if (!fgAllowed && !ringNow) showOverlay(now, until, exitAt);
       else hideOverlay();

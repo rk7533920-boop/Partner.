@@ -340,5 +340,12 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  t5('page: settings row, group, back target, title, permissions and prompt are wired',[/wake:\['Wake-up and sleep'/.test(src),/'g-self':\{[^}]*'wake'/.test(src),/'s-wake':'g-self'/.test(src),/case's-wake':return wakeView\(\)/.test(src),/\['fsi','Full-screen alarm'/.test(src),/wkPrompt\(\)\?/.test(src),/wkItems\(base\)/.test(src),/'brk','wk'\]/.test(src)],[true,true,true,true,true,true,true,true]);
  t5('page: the task screen has no way to dismiss it other than finishing (no close or skip button)',[!/data-a="wk(close|skip|dismiss|off)"/.test(src),/id="wk"/.test(html)],[true,true]);
  t5('page: only a finished first task logs a wake-up; a test or a check does not',[/if\(k==='wake'\)\{const r=wakeAt\(Date\.now\(\),0\)/.test(src)],[true]);
+ // Nov 2026: theme, payments delete, meal quantity steps, routine checklist, lockdown notifications
+ const NL2=fs.readFileSync('PartnerNotifListener.java','utf8'),LS2=fs.readFileSync('LockdownService.java','utf8');
+ t5('page: an untagged payment can be deleted from its card, with an undo',[/data-a="spdel"/.test(src),/spdel:id=>\{[^}]*x\.del=1/.test(src),/UNDO\.a==='__sp'/.test(src)],[true,true,true]);
+ t5('page: adding or editing an ingredient has minus and plus steps and the quantity can still be typed',[(src.match(/data-a="mqs"/g)||[]).length===2,/A\.mqs=d=>/.test(src),/id="mq" type="number"/.test(src)],[true,true,true]);
+ t5('page: a running routine shows as a checklist in the Mentor, steps can be ticked and unticked',[/\$\{rtCards\(\)\}<div class="ms">/.test(src),/function rtCards\(\)/.test(src),/A\.rttick=v=>/.test(src)],[true,true,true]);
+ t5('page: theme colours are variables with a dark twin, Inter is bundled, settings home is a list with icons',[/--ac:#1D4ED8/.test(html),/prefers-color-scheme:dark\)\{:root\{--bg:#0E0F12/.test(html),/font-family:Inter;font-weight:700/.test(html),/class="gi"/.test(src)],[true,true,true,true]);
+ t5('native: during a lock notifications are snoozed until it ends, not deleted; calls, alarms, ongoing ones, the dialer and Partner stay',[/snoozeNotification\(sbn\.getKey\(\)/.test(NL2),/CATEGORY_CALL/.test(NL2)&&/CATEGORY_ALARM/.test(NL2)&&/isOngoing\(\)/.test(NL2),/PartnerNotifListener\.lockSweep\(\)/.test(LS2),/SDK_INT < 26/.test(NL2)],[true,true,true,true]);
 }
 console.log(ok,'passed',bad,'failed');

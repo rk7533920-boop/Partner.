@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -112,6 +113,49 @@ public class PartnerNotifListener extends NotificationListenerService {
     nightHang(sbn, now);
     if (PAY.contains(pkg)) keepPayment(sbn, pkg);
     detoxQuiet(sbn, pkg);
+    lockQuiet(sbn, now);
+  }
+
+  /**
+   * Lockdown: while a lock runs (a rule, a schedule or the night rule) no notification can be tapped, because a tap (or an
+   * inline reply on a heads-up banner) is a way into another app. The notification is snoozed until the lock ends, so it comes
+   * back by itself and nothing is lost. Calls, alarms, ongoing notifications, the dialer and Partner itself stay as they are.
+   */
+  private void lockQuiet(StatusBarNotification sbn, long now) {
+    if (sbn == null || Build.VERSION.SDK_INT < 26) return;
+    long until = LockdownPlugin.sp(this).getLong("until", 0);
+    if (until <= now) return;
+    String pkg = sbn.getPackageName();
+    if (pkg == null || pkg.equals(getPackageName()) || DIALER.contains(pkg)) return;
+    if ("com.android.systemui".equals(pkg) || "android".equals(pkg) || "com.android.emergency".equals(pkg)) return;
+    Notification n = sbn.getNotification();
+    if (n == null || sbn.isOngoing()) return;
+    if (Notification.CATEGORY_CALL.equals(n.category) || Notification.CATEGORY_ALARM.equals(n.category)) return;
+    try {
+      snoozeNotification(sbn.getKey(), Math.max(2000L, until - now + 1500L));
+    } catch (Exception e) {
+      // not connected right now: the next sweep tries again
+    }
+  }
+
+  /** Called by the lockdown service every few seconds while a lock runs, for notifications that were already there. */
+  static void lockSweep() {
+    PartnerNotifListener l = inst;
+    if (l == null) return;
+    try {
+      StatusBarNotification[] all = l.getActiveNotifications();
+      if (all == null) return;
+      long now = System.currentTimeMillis();
+      for (StatusBarNotification s : all) {
+        try {
+          l.lockQuiet(s, now);
+        } catch (Exception e) {
+          // next one
+        }
+      }
+    } catch (Exception e) {
+      // ignore
+    }
   }
 
   /** App detox: notifications of a blocked app are removed, so they do not pull him back. Calls and ongoing notifications stay. */

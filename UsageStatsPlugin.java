@@ -112,4 +112,19 @@ public class UsageStatsPlugin extends Plugin {
         r.put("sessions", out);
         call.resolve(r);
     }
+
+    /** Calls that ended since the app last cleared them (from the call notification, so the screen being off does not cut them). */
+    @PluginMethod
+    public void getCalls(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("calls", PartnerNotifListener.calls(getContext()));
+        call.resolve(r);
+    }
+
+    @PluginMethod
+    public void clearCalls(PluginCall call) {
+        Long u = call.getLong("upto");
+        if (u != null) PartnerNotifListener.callsClear(getContext(), u);
+        call.resolve();
+    }
 }

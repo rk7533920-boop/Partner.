@@ -267,7 +267,7 @@ t3('break: reminders, chat nudges and error notifications are held back; mentor 
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 29 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[29,29,29,true]);
+q2('settings: 6 groups, 30 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[30,30,30,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
@@ -342,10 +342,67 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  t5('page: only a finished first task logs a wake-up; a test or a check does not',[/if\(k==='wake'\)\{const r=wakeAt\(Date\.now\(\),0\)/.test(src)],[true]);
  // Nov 2026: theme, payments delete, meal quantity steps, routine checklist, lockdown notifications
  const NL2=fs.readFileSync('PartnerNotifListener.java','utf8'),LS2=fs.readFileSync('LockdownService.java','utf8');
- t5('page: an untagged payment can be deleted from its card, with an undo',[/data-a="spdel"/.test(src),/spdel:id=>\{[^}]*x\.del=1/.test(src),/UNDO\.a==='__sp'/.test(src)],[true,true,true]);
+ t5('page: a payment is deleted from its editor menu (no visible delete button), asks once, and has an undo',[/dqItem\('spd'\+x\.id,'spdel'/.test(src)&&!/>Delete this payment</.test(src),/spdel:id=>\{[^}]*x\.del=1/.test(src),/UNDO\.a==='__sp'/.test(src)],[true,true,true]);
  t5('page: adding or editing an ingredient has minus and plus steps and the quantity can still be typed',[(src.match(/data-a="mqs"/g)||[]).length===2,/A\.mqs=d=>/.test(src),/id="mq" type="number"/.test(src)],[true,true,true]);
  t5('page: a running routine shows as a checklist in the Mentor, steps can be ticked and unticked',[/\$\{rtCards\(\)\}<div class="ms">/.test(src),/function rtCards\(\)/.test(src),/A\.rttick=v=>/.test(src)],[true,true,true]);
- t5('page: theme colours are variables with a dark twin, Inter is bundled, settings home is a list with icons',[/--ac:#1D4ED8/.test(html),/prefers-color-scheme:dark\)\{:root\{--bg:#0E0F12/.test(html),/font-family:Inter;font-weight:700/.test(html),/class="gi"/.test(src)],[true,true,true,true]);
+ t5('page: theme colours are variables with a dark twin, Inter is bundled, settings home is a list with icons',[/--ac:#1D4ED8/.test(html),/prefers-color-scheme:dark\)\{:root:not\(\[data-theme=light\]\)\{color-scheme:dark;--bg:#0E0F12/.test(html)&&/:root\[data-theme=dark\]\{color-scheme:dark;--bg:#0E0F12/.test(html),/font-family:Inter;font-weight:700/.test(html),/class="gi"/.test(src)],[true,true,true,true]);
  t5('native: during a lock notifications are snoozed until it ends, not deleted; calls, alarms, ongoing ones, the dialer and Partner stay',[/snoozeNotification\(sbn\.getKey\(\)/.test(NL2),/CATEGORY_CALL/.test(NL2)&&/CATEGORY_ALARM/.test(NL2)&&/isOngoing\(\)/.test(NL2),/PartnerNotifListener\.lockSweep\(\)/.test(LS2),/SDK_INT < 26/.test(NL2)],[true,true,true,true]);
+}
+
+/* ---- payments: one payment is one record, however many alerts it makes (Nov 2026) ---- */
+{const spCode=between('const spOrgs=','function spDd'),nm=t=>String(t).toLowerCase().replace(/[^a-z0-9]/g,'');
+ const mk=()=>new Function('S','put','toast','norm','spCat','return (function(){'+spCode+';return{spIngest,spDedupe,spSame}})()')({spend:[],set:{}},()=>{},()=>{},nm,()=>'');
+ const live=S2=>S2.filter(x=>!x.del).length;
+ let M=mk();const sp=[];const m2=new Function('sp','S','put','toast','norm','spCat',spCode+';return{spIngest,spDedupe}');
+ const run=(f)=>{const S2={spend:[],set:{}},api=m2(null,S2,()=>{},()=>{},nm,()=>'');f(api,S2);return S2.spend};
+ const T0=Date.parse('2026-11-13T10:00:00');
+ let r=run((a)=>{a.spIngest({amt:500,to:'Swiggy',ts:T0,key:'s1',src:'sms',org:'s:HDFCBK'});a.spIngest({amt:500,to:'Swiggy',ts:T0+60e3,key:'n1',src:'notif',org:'n:com.phonepe.app'});a.spIngest({amt:500,to:'Swiggy',ts:T0+90e3,key:'n2',src:'notif',org:'n:com.google.android.apps.nbu.paisa.user'})});
+ q2('payments: bank SMS + PhonePe + Google Pay for one payment is one record (the third alert used to become a new payment)',r.length,1);
+ r=run((a)=>{a.spIngest({amt:500,to:'Swiggy',ts:T0,key:'s1',src:'sms',org:'s:HDFCBK'});a.spIngest({amt:500,to:'',ts:T0+30e3,key:'s2',src:'sms',org:'s:ICICIB'})});
+ q2('payments: two different banks\' SMS for one payment are one record',r.length,1);
+ r=run((a)=>{a.spIngest({amt:99,to:'Zomato',ts:T0,key:'n1',src:'notif',org:'n:com.phonepe.app'});a.spIngest({amt:99,to:'Zomato',ts:T0+70e3,key:'n9',src:'notif',org:'n:com.phonepe.app'})});
+ q2('payments: a notification posted again with another key a minute later is not a new payment',r.length,1);
+ r=run((a)=>{a.spIngest({amt:20,to:'Chai',ts:T0,key:'n1',src:'notif',org:'n:com.phonepe.app'});a.spIngest({amt:20,to:'Chai',ts:T0+6*6e4,key:'n2',src:'notif',org:'n:com.phonepe.app'})});
+ q2('payments: two real payments of the same amount to the same shop 6 minutes apart stay two',r.length,2);
+ r=run((a)=>{a.spIngest({amt:20,to:'Chai',ts:T0,key:'n1',src:'notif',org:'n:com.phonepe.app'});a.spIngest({amt:20,to:'Juice',ts:T0+90e3,key:'n2',src:'notif',org:'n:com.phonepe.app'})});
+ q2('payments: same app, same amount, different shop 90 s apart stay two',r.length,2);
+ r=run((a,S2)=>{S2.spend.push({id:'v1',ts:T0,amt:150,to:'Auto',cat:'Travel',src:'voice',os:['hand'],ks:[],q:0});a.spIngest({amt:150,to:'Auto Ram',ts:T0+10*6e4,key:'s5',src:'sms',org:'s:SBIUPI'})});
+ q2('payments: what he told the mentor and the bank alert 10 minutes later are one payment, his tag is kept',[r.length,r[0].cat],[1,'Travel']);
+ r=run((a,S2)=>{const k=(id,ts,src,to)=>S2.spend.push({id,ts,amt:300,to,cat:'',src,ks:[id],q:1});k('a',T0,'sms','Amazon');k('b',T0+40e3,'notif','Amazon');k('c',T0+80e3,'notif','');k('d',T0+3*36e5,'sms','Amazon');a.spDedupe()});
+ q2('payments: clean-up merges the three alerts of one old payment, keeps a later payment, and marks extras removed (nothing deleted)',[live(r),r.length],[2,4]);
+ r=run((a,S2)=>{S2.spend.push({id:'a',ts:T0,amt:50,to:'Chai',cat:'Food',src:'sms',ks:['a'],q:0},{id:'b',ts:T0+5*6e4,amt:50,to:'Chai',cat:'Food',src:'sms',ks:['b'],q:0});a.spDedupe()});
+ q2('payments: clean-up leaves two same-source payments 5 minutes apart alone',live(r),2);
+}
+
+/* ---- calls count as screen time and are never counted twice with the app's own foreground time ---- */
+{const code=between('const DLR=','async function callsIn');const S2={usage:[]};
+ const run=u=>{S2.usage=u;new Function('S',code+';callCut()')(S2);return S2.usage};
+ const M=60000,T0=1e12;
+ let r=run([{p:'com.whatsapp',a:'WhatsApp',s:T0,e:T0+20*M},{p:'call:com.whatsapp',a:'WhatsApp call',s:T0+5*M,e:T0+15*M,c:1}]);
+ q2('calls: the WhatsApp foreground time inside a WhatsApp call is cut out, the call stays',r.map(b=>[b.p,Math.round((b.e-b.s)/M)]),[['com.whatsapp',5],['call:com.whatsapp',10],['com.whatsapp',5]]);
+ r=run([{p:'com.google.android.dialer',a:'Phone',s:T0,e:T0+3*M},{p:'call:com.samsung.android.incallui',a:'Phone call',s:T0+M,e:T0+30*M,c:1},{p:'com.instagram.android',a:'Instagram',s:T0+10*M,e:T0+12*M}]);
+ q2('calls: dialer time inside a normal call is cut out; another app is left alone',r.map(b=>[b.p,Math.round((b.e-b.s)/M)]),[['com.google.android.dialer',1],['call:com.samsung.android.incallui',29],['com.instagram.android',2]]);
+ const total=r.reduce((a,b)=>a+(b.e-b.s),0)/M;q2('calls: total screen time adds the call once',Math.round(total),32);
+}
+
+/* ---- wake-up task "scan my QR code", Home tab, theme, quiet edit/delete (Nov 2026) ---- */
+{const code=between('const wkM=','const wkLocked'),f=new Function('S','NP','MISS',code+';return{wkWeaker}');
+ const W=f({set:{}},null,['math','type','shake','qr']).wkWeaker;
+ const base={on:true,time:'07:00',days:[0,1,2,3,4,5,6],guard:true,check:true,checkMin:8,vol:100,guardFrom:'21:00'};
+ const c=(o)=>({...base,...o});
+ q2('qr: choosing the QR task from maths is stronger, so it starts at once',W(c({mission:'math',diff:2,count:3}),c({mission:'qr',qr:'a'})),false);
+ q2('qr: a different code waits 24 hours (it could be one next to the bed)',W(c({mission:'qr',qr:'a'}),c({mission:'qr',qr:'b'})),true);
+ q2('qr: the same code is no change',W(c({mission:'qr',qr:'a'}),c({mission:'qr',qr:'a'})),false);
+ q2('qr: going from the QR task to maths or typing is weaker and waits',[W(c({mission:'qr',qr:'a'}),c({mission:'math',diff:3,count:8})),W(c({mission:'qr',qr:'a'}),c({mission:'type',text:'a long sentence here'}))],[true,true]);
+}
+{const NL3=fs.readFileSync('PartnerNotifListener.java','utf8'),QP=fs.readFileSync('QrPlugin.java','utf8'),MA=fs.readFileSync('MainActivity.java','utf8'),YM=fs.readFileSync('.github/workflows/android.yml','utf8'),US3=fs.readFileSync('UsageStatsPlugin.java','utf8');
+ q2('page: theme is System, Light or Dark; saved, applied before first paint, found in settings search',[/A\.setthm=v=>/.test(src),/function applyTheme\(\)/.test(src),/localStorage\.getItem\("ptheme"\)/.test(html),/theme:\['Appearance'/.test(src),/\$\{themeSeg\(\)\}\$\{nd\.length/.test(src)],[true,true,true,true,true]);
+ q2('page: Home is the first tab, the start screen, with last night, quick actions, tiles, habits and tasks; Insights stays reachable',[/\['home','Home'\],\['chat','Mentor'\],\['diary','Diary'\]/.test(src),/V='home',vd=0/.test(src),/if\(V==='home'\)return homeView\(\)/.test(src),/const ORDER=\['home'/.test(src),/data-a="tab" data-v="insights"/.test(src),/function sleepCard\(\)/.test(src)&&/function lastNight\(st\)/.test(src)],[true,true,true,true,true,true]);
+ q2('page: the Today sleep tile shows last night (the sleep that ended where the day starts)',[/lnx&&lnx\.m\?dur\(lnx\.m\)/.test(src),/slept last night/.test(src)],[true,true]);
+ q2('page: edit and delete sit behind one muted menu, Delete asks once, tasks swipe left, no red button on cards',[/function moreRedraw\(\)/.test(src),/A\.dq=v=>/.test(src),/data-sw="\$\{t\.id\}"/.test(src),!/data-a="tdel" data-v="\$\{t\.id\}" aria-label="Remove">×/.test(src),/dqItem\('hbdel','hdel'/.test(src)&&/dqItem\('mldel','mealdel'/.test(src)&&/dqItem\('fcdel','edel'/.test(src)],[true,true,true,true,true]);
+ q2('page: QR task is wired (settings, scanning, hash, camera fallback to maths, 24 h rule)',[/MISS=\['math','type','shake','qr'\]/.test(src),/async function qrHash\(t\)/.test(src),/QRP\.decode\(/.test(src),/wkFallback\('The camera could not start/.test(src),/data-a="qrnew"/.test(src),/qr:String\(w\.qr\|\|''\)/.test(src)],[true,true,true,true,true,true]);
+ q2('native: QR plugin reads frames with ZXing, is registered, camera permission and the library are added by the build',[/QR_CODE/.test(QP)&&/decodeWithState/.test(QP),/registerPlugin\(QrPlugin\.class\)/.test(MA),/android\.permission\.CAMERA/.test(YM)&&/com\.google\.zxing:core/.test(YM)&&/cp QrPlugin\.java/.test(YM)],[true,true,true]);
+ q2('native: every connected call (normal and app calls) is timed from its notification and read by the app',[/private void trackCall\(/.test(NL3),/EXTRA_SHOW_CHRONOMETER/.test(NL3),/onNotificationRemoved/.test(NL3),/static JSONArray calls\(/.test(NL3),/getCalls/.test(US3)&&/clearCalls/.test(US3),/US\.getCalls/.test(src),/b\.e<=from\|\|b\.c/.test(src)],[true,true,true,true,true,true,true]);
+ q2('page: calls do not trigger the "time went on the phone" nudge unless he turns it on',[/\(!b\.c\|\|S\.set\.callNudge\)/.test(src),/A\.cntog=/.test(src)],[true,true]);
 }
 console.log(ok,'passed',bad,'failed');

@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
@@ -20,7 +21,8 @@ import org.json.JSONObject;
 /**
  * Two jobs, both only with the notification access he gives Partner:
  * 1) keeps payment notifications of UPI apps (PhonePe, Paytm, Google Pay, BHIM, CRED) in a small queue the app reads, for the spending page;
- * 2) during the night window, hangs up WhatsApp (and other app) calls from people he did not allow, using the Hang up or Decline button of the call notification.
+ * 2) times every connected call (normal calls and WhatsApp, Telegram, Meet and other app calls) from its ongoing call notification, so call time counts as screen time even with the screen off;
+ * 3) during the night window, hangs up WhatsApp (and other app) calls from people he did not allow, using the Hang up or Decline button of the call notification.
  */
 public class PartnerNotifListener extends NotificationListenerService {
 
@@ -52,6 +54,11 @@ public class PartnerNotifListener extends NotificationListenerService {
     super.onListenerConnected();
     inst = this;
     try {
+      callReconcile();
+    } catch (Exception e) {
+      // ignore
+    }
+    try {
       sweepNow();
     } catch (Exception e) {
       // ignore
@@ -70,6 +77,15 @@ public class PartnerNotifListener extends NotificationListenerService {
       handle(sbn);
     } catch (Exception e) {
       // never let one notification stop the listener
+    }
+  }
+
+  @Override
+  public void onNotificationRemoved(StatusBarNotification sbn) {
+    try {
+      if (sbn != null) callEnd(sbn.getKey(), System.currentTimeMillis());
+    } catch (Exception e) {
+      // ignore
     }
   }
 
@@ -111,6 +127,7 @@ public class PartnerNotifListener extends NotificationListenerService {
     if (pkg == null || pkg.equals(getPackageName())) return;
     long now = System.currentTimeMillis();
     nightHang(sbn, now);
+    trackCall(sbn, pkg, now);
     if (PAY.contains(pkg)) keepPayment(sbn, pkg);
     detoxQuiet(sbn, pkg);
     lockQuiet(sbn, now);
@@ -167,6 +184,136 @@ public class PartnerNotifListener extends NotificationListenerService {
       cancelNotification(sbn.getKey());
     } catch (Exception e) {
       // ignore
+    }
+  }
+
+  // ---- call time (counts as screen time) ----
+
+  private static SharedPreferences cp(Context c) {
+    return c.getSharedPreferences("partner_calls", Context.MODE_PRIVATE);
+  }
+
+  /** A call counts from the moment the other side picks up (the notification shows its timer) until the notification goes. */
+  private void trackCall(StatusBarNotification sbn, String pkg, long now) {
+    Notification n = sbn.getNotification();
+    if (n == null) return;
+    if (!Notification.CATEGORY_CALL.equals(n.category) && !DIALER.contains(pkg)) return;
+    Bundle x = n.extras;
+    boolean chrono = x != null && x.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER, false);
+    boolean connected = sbn.isOngoing() && (chrono || (x != null && x.getInt("android.callType", 0) == 2));
+    if (!connected) {
+      callEnd(sbn.getKey(), now);
+      return;
+    }
+    long start = now;
+    if (chrono && n.when > 0 && n.when <= now && now - n.when < 6L * 3600000L) start = n.when;
+    callSeen(sbn.getKey(), pkg, start, now);
+  }
+
+  private void callSeen(String key, String pkg, long start, long now) {
+    synchronized (LOCK) {
+      try {
+        SharedPreferences p = cp(this);
+        JSONObject act = new JSONObject(p.getString("act", "{}"));
+        JSONObject o = act.optJSONObject(key);
+        if (o == null) {
+          o = new JSONObject();
+          o.put("p", pkg);
+          o.put("s", start);
+        }
+        o.put("l", now);
+        act.put(key, o);
+        p.edit().putString("act", act.toString()).apply();
+      } catch (Exception e) {
+        // ignore
+      }
+    }
+  }
+
+  private String callLabel(String pkg) {
+    if (DIALER.contains(pkg)) return "Phone";
+    try {
+      PackageManager pm = getPackageManager();
+      return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
+    } catch (Exception e) {
+      return pkg;
+    }
+  }
+
+  private void callEnd(String key, long end) {
+    synchronized (LOCK) {
+      try {
+        SharedPreferences p = cp(this);
+        JSONObject act = new JSONObject(p.getString("act", "{}"));
+        JSONObject o = act.optJSONObject(key);
+        if (o == null) return;
+        act.remove(key);
+        long s0 = o.optLong("s");
+        SharedPreferences.Editor ed = p.edit().putString("act", act.toString());
+        if (end - s0 >= 3000) {
+          JSONArray q = new JSONArray(p.getString("q", "[]"));
+          JSONObject r = new JSONObject();
+          r.put("p", o.optString("p"));
+          r.put("a", callLabel(o.optString("p")));
+          r.put("s", s0);
+          r.put("e", end);
+          q.put(r);
+          if (q.length() > 300) {
+            JSONArray t = new JSONArray();
+            for (int i = q.length() - 300; i < q.length(); i++) t.put(q.get(i));
+            q = t;
+          }
+          ed.putString("q", q.toString());
+        }
+        ed.apply();
+      } catch (Exception e) {
+        // ignore
+      }
+    }
+  }
+
+  /** After the listener was off for a while: a call that is no longer on screen ended when it was last seen. */
+  private void callReconcile() throws Exception {
+    JSONObject act;
+    synchronized (LOCK) {
+      act = new JSONObject(cp(this).getString("act", "{}"));
+    }
+    if (act.length() == 0) return;
+    Set<String> live = new HashSet<>();
+    StatusBarNotification[] all = getActiveNotifications();
+    if (all != null) for (StatusBarNotification s : all) live.add(s.getKey());
+    JSONArray names = act.names();
+    if (names == null) return;
+    for (int i = 0; i < names.length(); i++) {
+      String k = names.getString(i);
+      if (!live.contains(k)) {
+        JSONObject o = act.optJSONObject(k);
+        callEnd(k, o == null ? System.currentTimeMillis() : Math.max(o.optLong("s"), o.optLong("l")));
+      }
+    }
+  }
+
+  /** Finished calls not read by the app yet: [{p, a, s, e}]. */
+  static JSONArray calls(Context c) {
+    synchronized (LOCK) {
+      try {
+        return new JSONArray(cp(c).getString("q", "[]"));
+      } catch (Exception e) {
+        return new JSONArray();
+      }
+    }
+  }
+
+  /** The app has saved every call that ended up to this time. */
+  static void callsClear(Context c, long upto) {
+    synchronized (LOCK) {
+      try {
+        JSONArray q = new JSONArray(cp(c).getString("q", "[]")), keep = new JSONArray();
+        for (int i = 0; i < q.length(); i++) if (q.getJSONObject(i).optLong("e") > upto) keep.put(q.get(i));
+        cp(c).edit().putString("q", keep.toString()).apply();
+      } catch (Exception e) {
+        // ignore
+      }
     }
   }
 

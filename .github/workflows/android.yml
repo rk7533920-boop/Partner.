@@ -158,6 +158,17 @@ jobs:
           B=android/app/build.gradle
           sed -i '/^dependencies {/a implementation "com.google.zxing:core:3.5.3"' $B
           grep -q "com.google.zxing:core" $B
+      - name: Add home screen widgets
+        run: |
+          set -e
+          D=android/app/src/main/java/com/partner/diary
+          cp PartnerWidgets.java PartnerWidgetProvider.java QuickWidget.java TodayWidget.java TalkWidget.java MealWidget.java WidgetActReceiver.java WidgetPlugin.java $D/
+          cp -r widget_res/. android/app/src/main/res/
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#</application>#<receiver android:name="com.partner.diary.QuickWidget" android:exported="false" android:label="Partner quick actions"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info"/></receiver><receiver android:name="com.partner.diary.TodayWidget" android:exported="false" android:label="Partner today"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_today_info"/></receiver><receiver android:name="com.partner.diary.TalkWidget" android:exported="false" android:label="Partner talk"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_talk_info"/></receiver><receiver android:name="com.partner.diary.MealWidget" android:exported="false" android:label="Partner log meal"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_meal_info"/></receiver><receiver android:name="com.partner.diary.WidgetActReceiver" android:exported="false"/></application>#' $M
+          grep -q "QuickWidget" $M
+          grep -q "WidgetActReceiver" $M
+          test -f android/app/src/main/res/layout/widget_today.xml
       - name: Allow speech engines on Android 11+
         run: |
           sed -i 's#</manifest>#<queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent><intent><action android:name="android.speech.RecognitionService"/></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml

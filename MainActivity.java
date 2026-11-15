@@ -49,6 +49,15 @@ public class MainActivity extends BridgeActivity {
             WakePlugin.ping();
             return;
         }
+        // a home screen widget button that needs the app (meal, workout)
+        String wact = intent != null ? intent.getStringExtra("wact") : null;
+        if (wact != null && !wact.isEmpty()) {
+            intent.removeExtra("wact");
+            showOverLock(false);
+            WidgetPlugin.pendingAct = wact;
+            if (hasWindowFocus()) WidgetPlugin.ping();
+            return;
+        }
         showOverLock(quick);
         if (quick) {
             intent.removeExtra("quick");
@@ -80,6 +89,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WakePlugin.class);
         registerPlugin(GuardPlugin.class);
         registerPlugin(QrPlugin.class);
+        registerPlugin(WidgetPlugin.class);
         try {
             // only present when the workflow could bundle the offline voice
             registerPlugin((Class<? extends com.getcapacitor.Plugin>) Class.forName("com.partner.diary.OfflineVoicePlugin"));
@@ -115,6 +125,7 @@ public class MainActivity extends BridgeActivity {
         super.onWindowFocusChanged(hasFocus);
         focused = hasFocus;
         if (hasFocus && QuickPlugin.pending) main.postDelayed(QuickPlugin::ping, 300);
+        if (hasFocus && WidgetPlugin.pendingAct != null) main.postDelayed(WidgetPlugin::ping, 300);
     }
 
     @Override

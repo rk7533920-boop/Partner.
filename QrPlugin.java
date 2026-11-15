@@ -1,6 +1,10 @@
 package com.partner.diary;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.util.Base64;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -25,6 +29,26 @@ import java.util.Map;
  */
 @CapacitorPlugin(name = "Qr")
 public class QrPlugin extends Plugin {
+
+    /** {granted}: the camera permission is on. The page checks this before it opens the camera for the wake-up task. */
+    @PluginMethod
+    public void camera(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("granted", ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED);
+        call.resolve(r);
+    }
+
+    /** Shows the Android permission question for the camera. The answer is read with camera(). */
+    @PluginMethod
+    public void requestCamera(PluginCall call) {
+        boolean ok = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        if (!ok && getActivity() != null) {
+            ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.CAMERA }, 7311);
+        }
+        JSObject r = new JSObject();
+        r.put("granted", ok);
+        call.resolve(r);
+    }
 
     @PluginMethod
     public void decode(PluginCall call) {

@@ -10,6 +10,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.net.Uri;
@@ -55,6 +56,13 @@ public class LockdownService extends AccessibilityService {
   private TextView tTime, tMsg;
   private Button bExit;
   private boolean shown = false;
+  // 2-minute warning card with OK, and the small timer over an app that has a limit
+  private LinearLayout warnView;
+  private TextView wTitle, wMsg, timerView;
+  private Button wClose;
+  private boolean warnShown = false, timerShown = false;
+  private long warnAt = 0;
+  private final Set<String> warned = new HashSet<>();
   private String curPkg = "";
   private boolean fgAllowed = false;
   private long lastTick = 0;
@@ -87,7 +95,7 @@ public class LockdownService extends AccessibilityService {
       } catch (Exception e) {
         // keep ticking
       }
-      h.postDelayed(this, shown ? 1000 : ((nightRun || dxRun || wkRun) ? 2000 : 5000));
+      h.postDelayed(this, (shown || timerShown || warnShown) ? 1000 : ((nightRun || dxRun || wkRun) ? 2000 : 5000));
     }
   };
 
@@ -99,6 +107,7 @@ public class LockdownService extends AccessibilityService {
     wm = (WindowManager) getSystemService(WINDOW_SERVICE);
     buildSets();
     loadUsed();
+    loadWarned();
     lastTick = System.currentTimeMillis();
     h.removeCallbacks(tick);
     h.post(tick);
@@ -109,6 +118,8 @@ public class LockdownService extends AccessibilityService {
     inst = null;
     h.removeCallbacks(tick);
     hideOverlay();
+    hideTimer();
+    hideWarn();
     return super.onUnbind(intent);
   }
 
@@ -361,6 +372,8 @@ public class LockdownService extends AccessibilityService {
       nightRun = false;
       wkRun = false;
       hideOverlay();
+      hideTimer();
+      hideWarn();
       detoxTick(now); // a break never pauses a detox: that would be a way around it
       lastTick = now;
       return;
@@ -391,9 +404,12 @@ public class LockdownService extends AccessibilityService {
       // while the wake-up alarm rings the night lock steps aside, so the mission can be done; everything else stays out
       if (!fgAllowed && !ringNow) showOverlay(now, until, exitAt);
       else hideOverlay();
+      hideTimer();
+      hideWarn();
     } else {
       hideOverlay();
       trackUsage(now);
+      limitTick(now);
     }
     nudgeTick(now);
     detoxTick(now);
@@ -761,7 +777,7 @@ public class LockdownService extends AccessibilityService {
     JSONObject c = cfg();
     if (c == null || !c.optBoolean("on", false)) return;
     JSONArray rs = c.optJSONArray("rules");
-    if (rs == null) return;
+    if (rs == null) rs = new JSONArray();
     if (sp.getInt("usedDay", 0) != dayKey(now)) {
       used.clear();
       seen.clear();
@@ -788,6 +804,7 @@ public class LockdownService extends AccessibilityService {
             .apply();
           fgAllowed = false;
           saveUsed(now);
+          goHome();
           return;
         }
       } else if (session && seen.containsKey(id) && now - seen.get(id) > 180000L) {
@@ -795,7 +812,284 @@ public class LockdownService extends AccessibilityService {
         seen.remove(id);
       }
     }
+    // allowed social media: the apps in the pool share one daily limit
+    JSONObject pl = c.optJSONObject("pool");
+    if (pl != null && pl.optBoolean("on", false) && inPool(pl, curPkg)) {
+      long u = (used.containsKey("pool") ? used.get("pool") : 0L) + dt;
+      used.put("pool", u);
+      changed = true;
+      int pmin = pl.optInt("min", 60), plock = pl.optInt("lock", 20);
+      if (u >= pmin * 60000L) {
+        sp.edit()
+          .putLong("until", now + plock * 60000L)
+          .putString("reason", "Social media for " + pmin + " min today")
+          .putLong("exitAt", 0)
+          .apply();
+        fgAllowed = false;
+        saveUsed(now);
+        goHome();
+        return;
+      }
+    }
     if (changed && now - usedSave > 15000L) saveUsed(now);
+  }
+
+  /** The app is closed at once when its time is over: back to the home screen, then the lock covers the phone. */
+  private void goHome() {
+    try {
+      performGlobalAction(GLOBAL_ACTION_HOME);
+    } catch (Exception e) {
+      // the lock screen still covers the app
+    }
+  }
+
+  private boolean inPool(JSONObject pl, String pkg) {
+    if (pkg == null || pkg.isEmpty() || pl == null) return false;
+    JSONArray a = pl.optJSONArray("apps");
+    if (a == null) return false;
+    for (int i = 0; i < a.length(); i++) {
+      Object o = a.opt(i);
+      String p = o instanceof JSONObject ? ((JSONObject) o).optString("pkg") : String.valueOf(o);
+      if (pkg.equals(p)) return true;
+    }
+    return false;
+  }
+
+  // ---- timer over limited apps, and the warning 2 minutes before a lock ----
+
+  private static final long WARN_MS = 120000L;
+
+  private String clock(long t) {
+    Calendar c = Calendar.getInstance();
+    c.setTimeInMillis(t);
+    int hh = c.get(Calendar.HOUR), ap = c.get(Calendar.AM_PM);
+    return String.format(Locale.US, "%d:%02d %s", hh == 0 ? 12 : hh, c.get(Calendar.MINUTE), ap == Calendar.AM ? "AM" : "PM");
+  }
+
+  private void loadWarned() {
+    warned.clear();
+    try {
+      if (sp.getInt("warnDay", 0) == dayKey(System.currentTimeMillis())) {
+        String s = sp.getString("warnSet", "");
+        if (!s.isEmpty()) warned.addAll(Arrays.asList(s.split("\\|")));
+      }
+    } catch (Exception e) {
+      // start again
+    }
+  }
+
+  private void saveWarned(long now) {
+    StringBuilder b = new StringBuilder();
+    for (String k : warned) {
+      if (b.length() > 0) b.append('|');
+      b.append(k);
+    }
+    sp.edit().putInt("warnDay", dayKey(now)).putString("warnSet", b.toString()).apply();
+  }
+
+  /**
+   * While an app with a limit (a rule or the social pool) is in front, a small timer shows how long is left today. Two
+   * minutes before the limit ends a card says so; OK dismisses it, Close app goes to the home screen. Clock locks (the night
+   * rule and scheduled lockdowns) get the same card two minutes before they start.
+   */
+  private void limitTick(long now) {
+    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+    JSONObject c = cfg();
+    if ((pm != null && !pm.isInteractive()) || c == null || !c.optBoolean("on", false)) {
+      hideTimer();
+      hideWarn();
+      return;
+    }
+    if (sp.getInt("warnDay", 0) != dayKey(now)) {
+      warned.clear();
+      saveWarned(now);
+    }
+    boolean timerOn = c.optBoolean("timer", true), warnOn = c.optBoolean("warn", true);
+    long best = -1;
+    String label = "", key = "";
+    JSONArray rs = c.optJSONArray("rules");
+    if (rs != null && !curPkg.isEmpty()) {
+      for (int i = 0; i < rs.length(); i++) {
+        JSONObject r = rs.optJSONObject(i);
+        if (r == null || !curPkg.equals(r.optString("pkg"))) continue;
+        String id = r.optString("id");
+        long rem = r.optInt("min", 30) * 60000L - (used.containsKey(id) ? used.get(id) : 0L);
+        if (best < 0 || rem < best) {
+          best = rem;
+          label = r.optString("name", "App");
+          key = "r:" + id;
+        }
+      }
+    }
+    JSONObject pl = c.optJSONObject("pool");
+    if (pl != null && pl.optBoolean("on", false) && inPool(pl, curPkg)) {
+      long rem = pl.optInt("min", 60) * 60000L - (used.containsKey("pool") ? used.get("pool") : 0L);
+      if (best < 0 || rem < best) {
+        best = rem;
+        label = "Social media";
+        key = "pool";
+      }
+    }
+    boolean ownApp = curPkg.equals(getPackageName()) || ignore.contains(curPkg);
+    if (best > 0 && !ownApp) {
+      if (timerOn) showTimer(label, best);
+      else hideTimer();
+      if (warnOn && best <= WARN_MS && !warned.contains(key)) {
+        warned.add(key);
+        saveWarned(now);
+        showWarn("Lockdown in 2 minutes", label + " ends at " + clock(now + best) + ". Then your phone rests for a while. Finish what you are doing.", true, now);
+      }
+    } else {
+      hideTimer();
+    }
+    if (warnOn) clockWarn(now, c);
+    if (warnShown && now - warnAt > 90000L) hideWarn();
+  }
+
+  private long startToday(int minutes, long now) {
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(now);
+    cal.set(Calendar.HOUR_OF_DAY, minutes / 60);
+    cal.set(Calendar.MINUTE, minutes % 60);
+    cal.set(Calendar.SECOND, 0);
+    cal.set(Calendar.MILLISECOND, 0);
+    return cal.getTimeInMillis();
+  }
+
+  private void clockWarn(long now, JSONObject c) {
+    JSONObject n = NightRule.cfg(this);
+    if (n != null && n.optBoolean("on", false) && NightRule.activeEnd(this, now) == 0) {
+      long st = startToday(hm(n.optString("from", "23:00"), 1380), now);
+      if (st > now && st - now <= WARN_MS && !warned.contains("n:" + st)) {
+        warned.add("n:" + st);
+        saveWarned(now);
+        showWarn("Night rule in 2 minutes", "Your phone rests from " + clock(st) + ". Only the people you allowed can be called.", false, now);
+      }
+    }
+    JSONArray sc = c.optJSONArray("sched");
+    if (sc == null) return;
+    int dow = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1;
+    for (int i = 0; i < sc.length(); i++) {
+      JSONObject s = sc.optJSONObject(i);
+      if (s == null || !s.optBoolean("on", true)) continue;
+      JSONArray days = s.optJSONArray("days");
+      boolean today = false;
+      for (int k = 0; days != null && k < days.length(); k++) if (days.optInt(k, -1) == dow) today = true;
+      int f = hm(s.optString("from", ""), -1);
+      if (!today || f < 0) continue;
+      long st = startToday(f, now);
+      if (st > now && st - now <= WARN_MS && !warned.contains("s:" + st)) {
+        warned.add("s:" + st);
+        saveWarned(now);
+        showWarn("Lockdown in 2 minutes", "Your scheduled lockdown starts at " + clock(st) + ".", false, now);
+      }
+    }
+  }
+
+  private void showTimer(String label, long rem) {
+    if (timerView == null) {
+      TextView t = new TextView(this);
+      t.setTextColor(Color.WHITE);
+      t.setTextSize(14);
+      t.setTypeface(Typeface.DEFAULT_BOLD);
+      t.setPadding(dp(14), dp(8), dp(14), dp(8));
+      GradientDrawable g = new GradientDrawable();
+      g.setColor(Color.parseColor("#E6111318"));
+      g.setCornerRadius(dp(20));
+      t.setBackground(g);
+      timerView = t;
+    }
+    long sec = Math.max(0, rem) / 1000;
+    timerView.setText(label + "  \u00b7  " + String.format(Locale.US, "%d:%02d", sec / 60, sec % 60) + " left today");
+    if (!timerShown) {
+      WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+        WindowManager.LayoutParams.WRAP_CONTENT,
+        WindowManager.LayoutParams.WRAP_CONTENT,
+        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+        PixelFormat.TRANSLUCENT
+      );
+      p.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+      p.y = dp(44);
+      try {
+        wm.addView(timerView, p);
+        timerShown = true;
+      } catch (Exception e) {
+        // try again on the next tick
+      }
+    }
+  }
+
+  private void hideTimer() {
+    if (timerShown && timerView != null) {
+      try {
+        wm.removeView(timerView);
+      } catch (Exception e) {
+        // already gone
+      }
+      timerShown = false;
+    }
+  }
+
+  private void showWarn(String title, String msg, boolean closeApp, long now) {
+    if (warnView == null) {
+      LinearLayout l = new LinearLayout(this);
+      l.setOrientation(LinearLayout.VERTICAL);
+      l.setPadding(dp(22), dp(20), dp(22), dp(16));
+      GradientDrawable g = new GradientDrawable();
+      g.setColor(Color.parseColor("#111318"));
+      g.setCornerRadius(dp(24));
+      l.setBackground(g);
+      wTitle = tv("", 20, "#FFFFFF");
+      wTitle.setTypeface(Typeface.DEFAULT_BOLD);
+      wMsg = tv("", 15, "#C9CCD3");
+      LinearLayout row = new LinearLayout(this);
+      row.setGravity(Gravity.CENTER);
+      Button ok = btn("OK");
+      ok.setOnClickListener(v -> hideWarn());
+      wClose = btn("Close app");
+      wClose.setOnClickListener(v -> {
+        goHome();
+        hideWarn();
+      });
+      row.addView(ok, lp(0));
+      row.addView(wClose, lp(0));
+      l.addView(wTitle, lp(0));
+      l.addView(wMsg, lp(10));
+      l.addView(row, lp(18));
+      warnView = l;
+    }
+    wTitle.setText(title);
+    wMsg.setText(msg);
+    wClose.setVisibility(closeApp ? View.VISIBLE : View.GONE);
+    warnAt = now;
+    if (!warnShown) {
+      WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+        dp(330),
+        WindowManager.LayoutParams.WRAP_CONTENT,
+        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+        PixelFormat.TRANSLUCENT
+      );
+      p.gravity = Gravity.CENTER;
+      try {
+        wm.addView(warnView, p);
+        warnShown = true;
+      } catch (Exception e) {
+        // try again on the next tick
+      }
+    }
+  }
+
+  private void hideWarn() {
+    if (warnShown && warnView != null) {
+      try {
+        wm.removeView(warnView);
+      } catch (Exception e) {
+        // already gone
+      }
+      warnShown = false;
+    }
   }
 
   // ---- focus nudges: an app that is not allowed, used for long, makes the phone speak his message ----

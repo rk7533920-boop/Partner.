@@ -266,8 +266,8 @@ t3('break: reminders, chat nudges and error notifications are held back; mentor 
 }
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
-const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]);
-q2('settings: 6 groups, 32 rows, each row in exactly one group',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[32,32,32,true]);
+const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]).filter(k=>k!=='nz'); // Focus nudges lives inside Lockdown and is found by search
+q2('settings: 6 groups, 33 rows, each row in exactly one group (Focus nudges nested in Lockdown)',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[33,33,33,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
@@ -437,4 +437,12 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  q('buttons: one system, Delete and Remove red, paired actions 50 px',[/one button system/.test(html),/\.two>\.pill,\.two>\.mn,\.two>\.pb\{height:50px/.test(html),(html.match(/class="pb dng"/g)||[]).length>=3],[true,true,true]);
 }
 
+{const t5=(n,a,b)=>{if(JSON.stringify(a)===JSON.stringify(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',JSON.stringify(a),'want',JSON.stringify(b))}}; // ---- 2026-11-15 update: Growth tab, reminders that know when, alarm fixes, app timer, widgets ----
+t5('nav: Growth replaces the Habits tab, Habits opens from Home and goes back to Home',[/\['diary','Diary'\],\['growth','Growth'\],\['health','Health'\]/.test(src),!/\['habits','Habits'\]/.test(src),/const ORDER=\['home','chat','diary','growth','patterns','identity','spend','health'\]/.test(src),/'habits':'home'/.test(src),/data-a="go" data-v="habits"/.test(src)],[true,true,true,true,true]);
+t5('growth reminders: care and steps carry a time or a word, Home tile swipes, notifications and the mentor know them',[/function gwTile\(\)/.test(src),/class="cq"/.test(src),/function gwSlots\(base\)/.test(src),/gwSlots\(base\)\.forEach/.test(src),/gwPrompt\(\)\?/.test(src),/function gwAfter\(text,t0\)/.test(src),/id="lct"/.test(src),/gwStep/.test(src)],[true,true,true,true,true,true,true,true]);
+t5('alarm: picture painted from script, scan timer apart from the quote, camera checked, 2 retries, 6 h option',[/function wkPaintBg\(\)/.test(src),!/url\("\$\{u\}"\) center\/cover no-repeat`;const e=document\.querySelector\('\.wks'\)/.test(src),/S0\.qiv=setInterval/.test(src),/QRP\.requestCamera/.test(src),/S0\.qtry<=2/.test(src),/\[6,7,7\.5,8,8\.5,9\]/.test(src)],[true,true,true,true,true,true]);
+t5('lockdown: pool, warning and timer are in the config and a looser pool waits like any weaker change',[/pool:lkPool\(l\),warn:l\.warn!==false,timer:l\.timer!==false/.test(src),/function lkPoolHtml\(v\)/.test(src),/pa\.on&&!pb\.on/.test(src),/plpick/.test(src)],[true,true,true,true]);
+t5('widgets: page snapshot, merge of taps, plugin registered, workflow step',[/function wgSnap\(\)/.test(src),/async function wgMerge\(\)/.test(src),/NP\.Widget/.test(src),fs.readFileSync('MainActivity.java','utf8').includes('registerPlugin(WidgetPlugin.class)'),fs.readFileSync('.github/workflows/android.yml','utf8').includes('Add home screen widgets')],[true,true,true,true,true]);
+t5('what is new: shown once per update id, reopened from Settings',[/const WNEW_ID=/.test(src),/function wnCheck\(\)/.test(src),/data-a="wnopen"/.test(src)],[true,true,true]);
+}
 console.log(ok,'passed',bad,'failed');

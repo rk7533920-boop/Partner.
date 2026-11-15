@@ -134,6 +134,19 @@ jobs:
           sed -i 's#</application>#<receiver android:name="com.partner.diary.WakeReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter></receiver><service android:name="com.partner.diary.WakeService" android:exported="false" android:foregroundServiceType="mediaPlayback"/></application>#' $M
           grep -q "WakeReceiver" $M
           grep -q "WakeService" $M
+      - name: Add adult block, accountability messages, step counter and calm wake-up sound
+        run: |
+          set -e
+          D=android/app/src/main/java/com/partner/diary
+          cp Guard.java GuardPlugin.java AdultMatch.java WalkSteps.java $D/
+          R=android/app/src/main/res/raw
+          mkdir -p $R
+          cp wake_calm.wav $R/wake_calm.wav
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#<uses-permission android:name="android.permission.SEND_SMS"/><uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/><uses-feature android:name="android.hardware.telephony" android:required="false"/><queries><package android:name="com.whatsapp"/><package android:name="com.whatsapp.w4b"/></queries></manifest>#' $M
+          grep -q "android.permission.SEND_SMS" $M
+          grep -q "android.permission.ACTIVITY_RECOGNITION" $M
+          test -f $R/wake_calm.wav
       - name: Add QR scanner for the wake-up task
         run: |
           set -e

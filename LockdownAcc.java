@@ -79,7 +79,7 @@ final class LockdownAcc {
 
   /** Pauses the service for a while. Never during a lockdown. */
   static boolean startBank(Context c, int minutes) {
-    if (!granted(c) || locked(c) || !isOn(c)) return false;
+    if (!granted(c) || locked(c) || !isOn(c) || WakeAlarm.ringing(c)) return false;
     // while an app detox runs the pause is kept short, because the detox cannot block anything while the service is off
     int m = Math.max(1, Math.min(Detox.any(c) ? 15 : 60, minutes));
     long end = System.currentTimeMillis() + m * 60000L;

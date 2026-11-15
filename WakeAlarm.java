@@ -16,7 +16,7 @@ import org.json.JSONObject;
  * in the lockdown preferences, so a restored backup or a bug in the web page cannot weaken them.
  *
  * Config (saved by the app, key "wake"): {on, time "HH:mm", days [0..6, 0 = Sunday], mission, diff, count, text, vol,
- * guard, guardFrom "HH:mm", check, checkMin}. A weaker change waits 24 hours ("wakePend", "wakePendAt"), like the night rule.
+ * guard, guardFrom "HH:mm", check, checkMin}. A weaker change waits 18 hours ("wakePend", "wakePendAt"), like the night rule.
  *
  * Ring state: "wakeRing" = when the ring started (0 = quiet), "wakeKind" = "wake" or "check", "wakeCheckAt" = when the
  * second "are you awake" ring is due, "wakeDone" and "wakeMiss" = last finished and last given-up time.
@@ -144,7 +144,7 @@ final class WakeAlarm {
     return sp(c).getString("wakeKind", "wake");
   }
 
-  /** A weaker change waits 24 hours and never lands while a ring or the guard window is running. */
+  /** A weaker change waits 18 hours and never lands while a ring or the guard window is running. */
   static void applyPending(Context c, long now) {
     SharedPreferences p = sp(c);
     long pa = p.getLong("wakePendAt", 0);
@@ -229,7 +229,15 @@ final class WakeAlarm {
   static void startRing(Context c, String kind) {
     long now = System.currentTimeMillis();
     sp(c).edit().putLong("wakeRing", now).putString("wakeKind", kind).putLong("wakeCheckAt", 0).apply();
+    // banking mode switched the accessibility service off: the ring needs it to keep the task in front, so bring it back
+    try {
+      if (sp(c).getLong("bankUntil", 0) > 0) LockdownAcc.endBank(c);
+    } catch (Exception e) {
+      // ignore
+    }
     startService(c);
+    // the lock overlay steps aside at once instead of at the next tick
+    if (LockdownService.inst != null) LockdownService.inst.poke();
     exact(c, now + WATCH_EVERY, fire(c, ACT_WATCH, REQ_WATCH));
   }
 
@@ -268,7 +276,27 @@ final class WakeAlarm {
     }
   }
 
-  /** The mission was done: the ring stops. A first wake-up mission may start the "are you awake" check a few minutes later. */
+  static JSONObject walkCfg(Context c) {
+    JSONObject o = cfg(c);
+    return o == null ? null : o.optJSONObject("walk");
+  }
+
+  static boolean walkOn(Context c) {
+    JSONObject w = walkCfg(c);
+    return w != null && w.optBoolean("on", false) && WalkSteps.available(c);
+  }
+
+  static int walkNeed(Context c) {
+    JSONObject w = walkCfg(c);
+    return w == null ? 100 : Math.max(20, Math.min(2000, w.optInt("steps", 100)));
+  }
+
+  static long walkWait(Context c) {
+    JSONObject w = walkCfg(c);
+    return (w == null ? 20 : Math.max(5, Math.min(60, w.optInt("min", 20)))) * 60000L;
+  }
+
+  /** The mission was done: the ring stops. A first wake-up mission starts the walk (or the "are you awake" check) a few minutes later. */
   static void done(Context c) {
     SharedPreferences p = sp(c);
     long now = System.currentTimeMillis();
@@ -276,15 +304,69 @@ final class WakeAlarm {
     SharedPreferences.Editor ed = p.edit().putLong("wakeRing", 0).putLong("wakeDone", now);
     JSONObject o = cfg(c);
     long chk = 0;
-    if ("wake".equals(k) && o != null && o.optBoolean("check", true)) {
-      int m = Math.max(2, Math.min(30, o.optInt("checkMin", 8)));
-      chk = now + m * 60000L;
+    boolean walk = walkOn(c);
+    if ("wake".equals(k)) {
+      if (walk) {
+        // walk the needed steps within the wait, or the alarm rings again
+        WalkSteps.begin(c);
+        ed.putInt("walkTry", 0);
+        chk = now + walkWait(c);
+      } else if (o != null && o.optBoolean("check", true)) {
+        int m = Math.max(2, Math.min(30, o.optInt("checkMin", 8)));
+        chk = now + m * 60000L;
+      } else {
+        Guard.fire(c, "awake", "");
+      }
+    } else if ("check".equals(k)) {
+      if (walk && WalkSteps.active(c)) {
+        int tries = p.getInt("walkTry", 0) + 1;
+        ed.putInt("walkTry", tries);
+        if (tries < 3) chk = now + walkWait(c);
+        else {
+          WalkSteps.end(c);
+          ed.putLong("walkMiss", now);
+          Guard.fire(c, "awake", "");
+        }
+      } else {
+        Guard.fire(c, "awake", "");
+      }
     }
     ed.putLong("wakeCheckAt", chk).apply();
     quiet(c);
     cancelAlarm(c, ACT_CHECK, REQ_CHECK);
     if (chk > 0) exact(c, chk, fire(c, ACT_CHECK, REQ_CHECK));
     schedule(c);
+  }
+
+  /** He walked enough: no second ring. The wake-up counts as confirmed. */
+  static void walkOk(Context c) {
+    cancelAlarm(c, ACT_CHECK, REQ_CHECK);
+    sp(c).edit().putLong("wakeCheckAt", 0).putLong("walkOkAt", System.currentTimeMillis()).apply();
+    WalkSteps.end(c);
+    Guard.fire(c, "awake", "");
+  }
+
+  /** The "check" time has come. With the walk on, the alarm rings again only when he did not walk enough. */
+  static void checkDue(final Context c, final Runnable finish) {
+    final long now = System.currentTimeMillis();
+    if (!(on(c) && !NightRule.breakNow(c, now))) {
+      sp(c).edit().putLong("wakeCheckAt", 0).apply();
+      finish.run();
+      return;
+    }
+    if (walkOn(c) && WalkSteps.active(c)) {
+      WalkSteps.count(c, steps -> {
+        try {
+          if (steps >= walkNeed(c)) walkOk(c);
+          else startRing(c, "check");
+        } finally {
+          finish.run();
+        }
+      });
+      return;
+    }
+    startRing(c, "check");
+    finish.run();
   }
 
   /** Nobody finished the mission within RING_MAX: the ring stops by itself and the miss is written down. */
@@ -305,7 +387,7 @@ final class WakeAlarm {
     } else {
       long chk = p.getLong("wakeCheckAt", 0);
       if (chk > 0) {
-        if (chk <= System.currentTimeMillis()) startRing(c, "check");
+        if (chk <= System.currentTimeMillis()) checkDue(c, () -> {});
         else exact(c, chk, fire(c, ACT_CHECK, REQ_CHECK));
       }
     }

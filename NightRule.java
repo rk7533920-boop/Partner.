@@ -66,7 +66,7 @@ final class NightRule {
   }
 
   /**
-   * A change that makes the rule weaker waits 24 hours (the app saves it as a pending change). Once its time has come it
+   * A change that makes the rule weaker waits 18 hours (the app saves it as a pending change). Once its time has come it
    * becomes the real setting, but never in the middle of a night window, so the lock is not cut short.
    */
   static void applyPending(Context c, long now) {

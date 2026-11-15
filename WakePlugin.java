@@ -71,7 +71,33 @@ public class WakePlugin extends Plugin {
       // unknown
     }
     o.put("exact", ex);
+    o.put("walkAvail", WalkSteps.available(c));
+    o.put("walkPerm", WalkSteps.permission(c));
+    o.put("walkSensor", WalkSteps.hasSensor(c));
+    o.put("walkActive", WalkSteps.active(c) && p.getLong("wakeCheckAt", 0) > 0);
+    o.put("walkMiss", p.getLong("walkMiss", 0));
     call.resolve(o);
+  }
+
+  /** The walk after the wake-up task: steps so far, steps needed, and when the alarm rings again if he does not walk. */
+  @PluginMethod
+  public void walk(final PluginCall call) {
+    final Context c = getContext();
+    final JSObject o = new JSObject();
+    o.put("active", WalkSteps.active(c));
+    o.put("need", WakeAlarm.walkNeed(c));
+    o.put("until", WakeAlarm.sp(c).getLong("wakeCheckAt", 0));
+    if (!WalkSteps.active(c)) {
+      o.put("steps", 0);
+      call.resolve(o);
+      return;
+    }
+    WalkSteps.count(c, steps -> {
+      o.put("steps", steps);
+      if (steps >= WakeAlarm.walkNeed(c)) WakeAlarm.walkOk(c);
+      o.put("ok", steps >= WakeAlarm.walkNeed(c));
+      call.resolve(o);
+    });
   }
 
   /** Saves the config and a waiting weaker change. Refused while the guard window or a ring is running. */

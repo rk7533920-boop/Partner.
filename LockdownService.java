@@ -1,6 +1,9 @@
 package com.partner.diary;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.KeyguardManager;
+import android.app.usage.UsageEvents;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -19,6 +22,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -70,6 +74,10 @@ public class LockdownService extends AccessibilityService {
   // wake-up alarm: while it rings (or the evening guard runs) the mission is kept in front and the pages that could remove it are closed (see WakeAlarm)
   private boolean wkRun = false;
   private long wkOpen = 0;
+  // adult-content block and accountability messages (see Guard)
+  private boolean gdScan = false, gdApps = false;
+  private long gdScanAt = 0, gdHitAt = 0, gdToast = 0, gdDnsAt = 0, waTry = 0;
+  private String waCur = "";
 
   private final Runnable tick = new Runnable() {
     @Override
@@ -125,7 +133,9 @@ public class LockdownService extends AccessibilityService {
       "com.android.dialer", "com.google.android.dialer", "com.samsung.android.dialer",
       "com.samsung.android.incallui", "com.android.incallui", "com.android.phone",
       "com.android.server.telecom", "com.android.emergency",
-      "com.android.contacts", "com.google.android.contacts"
+      "com.android.contacts", "com.google.android.contacts",
+      // the Clock app: an alarm or timer that rings during a lock has to be stoppable
+      "com.sec.android.app.clockpackage", "com.google.android.deskclock", "com.android.deskclock"
     ));
     try {
       TelecomManager tm = (TelecomManager) getSystemService(TELECOM_SERVICE);
@@ -179,8 +189,13 @@ public class LockdownService extends AccessibilityService {
   @Override
   public void onAccessibilityEvent(AccessibilityEvent e) {
     if (e == null || e.getPackageName() == null || sp == null) return;
-    if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
+    int type = e.getEventType();
     String p = e.getPackageName().toString();
+    if (type != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+      // typing and content changes: only windows that something is watching, and only when something needs them
+      if (type == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED || type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) guardEvent(e, p, type);
+      return;
+    }
     String c = e.getClassName() == null ? "" : e.getClassName().toString().toLowerCase(Locale.ROOT);
     if (!ignore.contains(p) || p.equals(getPackageName())) nzPkg = p;
     if ((c.contains("globalactions") || c.contains("powermenu") || c.contains("shutdown") || c.contains("reboot"))
@@ -194,7 +209,7 @@ public class LockdownService extends AccessibilityService {
       return;
     }
     // smart banking mode: a listed bank or payment app opened, so pause this service for a while
-    if (!isLocked() && sp.getBoolean("smartbank", false) && isBankPkg(p)) {
+    if (!isLocked() && !WakeAlarm.ringing(this) && sp.getBoolean("smartbank", false) && isBankPkg(p)) {
       if (LockdownAcc.startBank(this, sp.getInt("bankmin", 10))) return;
     }
     // app detox: a blocked app (or a Settings page that could switch the detox off) goes straight back to the home screen
@@ -205,7 +220,8 @@ public class LockdownService extends AccessibilityService {
     }
     if (ignore.contains(p)) return;
     curPkg = p;
-    fgAllowed = allow.contains(p);
+    fgAllowed = allow.contains(p) || (!waCur.isEmpty() && Guard.isWa(p));
+    if (gdScan && Guard.watchPkg(p)) guardEvent(e, p, AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
     if (isLocked()) {
       try {
         onTick();
@@ -349,6 +365,8 @@ public class LockdownService extends AccessibilityService {
       lastTick = now;
       return;
     }
+    Guard.applyPending(this, now);
+    gdScan = Guard.scanOn(this);
     schedTick(now);
     nightTick(now);
     long until = sp.getLong("until", 0);
@@ -380,6 +398,7 @@ public class LockdownService extends AccessibilityService {
     nudgeTick(now);
     detoxTick(now);
     wakeTick(now);
+    guardTick(now);
     lastTick = now;
   }
 
@@ -396,6 +415,246 @@ public class LockdownService extends AccessibilityService {
     if (now - wkOpen < 2500L) return;
     wkOpen = now;
     WakeAlarm.openMission(this);
+  }
+
+  // ---- adult-content block, accountability messages ----
+
+  /** The app that came to the front most recently, from the phone's usage log (null when nothing changed in the last seconds). */
+  private String usageFg(long now) {
+    try {
+      UsageStatsManager um = (UsageStatsManager) getSystemService(USAGE_STATS_SERVICE);
+      if (um == null) return null;
+      UsageEvents ev = um.queryEvents(now - 20000L, now + 1000L);
+      UsageEvents.Event x = new UsageEvents.Event();
+      String last = null;
+      while (ev != null && ev.hasNextEvent()) {
+        ev.getNextEvent(x);
+        if (x.getEventType() == UsageEvents.Event.MOVE_TO_FOREGROUND) last = x.getPackageName();
+      }
+      return last;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private void guardTick(long now) {
+    try {
+      // time on the apps he picked, for the "long on the phone" message
+      PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+      if (pm == null || pm.isInteractive()) Guard.usageTick(this, curPkg, lastTick == 0 ? 0 : now - lastTick, now);
+      dnsTick(now);
+      waPump(now);
+    } catch (Exception e) {
+      // next tick
+    }
+  }
+
+  /** Keeps the filter DNS in place. When it cannot be set by itself and stays off for 10 minutes, he and his people are told. */
+  private void dnsTick(long now) {
+    if (now - gdDnsAt < 20000L) return;
+    gdDnsAt = now;
+    if (!Guard.keepOn(this)) {
+      sp.edit().remove("gdDnsOffAt").remove("gdDnsNote").apply();
+      return;
+    }
+    if (Guard.dnsOk(this) || Guard.dnsApply(this)) {
+      if (sp.getLong("gdDnsOffAt", 0) != 0) sp.edit().remove("gdDnsOffAt").remove("gdDnsNote").apply();
+      return;
+    }
+    long off = sp.getLong("gdDnsOffAt", 0);
+    if (off == 0) {
+      sp.edit().putLong("gdDnsOffAt", now).apply();
+    } else if (now - off > 10 * 60000L && !sp.getBoolean("gdDnsNote", false)) {
+      sp.edit().putBoolean("gdDnsNote", true).apply();
+      Guard.note(this, "Adult filter is off", "Private DNS is not the filter any more. Open Partner, Settings, Adult content block and switch it back on.");
+      Guard.fire(this, "filter", "");
+    }
+  }
+
+  /** Typing or content in a watched window (a browser, a search box). */
+  private void guardEvent(AccessibilityEvent e, String p, int type) {
+    long now = System.currentTimeMillis();
+    if (!waCur.isEmpty() && Guard.isWa(p)) {
+      if (now - waTry > 350L) {
+        waTry = now;
+        waTryClick();
+      }
+      return;
+    }
+    if (!gdScan || !Guard.watchPkg(p)) return;
+    if (type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
+      if (e.isPassword() || e.getText() == null) return;
+      StringBuilder b = new StringBuilder();
+      for (CharSequence c : e.getText()) if (c != null) b.append(c).append(' ');
+      if (AdultMatch.adult(b.toString())) adultHit(p);
+      return;
+    }
+    if (now - gdScanAt < 700L) return;
+    gdScanAt = now;
+    AccessibilityNodeInfo root = null;
+    try {
+      root = getRootInActiveWindow();
+      if (root == null || root.getPackageName() == null || !p.equals(root.getPackageName().toString())) return;
+      if (scanNode(root, 0, new int[] { 260 })) adultHit(p);
+    } catch (Exception ex) {
+      // next event
+    } finally {
+      try {
+        if (root != null) root.recycle();
+      } catch (Exception ex) {
+        // ignore
+      }
+    }
+  }
+
+  /** Looks at address bars and search boxes only (never at page text or messages). */
+  private boolean scanNode(AccessibilityNodeInfo n, int depth, int[] budget) {
+    if (n == null || depth > 14 || budget[0]-- <= 0) return false;
+    CharSequence cn = n.getClassName(), t = n.getText();
+    String id = n.getViewIdResourceName();
+    if (t != null && t.length() > 2 && !n.isPassword()) {
+      boolean field = (cn != null && cn.toString().contains("EditText"))
+        || (id != null && (id.contains("url") || id.contains("search") || id.contains("omnibox") || id.contains("location_bar") || id.contains("address") || id.contains("query")));
+      if (field && AdultMatch.adult(t.toString())) return true;
+    }
+    for (int i = 0; i < n.getChildCount(); i++) {
+      AccessibilityNodeInfo ch = n.getChild(i);
+      if (ch == null) continue;
+      boolean hit = scanNode(ch, depth + 1, budget);
+      try {
+        ch.recycle();
+      } catch (Exception ex) {
+        // ignore
+      }
+      if (hit) return true;
+    }
+    return false;
+  }
+
+  /** Something adult was opened or typed: leave it, say why, count it, and tell his people (no more than every 20 minutes). */
+  private void adultHit(String p) {
+    long now = System.currentTimeMillis();
+    if (now - gdHitAt < 2500L) return;
+    gdHitAt = now;
+    try {
+      performGlobalAction(GLOBAL_ACTION_HOME);
+    } catch (Exception ex) {
+      // ignore
+    }
+    if (now - gdToast > 3000L) {
+      gdToast = now;
+      try {
+        Toast.makeText(this, "Blocked. Your adult-content block is on.", Toast.LENGTH_LONG).show();
+      } catch (Exception ex) {
+        // ignore
+      }
+    }
+    Guard.recordHit(this, now);
+    Guard.fire(this, "adult", "");
+  }
+
+  /** Sends the next WhatsApp message of the queue: opens the chat with the text filled in and taps Send. */
+  private void waPump(long now) {
+    waCur = sp.getString("waId", "");
+    if (Guard.queueLen(this) == 0) {
+      if (!waCur.isEmpty()) sp.edit().remove("waId").apply();
+      return;
+    }
+    Guard.pump(this); // SMS ones and messages that waited too long
+    if (!waCur.isEmpty()) {
+      if (now - sp.getLong("waStart", 0) > 25000L) {
+        Guard.failed(this, waCur);
+        sp.edit().remove("waId").putLong("waEnd", now).apply();
+        waCur = "";
+      } else {
+        waTryClick();
+      }
+      return;
+    }
+    PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+    KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+    if ((pm != null && !pm.isInteractive()) || (km != null && km.isKeyguardLocked())) return; // waits until the phone is in use
+    if (now - sp.getLong("waEnd", 0) < 5000L) return;
+    org.json.JSONObject it = Guard.nextWa(this);
+    if (it == null) return;
+    String id = it.optString("id");
+    Intent i = Guard.waIntent(it.optString("num"), it.optString("text"), "com.whatsapp");
+    if (i == null) {
+      Guard.failed(this, id);
+      Guard.failed(this, id);
+      return;
+    }
+    sp.edit().putString("waId", id).putLong("waStart", now).apply();
+    waCur = id;
+    try {
+      startActivity(i);
+    } catch (Exception e1) {
+      try {
+        i.setPackage("com.whatsapp.w4b");
+        startActivity(i);
+      } catch (Exception e2) {
+        sp.edit().remove("waId").putLong("waEnd", now).apply();
+        waCur = "";
+        Guard.failed(this, id);
+      }
+    }
+  }
+
+  private void waTryClick() {
+    if (waCur.isEmpty()) return;
+    AccessibilityNodeInfo root = null;
+    try {
+      root = getRootInActiveWindow();
+      if (root == null || root.getPackageName() == null || !Guard.isWa(root.getPackageName().toString())) return;
+      AccessibilityNodeInfo b = findSend(root, 0, new int[] { 300 });
+      if (b == null) return;
+      AccessibilityNodeInfo c = b;
+      int up = 0;
+      while (c != null && !c.isClickable() && up++ < 3) c = c.getParent();
+      if (c != null && c.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+        final String id = waCur;
+        Guard.sent(this, id);
+        sp.edit().remove("waId").putLong("waEnd", System.currentTimeMillis()).apply();
+        waCur = "";
+        // back to what he was doing
+        h.postDelayed(() -> {
+          try {
+            performGlobalAction(GLOBAL_ACTION_BACK);
+          } catch (Exception ex) {
+            // ignore
+          }
+        }, 1300L);
+        h.postDelayed(() -> {
+          try {
+            if (Guard.isWa(nzPkg) || Guard.isWa(curPkg)) performGlobalAction(GLOBAL_ACTION_BACK);
+          } catch (Exception ex) {
+            // ignore
+          }
+        }, 2600L);
+      }
+    } catch (Exception ex) {
+      // the next tick tries again
+    } finally {
+      try {
+        if (root != null) root.recycle();
+      } catch (Exception ex) {
+        // ignore
+      }
+    }
+  }
+
+  private AccessibilityNodeInfo findSend(AccessibilityNodeInfo n, int depth, int[] budget) {
+    if (n == null || depth > 16 || budget[0]-- <= 0) return null;
+    String id = n.getViewIdResourceName();
+    CharSequence d = n.getContentDescription();
+    if ((id != null && id.endsWith(":id/send")) || (d != null && (d.toString().equalsIgnoreCase("send") || d.toString().equals("भेजें")))) return n;
+    for (int i = 0; i < n.getChildCount(); i++) {
+      AccessibilityNodeInfo ch = n.getChild(i);
+      if (ch == null) continue;
+      AccessibilityNodeInfo r = findSend(ch, depth + 1, budget);
+      if (r != null) return r;
+    }
+    return null;
   }
 
   private String textOf(AccessibilityEvent e) {
@@ -415,6 +674,8 @@ public class LockdownService extends AccessibilityService {
     String msg = null;
     long until = Detox.until(this, p);
     if (until > now) msg = Detox.name(this, p) + " is blocked for " + Detox.left(until - now) + " more.";
+    else if (Guard.appBlocked(this, p)) msg = Guard.appName(this, p) + " is blocked by your adult-content block.";
+    else if (Guard.dnsPage(this, p, c, t)) msg = "Private DNS is locked while the adult-content block is on.";
     else if (Detox.settingsGuard(this, p, c, t)) msg = Detox.any(this) ? "This setting is closed until your detox ends." : "This is closed until your wake-up task is done.";
     if (msg == null) return false;
     if (now - dxHome > 300L) {
@@ -438,11 +699,25 @@ public class LockdownService extends AccessibilityService {
 
   /** Backup for the event: if a blocked app is still in front (the home press was missed), press Home again. */
   private void detoxTick(long now) {
-    dxRun = Detox.any(this);
-    if (!dxRun || curPkg.isEmpty()) return;
+    gdApps = false;
+    try {
+      org.json.JSONObject ad = Guard.adult(this);
+      gdApps = ad != null && ad.optBoolean("on", false) && ad.optJSONArray("apps") != null && ad.optJSONArray("apps").length() > 0;
+    } catch (Exception e) {
+      gdApps = false;
+    }
+    dxRun = Detox.any(this) || gdApps;
+    if (!dxRun) return;
     PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
     if (pm != null && !pm.isInteractive()) return;
-    if (Detox.until(this, curPkg) > now) detoxHit(curPkg, "", "");
+    // accessibility events can be missed (an app resumed from Recents), so the phone's usage log says which app is in front too
+    String fg = usageFg(now);
+    if (fg != null && !ignore.contains(fg) && !fg.equals(getPackageName())) {
+      curPkg = fg;
+      fgAllowed = allow.contains(fg);
+    }
+    if (curPkg.isEmpty()) return;
+    if (Detox.until(this, curPkg) > now || Guard.appBlocked(this, curPkg)) detoxHit(curPkg, "", "");
   }
 
   /** The limit day changes at 5 AM, so late-night use still counts for the day that is ending. */

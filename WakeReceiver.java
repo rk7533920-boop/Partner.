@@ -18,8 +18,15 @@ public class WakeReceiver extends BroadcastReceiver {
         if (WakeAlarm.on(c) && !NightRule.breakNow(c, now)) WakeAlarm.startRing(c, "wake");
       } else if (WakeAlarm.ACT_CHECK.equals(a)) {
         if (WakeAlarm.sp(c).getLong("wakeCheckAt", 0) > 0) {
-          if (WakeAlarm.on(c) && !NightRule.breakNow(c, now)) WakeAlarm.startRing(c, "check");
-          else WakeAlarm.sp(c).edit().putLong("wakeCheckAt", 0).apply();
+          // reading the step counter takes a moment, so this receiver stays alive until it is done
+          final PendingResult pr = goAsync();
+          WakeAlarm.checkDue(c, () -> {
+            try {
+              pr.finish();
+            } catch (Exception e) {
+              // already finished
+            }
+          });
         }
       } else if (WakeAlarm.ACT_WATCH.equals(a)) {
         WakeAlarm.watch(c);

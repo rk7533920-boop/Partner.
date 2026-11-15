@@ -43,6 +43,11 @@ public class SpeakerPlugin extends Plugin {
 
     /** ring = true makes SpeakService ring an alarm sound (timer) instead of speaking. */
     static void set(Context c, int id, long at, String title, String body, String text, String lang, boolean repeat, String ak, boolean ring) {
+        set(c, id, at, title, body, text, lang, repeat, ak, ring, "");
+    }
+
+    /** cond = "call": speak only if a call (normal or WhatsApp) is running at that moment. "" = always. */
+    static void set(Context c, int id, long at, String title, String body, String text, String lang, boolean repeat, String ak, boolean ring, String cond) {
         AlarmManager am = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(c, SpeakReceiver.class);
         i.putExtra("id", id);
@@ -54,6 +59,7 @@ public class SpeakerPlugin extends Plugin {
         i.putExtra("repeat", repeat);
         i.putExtra("ak", ak == null ? "" : ak);
         i.putExtra("ring", ring);
+        i.putExtra("cond", cond == null ? "" : cond);
         PendingIntent pi = PendingIntent.getBroadcast(c, id, i, PendingIntent.FLAG_UPDATE_CURRENT | immutable());
         if (Build.VERSION.SDK_INT >= 31 && !am.canScheduleExactAlarms()) {
             am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi);
@@ -93,7 +99,7 @@ public class SpeakerPlugin extends Plugin {
                     while (at <= now) at += 86400000L;
                 }
                 set(c, o.getInt("id"), at, o.optString("title", "Partner"), o.optString("body", ""),
-                        o.optString("text", ""), o.optString("lang", "hi-IN"), rep, o.optString("ak", ""), o.optBoolean("ring", false));
+                        o.optString("text", ""), o.optString("lang", "hi-IN"), rep, o.optString("ak", ""), o.optBoolean("ring", false), o.optString("cond", ""));
             }
         } catch (Exception ignored) {
         }
@@ -117,7 +123,7 @@ public class SpeakerPlugin extends Plugin {
                     if (!ak0.isEmpty()) keep.add("spk_" + ak0 + ".mp3");
                     int id = o.getInt("id");
                     set(c, id, o.getLong("at"), o.optString("title", "Partner"), o.optString("body", ""),
-                            o.optString("text", ""), o.optString("lang", "hi-IN"), o.optBoolean("repeat", false), o.optString("ak", ""), o.optBoolean("ring", false));
+                            o.optString("text", ""), o.optString("lang", "hi-IN"), o.optBoolean("repeat", false), o.optString("ak", ""), o.optBoolean("ring", false), o.optString("cond", ""));
                     ids.add(String.valueOf(id));
                 }
             }

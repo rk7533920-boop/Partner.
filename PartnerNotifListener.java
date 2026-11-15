@@ -293,6 +293,37 @@ public class PartnerNotifListener extends NotificationListenerService {
     }
   }
 
+  /** True while a call (WhatsApp, Telegram, Meet, or the phone app) is on its ongoing notification right now. */
+  static boolean callActive(Context c) {
+    try {
+      JSONObject act;
+      synchronized (LOCK) {
+        act = new JSONObject(cp(c).getString("act", "{}"));
+      }
+      if (act.length() == 0) return false;
+      PartnerNotifListener l = inst;
+      if (l != null) {
+        StatusBarNotification[] all = l.getActiveNotifications();
+        if (all != null) {
+          for (StatusBarNotification s : all) if (act.has(s.getKey())) return true;
+        }
+        return false;
+      }
+      // the listener is not connected: trust a call seen in the last minutes
+      JSONArray names = act.names();
+      long now = System.currentTimeMillis();
+      if (names != null) {
+        for (int i = 0; i < names.length(); i++) {
+          JSONObject o = act.optJSONObject(names.getString(i));
+          if (o != null && now - o.optLong("l") < 10 * 60000L) return true;
+        }
+      }
+    } catch (Exception e) {
+      // unknown: treat as no call
+    }
+    return false;
+  }
+
   /** Finished calls not read by the app yet: [{p, a, s, e}]. */
   static JSONArray calls(Context c) {
     synchronized (LOCK) {

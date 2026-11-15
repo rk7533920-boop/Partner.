@@ -97,7 +97,7 @@ final class Detox {
     long best = 0;
     for (int i = 0; i < a.length(); i++) {
       JSONObject o = a.optJSONObject(i);
-      if (o != null && pkg.equals(o.optString("pkg")) && o.optLong("until", 0) > best) best = o.optLong("until", 0);
+      if (o != null && pkg.equals(o.optString("pkg")) && o.optLong("from", 0) <= System.currentTimeMillis() && o.optLong("until", 0) > best) best = o.optLong("until", 0);
     }
     return best;
   }
@@ -119,10 +119,17 @@ final class Detox {
    * An app that is already blocked for longer keeps its longer time.
    */
   static String add(Context c, JSONArray apps, long until) {
+    return add(c, apps, 0, until);
+  }
+
+  /** `from` is when the block starts (0 or in the past = now). A block that starts later is shown as planned and starts by itself. */
+  static String add(Context c, JSONArray apps, long from, long until) {
     long now = System.currentTimeMillis();
+    if (from < now) from = now;
+    if (from > now + MAX) return "The start is too far away.";
     if (apps == null || apps.length() == 0) return "Pick at least one app.";
-    if (until < now + MIN) return "The end time is too close.";
-    if (until > now + MAX) until = now + MAX;
+    if (until < from + MIN) return "The end time is too close to the start.";
+    if (until > from + MAX) until = from + MAX;
     synchronized (LOCK) {
       JSONArray cur = list(c);
       JSONArray out = new JSONArray();
@@ -157,7 +164,8 @@ final class Detox {
           o.put("pkg", pkg);
           String nm = a.optString("name", pkg);
           o.put("name", nm.length() > 40 ? nm.substring(0, 40) : nm);
-          o.put("from", now);
+          o.put("from", from);
+          o.put("ts", now);
           o.put("until", until);
           out.put(o);
         }
@@ -182,7 +190,7 @@ final class Detox {
           JSONObject o = cur.getJSONObject(i);
           if (id != null && id.equals(o.optString("id"))) {
             found = true;
-            if (now - o.optLong("from", 0) > REGRET) {
+            if (now - o.optLong("ts", o.optLong("from", 0)) > REGRET) {
               err = o.optString("name", "This app") + " is blocked until it ends. The 10 minutes to undo are over.";
               out.put(o);
             }

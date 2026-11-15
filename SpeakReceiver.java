@@ -10,6 +10,8 @@ public class SpeakReceiver extends BroadcastReceiver {
     public void onReceive(Context c, Intent i) {
         // a planned break: spoken reminders stay silent (a timer he started himself still rings)
         boolean quiet = NightRule.breakNow(c, System.currentTimeMillis()) && !i.getBooleanExtra("ring", false);
+        // a reminder that only makes sense in a situation (for example "wrap up the call") stays silent when it is not that situation
+        if (!condOk(c, i.getStringExtra("cond"))) quiet = true;
         if (!quiet) {
             Intent s = new Intent(c, SpeakService.class);
             if (i.getExtras() != null) s.putExtras(i.getExtras());
@@ -21,7 +23,21 @@ public class SpeakReceiver extends BroadcastReceiver {
         if (i.getBooleanExtra("repeat", false)) {
             SpeakerPlugin.set(c, i.getIntExtra("id", 1), i.getLongExtra("at", System.currentTimeMillis()) + 86400000L,
                     i.getStringExtra("title"), i.getStringExtra("body"), i.getStringExtra("text"),
-                    i.getStringExtra("lang"), true, i.getStringExtra("ak"));
+                    i.getStringExtra("lang"), true, i.getStringExtra("ak"), i.getBooleanExtra("ring", false), i.getStringExtra("cond"));
         }
+    }
+
+    static boolean condOk(Context c, String cond) {
+        if (cond == null || cond.isEmpty()) return true;
+        if ("call".equals(cond)) {
+            try {
+                android.telecom.TelecomManager tm = (android.telecom.TelecomManager) c.getSystemService(Context.TELECOM_SERVICE);
+                if (tm != null && tm.isInCall()) return true;
+            } catch (Exception e) {
+                // no phone permission: fall through to the app-call check
+            }
+            return PartnerNotifListener.callActive(c);
+        }
+        return true;
     }
 }

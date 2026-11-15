@@ -72,6 +72,7 @@ public class LockdownPlugin extends Plugin {
     o.put("nightLastBlock", p.getLong("nightLastBlock", 0));
     o.put("nightLastRepeat", p.getLong("nightLastRepeat", 0));
     o.put("detox", Detox.list(getContext()).toString());
+    o.put("running", LockdownService.inst != null);
     o.put("brkFrom", p.getLong("brkFrom", 0));
     o.put("brkTo", p.getLong("brkTo", 0));
     call.resolve(o);
@@ -175,8 +176,13 @@ public class LockdownPlugin extends Plugin {
         call.reject("Turn on the accessibility service first");
         return;
       }
+    } else if (LockdownService.inst == null && LockdownAcc.granted(getContext())) {
+      // switched on in Settings but not running (Android stopped it): switch it off and on again so it connects
+      LockdownAcc.setOn(getContext(), false);
+      LockdownAcc.setOn(getContext(), true);
     }
-    String err = Detox.add(getContext(), apps, u.longValue());
+    Double f = call.getDouble("from");
+    String err = Detox.add(getContext(), apps, f == null ? 0 : f.longValue(), u.longValue());
     if (!err.isEmpty()) {
       call.reject(err);
       return;

@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import org.json.JSONObject;
 
@@ -36,6 +37,7 @@ public class WakeService extends Service {
   private PowerManager.WakeLock wl, screen;
   private long t0 = 0;
   private boolean running = false;
+  private boolean vibOn = false;
 
   @Override
   public IBinder onBind(Intent i) {
@@ -51,6 +53,7 @@ public class WakeService extends Service {
     postNotification();
     if (!running) {
       running = true;
+      vibOn = false;
       t0 = System.currentTimeMillis();
       lightScreen();
       startSound();
@@ -69,7 +72,7 @@ public class WakeService extends Service {
       }
       keepLoud();
       // the accessibility service brings the mission back to the front if he leaves it
-      h.postDelayed(this, 2500);
+      h.postDelayed(this, 700);
     }
   };
 
@@ -121,42 +124,78 @@ public class WakeService extends Service {
     }
   }
 
+  /** Seconds the sound takes to rise from almost silent to full. Calm by default (2 minutes); the "are you awake" ring is shorter. */
+  private float rampSec() {
+    int r = 120;
+    try {
+      JSONObject o = WakeAlarm.cfg(this);
+      if (o != null) r = Math.max(30, Math.min(300, o.optInt("ramp", 120)));
+    } catch (Exception e) {
+      // default
+    }
+    if ("check".equals(WakeAlarm.kind(this))) r = Math.min(r, 45);
+    return r;
+  }
+
   private void keepLoud() {
     try {
       AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
       int max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM);
       int want = Math.max(1, Math.round(max * volPct() / 100f));
       if (am.getStreamVolume(AudioManager.STREAM_ALARM) < want) am.setStreamVolume(AudioManager.STREAM_ALARM, want, 0);
-      // the sound rises over the first 20 seconds, then stays full
-      float f = Math.min(1f, 0.35f + (System.currentTimeMillis() - t0) / 20000f * 0.65f);
+      // the sound rises slowly (ease-in), so it wakes him gently instead of with a jolt
+      float x = Math.min(1f, (System.currentTimeMillis() - t0) / (rampSec() * 1000f));
+      float f = 0.03f + 0.97f * x * x;
       if (mp != null) mp.setVolume(f, f);
       if (mp != null && !mp.isPlaying()) mp.start();
+      // soft vibration joins only when the sound is already about a third of the way up
+      if (!vibOn && x >= 0.35f) {
+        vibOn = true;
+        softVibrate();
+      }
     } catch (Exception e) {
       // try again on the next round
     }
   }
 
+  private void softVibrate() {
+    try {
+      vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+      if (vib == null) return;
+      if (Build.VERSION.SDK_INT >= 26) vib.vibrate(VibrationEffect.createWaveform(new long[] { 0, 350, 1650 }, new int[] { 0, 90, 0 }, 0));
+      else vib.vibrate(new long[] { 0, 350, 1650 }, 0);
+    } catch (Exception e) {
+      // ignore
+    }
+  }
+
   private void startSound() {
     try {
-      Uri u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-      if (u == null) u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-      if (u == null) u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
       mp = new MediaPlayer();
       mp.setAudioAttributes(new AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-      mp.setDataSource(this, u);
+        .setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
+      boolean calm = true;
+      JSONObject o = WakeAlarm.cfg(this);
+      if (o != null) calm = !"system".equals(o.optString("tone", "calm"));
+      int rid = calm ? getResources().getIdentifier("wake_calm", "raw", getPackageName()) : 0;
+      if (rid != 0) {
+        android.content.res.AssetFileDescriptor afd = getResources().openRawResourceFd(rid);
+        mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+        afd.close();
+      } else {
+        Uri u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+        if (u == null) u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        if (u == null) u = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        mp.setDataSource(this, u);
+      }
       mp.setLooping(true);
-      mp.setVolume(0.35f, 0.35f);
+      mp.setVolume(0.03f, 0.03f);
       mp.setOnPreparedListener(x -> x.start());
       mp.prepareAsync();
     } catch (Exception e) {
-      // vibration and the notification still work
-    }
-    try {
-      vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-      if (vib != null) vib.vibrate(new long[] { 0, 800, 400 }, 0);
-    } catch (Exception e) {
-      // ignore
+      // the notification and the later vibration still work
+      vibOn = true;
+      softVibrate();
     }
   }
 

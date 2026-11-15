@@ -188,6 +188,29 @@ input.f,textarea.f,select.f{background:var(--s1);box-shadow:var(--sh)}
 .mmenu button{display:block;width:100%;text-align:left;height:48px;padding:0 16px;font-weight:600;font-size:15px;border:0;background:none;color:var(--tx);font-family:inherit}.mmenu button+button{border-top:1px solid var(--ln)}.mmenu .mdl{color:#C2362F}:root[data-theme=dark] .mmenu .mdl{color:#FF8A80}@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .mmenu .mdl{color:#FF8A80}}
 [data-sw]{touch-action:pan-y}
 .wkv{position:relative;width:min(78vw,320px);aspect-ratio:1;border-radius:24px;overflow:hidden;background:#000;margin:0 auto}.wkv video{width:100%;height:100%;object-fit:cover}.wkv i{position:absolute;inset:14%;border:4px solid #7B97FF;border-radius:18px;pointer-events:none}
+
+/* ---- one button system (2026-11-14): same job = same size and shape everywhere ----
+   Block actions (.pb, and any button that is full width or sits in a pair): 50 px high, pill shape.
+   Small actions (.pill, .mn, .chip): 44 px high, pill shape. Delete and Remove are always red text on the soft grey fill. */
+.pb{height:50px;min-height:50px;border-radius:25px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 20px;line-height:1.1}
+.pill,.mn,.chip{min-height:44px;height:44px;border-radius:22px;padding:0 18px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1.1}
+.mn[style*="width:100%"],.pill[style*="width:100%"],.chip[style*="width:100%"],.two>.pill,.two>.mn,.two>.pb{height:50px;min-height:50px;border-radius:25px;font-size:15px;padding:0 20px}
+.mq .mn{width:52px;height:46px;min-height:46px;border-radius:23px;font-size:24px;padding:0}
+.tgs .chip{height:42px;min-height:42px;border-radius:21px}
+.seg button,.tabs button,.wkk button,.hmq button,.qc button{min-height:0}
+button[data-a$="del"],button[data-a="midel"],button[data-a="weremove"],button[data-a="wprest"]+button,button.dng{color:#e5645f}
+button.pb.dng,button.pb[data-a$="del"],button.pb[data-a="weremove"]{background:var(--s2);color:#e5645f}
+
+.wks.wkb{--tx:#fff;--mu:rgba(255,255,255,.78);--ln:rgba(255,255,255,.34);--bg:#111;color:#fff;background-size:cover}
+.wks.wkb .wkk button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+.wks.wkb .wkk button[data-v=ok]{background:#fff!important;color:#111!important}
+.wks.wkb .f{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.3)}
+.wks.wkb .pill{background:rgba(255,255,255,.2);color:#fff}
+.wkqt{font-size:17px;line-height:1.4;text-align:center;max-width:320px;margin:10px 0 2px;font-weight:600;text-shadow:0 1px 8px rgba(0,0,0,.35)}
+.wkw{width:100%;max-width:320px;height:10px;border-radius:5px;background:rgba(255,255,255,.28);overflow:hidden;margin:10px 0}.wkw i{display:block;height:100%;background:#fff;border-radius:5px;transition:width .6s}
+.wpg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0 10px}.wpg>div{position:relative}.wpg img{width:100%;height:96px;object-fit:cover;border-radius:12px;background:var(--s2)}
+.wpg button{position:absolute;top:4px;right:4px;width:30px;height:30px;min-height:0;border-radius:15px;background:rgba(0,0,0,.55);color:#fff;font-size:18px;padding:0}
+.hms.c2{grid-template-columns:1fr 1fr}
 </style></head><body>
 <div id="warn"></div><div id="top"></div><main id="main"></main><div id="foot"></div><div id="sheet"></div><div id="toast"></div>
 <div id="ring"></div><div id="wk"></div>
@@ -195,6 +218,7 @@ input.f,textarea.f,select.f{background:var(--s1);box-shadow:var(--sh)}
 <input type="file" id="wfile" accept=".json,.txt,text/plain,application/json" hidden>
 <input type="file" id="afile" accept="audio/*" hidden>
 <input type="file" id="cmfile" accept="image/*,video/*" multiple hidden>
+<input type="file" id="wpfile" accept="image/*" multiple hidden>
 <input type="file" id="ppcam" accept="image/*" capture="environment" hidden>
 <input type="file" id="ppfile" accept="image/*" hidden>
 <script>
@@ -608,7 +632,7 @@ ${CALTXT||'(not available)'}
 ${rv?(RVD?'THIS REVIEW IS FOR AN EARLIER DAY, '+new Date(RVD.a).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})+'. He is doing it late (he slept early or forgot). Review that day only, say which day it is, and do not judge today.\nFull diary of that day (every entry, phone and YPT usage, sleep):\n'+diaryText(RVD.a-1,RVD.b)+'\n':'Full diary of today for the review (every entry, phone and YPT usage, sleep):\n'+diaryText(st-1)+'\n'):''}Current date (his day starts when he wakes): ${tk}, ${wd}. Open targets (refer by T number):
 ${tl}
 Targets done today: ${td}
-Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}${dxPrompt()?'\n'+dxPrompt():''}${wkPrompt()?'\n'+wkPrompt():''}
+Pending reminders (he will get a notification at that time): ${rl}${idRight()?'\n'+idRight().trim():''}${woPrompt()?'\n'+woPrompt():''}${gdPrompt()?'\n'+gdPrompt():''}${spRight()?'\n'+spRight().trim():''}${brkPrompt()?'\n'+brkPrompt():''}${dxPrompt()?'\n'+dxPrompt():''}${wkPrompt()?'\n'+wkPrompt():''}
 ${S.routines.length?'Routines (refer by RT number; a routine marked RUNNING is happening now):\n'+rtText()+'\n':''}${(TMREF=S.timers.filter(t=>t.end>Date.now()),TMREF.length)?'Timers running (refer by TM number): '+TMREF.map((t,i)=>'TM'+(i+1)+' '+t.text+' (ends '+t12(t.end)+')').join('; ')+'\n':''}His usual durations (reference only): ${usual()||'(not enough data)'}
 ${(HREF=S.habits.slice(0,30),HREF.length)?'Habits he is building (refer by H number; each one done is a vote for his identity):\n'+HREF.map((h,i)=>'H'+(i+1)+' '+h.name+' | cue: '+(whenText(h)||'none')+(h.step?' | smallest step: '+h.step:'')+(h.mins?' | '+h.mins+' min':'')+(h.where?' | where: '+h.where:'')+(h.reward?' | reward: '+h.reward:'')+' | '+(hl(h.id,tk)>1?'done today':hl(h.id,tk)===1?'tiny step today':'not yet today')).join('\n')+'\n':''}
 Gym status:${lastWt()?' Last weigh-in: '+lastWt().kg+' kg ('+ago(lastWt().ts)+').':' He has not logged his weight yet.'}${S.set.goalWt?' Goal weight: '+S.set.goalWt+' kg.':''} Gym goal: ${S.set.gymDays||4} days a week. If the last weigh-in is over 7 days old, remind him once to weigh in.${S.gym.length?'\nGym history per exercise:\n'+exPrompt():''}${QK?'\nThe phone is locked, so it may not be him. Log only what he says now and answer in one short sentence. Never reveal, summarise or read out anything stored or from earlier, such as memory, diary, targets, goals, reviews or screen time. If asked, tell him to open the full app.':''}`;
@@ -721,6 +745,8 @@ const lkToday=pkg=>{const n=Date.now(),d=new Date(n);d.setHours(5,0,0,0);if(d.ge
 const NZMSG='Tum kaafi der se phone pe ho. Phone rakho aur apna kaam shuru karo.';
 const nz=()=>{const z=S.set.nz||(S.set.nz={});if(z.on===undefined)z.on=false;if(!Array.isArray(z.allow))z.allow=[];if(!z.msg)z.msg=NZMSG;if(!z.after)z.after=10;if(!z.every)z.every=10;if(!z.from)z.from='06:00';if(!z.to)z.to='23:00';return z};
 async function nzPush(){if(!LK||!LK.setNudge)return;try{await LK.setNudge({cfg:JSON.stringify(nz())})}catch(e){const m=String((e&&e.message)||e);if(!/not implemented/i.test(m))warn('Could not save focus nudges: '+m)}}
+/* how long a weaker change (switching a rule off, making it easier) waits before it applies: 18 hours (was 24, changed 2026-11-14) */
+const WAIT_H=18,WAIT_MS=WAIT_H*36e5;
 const lkd=()=>{const l=S.set.lk||(S.set.lk={on:false,rules:[],protect:true,exit:true,delay:true,pend:null,pendAt:0});if(!l.rules)l.rules=[];return l};
 const lkCfg=l=>({on:!!l.on,rules:l.rules||[],protect:l.protect!==false,exit:l.exit!==false,delay:l.delay!==false});
 const lkView=()=>{const l=lkd();return l.pend||lkCfg(l)};
@@ -736,17 +762,17 @@ const tgb=(a,on,lab)=>`<button class="tgl${on?' on':''}" role="switch" aria-chec
 function lkWeaker(a,b){if(a.on&&!b.on)return true;if(a.protect&&!b.protect)return true;if(!a.exit&&b.exit)return true;if(a.delay&&!b.delay)return true;
  for(const r of a.rules){const q=b.rules.find(x=>x.id===r.id);if(!q)return true;if(q.min>r.min||q.lock<r.lock)return true}return false}
 async function lkPush(){if(!LK)return;const l=lkd();try{await LK.setConfig({cfg:JSON.stringify(lkCfg(l)),pend:l.pend?JSON.stringify(l.pend):'',pendAt:l.pendAt||0})}catch(e){warn('Could not save lockdown settings: '+((e&&e.message)||e))}}
-async function lkSync(){if(!LK)return;try{nzPush();const o=await LK.status();LKD.st=o;ntFromStatus(o);try{LKS=await LK.secureStatus()}catch(e){LKS=null}const l=lkd();if(o&&o.cfg){Object.assign(l,JSON.parse(o.cfg));l.pend=o.pend?JSON.parse(o.pend):null;l.pendAt=+o.pendAt||0;put('set')}else if(l.on||l.rules.length)lkPush();if(LKS&&!(o&&o.locked)&&bkDiff())bkPush()}catch(e){}}
+async function lkSync(){if(!LK)return;try{nzPush();const o=await LK.status();LKD.st=o;ntFromStatus(o);gdSync();try{LKS=await LK.secureStatus()}catch(e){LKS=null}const l=lkd();if(o&&o.cfg){Object.assign(l,JSON.parse(o.cfg));l.pend=o.pend?JSON.parse(o.pend):null;l.pendAt=+o.pendAt||0;put('set')}else if(l.on||l.rules.length)lkPush();if(LKS&&!(o&&o.locked)&&bkDiff())bkPush()}catch(e){}}
 async function lkEdit(fn){const l=lkd();if(LKD.st&&LKD.st.locked){warn('Lockdown is active. Settings are locked until it ends.');return}
  const base=l.pend||lkCfg(l),nw=fn(JSON.parse(JSON.stringify(base))),cur=lkCfg(l);
- if(l.delay!==false&&lkWeaker(cur,nw)){l.pend=nw;l.pendAt=Date.now()+864e5}else{Object.assign(l,nw);l.pend=null;l.pendAt=0}
+ if(l.delay!==false&&lkWeaker(cur,nw)){l.pend=nw;l.pendAt=Date.now()+WAIT_MS}else{Object.assign(l,nw);l.pend=null;l.pendAt=0}
  put('set');await lkPush();render()}
 async function lkStart(min,reason){if(!LK){warn('Lockdown needs the APK.');return false}await lkSync();if(!(LKD.st&&LKD.st.accessibility)&&!(LKS&&LKS.granted)){warn('Turn on the accessibility service first (Settings, Lockdown, Setup).');return false}
  try{await LK.start({minutes:min,reason:reason||'Lockdown'});await lkSync();return true}catch(e){warn('Could not start lockdown: '+((e&&e.message)||e));return false}}
 const PRESET=[['com.snapchat.android','Snapchat'],['com.instagram.android','Instagram'],['com.google.android.youtube','YouTube'],['com.facebook.katana','Facebook'],['com.twitter.android','X'],['com.reddit.frontpage','Reddit'],['com.whatsapp','WhatsApp'],['org.telegram.messenger','Telegram']];
 PRESET.forEach(([p,n])=>LKD.map[p]=n);
 function appsHtml(){const q=LKD.q.toLowerCase(),src=LKD.apps&&LKD.apps.length?LKD.apps:PRESET.map(([pkg,name])=>({pkg,name}));
- return src.filter(a=>(!q||a.name.toLowerCase().includes(q))&&!(LKD.pm==='dx'&&DXNEVER.test(a.pkg))).slice(0,80).map(a=>`<button class="r" data-a="${LKD.pm==='nz'?'nzpick':LKD.pm==='dx'?'dxpick':'lkpick'}" data-v="${esc(a.pkg)}"><span><b>${esc(a.name)}</b></span><i>${LKD.pm==='dx'&&DX.sel.includes(a.pkg)?'\u2713':'+'}</i></button>`).join('')||'<small>No apps found.</small>'}
+ return src.filter(a=>(!q||a.name.toLowerCase().includes(q))&&!(LKD.pm==='dx'&&DXNEVER.test(a.pkg))).slice(0,80).map(a=>`<button class="r" data-a="${LKD.pm==='nz'?'nzpick':LKD.pm==='dx'?'dxpick':LKD.pm==='ga'?'gapick':LKD.pm==='gu'?'gupick':'lkpick'}" data-v="${esc(a.pkg)}"><span><b>${esc(a.name)}</b></span><i>${LKD.pm==='dx'&&DX.sel.includes(a.pkg)?'\u2713':'+'}</i></button>`).join('')||'<small>No apps found.</small>'}
 function appsRender(){const el=$('#lkl');if(el)el.innerHTML=appsHtml()}
 async function loadApps(){if(!LK||LKD.apps)return;try{const r=await LK.apps();LKD.apps=(r&&r.apps)||[];LKD.apps.forEach(a=>LKD.map[a.pkg]=a.name);if(V==='s-apps')appsRender();else if(V==='s-detox')render()}catch(e){}}
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='lkq'){LKD.q=e.target.value;appsRender()}});
@@ -888,10 +914,10 @@ function checkDue(){
  S.fu.forEach(f=>{if(!f.done&&f.at<=n){f.done=true;S.chat.push({id:'d'+f.id,role:'assistant',c:f.q,ts:n});ch=true;if(f.at>n-6e5){say.push(f.sp||f.q);fq=1;if(f.at>n-2e4)fr=1}}});
  nudgeSlots(n).forEach(z=>{if(z.at<=n&&z.at>n-6e5&&S.set.idleSent!==z.at){S.set.idleSent=z.at;S.chat.push({id:'n'+z.at,role:'assistant',c:z.body,ts:n});put('set');ch=true;say.push(z.text)}});
  const [h,m]=S.set.rev.split(':'),rt=new Date();rt.setHours(+h,+m,0,0);
- if(n>=rt.getTime()&&S.set.revAsked!==dayK(n)){S.set.revAsked=dayK(n);S.chat.push({id:'r'+n,role:'assistant',c:'Time for your daily review. Shall we go through today? Tap Start now in the Today tab.',ts:n});put('set');ch=true;if(n-rt.getTime()<6e5)say.push('डेली रिव्यू का टाइम। आज का दिन देखें?')}
+ if(n>=rt.getTime()&&S.set.revAsked!==dayK(n)&&!RVK()[hk()]){S.set.revAsked=dayK(n);S.chat.push({id:'r'+n,role:'assistant',c:'Time for your daily review. Shall we go through today? Tap Start now in the Today tab.',ts:n});put('set');ch=true;if(n-rt.getTime()<6e5)say.push('डेली रिव्यू का टाइम। आज का दिन देखें?')}
  if(ch){put('chat');put('fu');if(V==='chat')render()}
  if(say.length&&S.set.nspeak!==false&&!(NP&&NP.Speaker&&NP.Speaker.schedule)&&!cv.on&&!busy)speak(say.join('. '),()=>{if(fq)askListen(300)});else if(fq&&NP&&NP.Speaker&&NP.Speaker.schedule)askListen(fr?9000:800)}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){checkQuick();if(V==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});mergeInbox();checkDue();wkCheck();syncN().then(keepBtn);syncUsage();{const b4=JSON.stringify(LKD.st);lkSync().then(()=>{if((V==='s-lock'||V==='s-setup')&&JSON.stringify(LKD.st)!==b4)render()})}if(V==='s-us')usCheck();if(V==='s-night')suStatus().then(()=>{if(V==='s-night')render()});spSync(false).then(n=>{if(n&&V==='spend')render()});if(V==='spend')spStatus().then(()=>{if(V==='spend')render()});if(SU.on&&SU.wait){SU.wait=null;suRun()}else if(V==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!QK){checkQuick();if(V==='s-adult'||V==='s-acct')gdSync().then(()=>render());if(V==='s-tone')hwSync().then(()=>{if(V==='s-tone')render()});mergeInbox();checkDue();wkCheck();syncN().then(keepBtn);syncUsage();{const b4=JSON.stringify(LKD.st);lkSync().then(()=>{if((V==='s-lock'||V==='s-setup')&&JSON.stringify(LKD.st)!==b4)render()})}if(V==='s-us')usCheck();if(V==='s-night')suStatus().then(()=>{if(V==='s-night')render()});spSync(false).then(n=>{if(n&&V==='spend')render()});if(V==='spend')spStatus().then(()=>{if(V==='spend')render()});if(SU.on&&SU.wait){SU.wait=null;suRun()}else if(V==='s-setup')suStatus().then(()=>{if(V==='s-setup')render()})}});
 async function hwSync(){if(!HW)return;try{HWS.st=await HW.status()}catch(e){}}
 function hwKeep(){if(S.set.hotword&&HW&&HW.setEnabled)HW.setEnabled({enabled:true}).catch(()=>{})}
 function hwOpen(f){if(!HW){warn('This works only in the APK.');return}HW[f]().catch(e=>warn('Could not open the Android page: '+((e&&e.message)||e)))}
@@ -912,6 +938,10 @@ function hwBlock(s){
 function keepBtn(){hwKeep();if(S.set.lockBtn&&NP&&NP.Quick&&NP.Quick.setEnabled)NP.Quick.setEnabled({enabled:true}).catch(()=>{})}
 const habitMsg=h=>'Habit time: '+h.name+'.'+(h.step?' Start small: '+h.step+'.':'');
 const nextAt=(hm,after)=>{const [h,m]=hm.split(':'),d=new Date(after);d.setHours(+h,+m,0,0);if(d.getTime()<=after)d.setDate(d.getDate()+1);return d};
+/* a reminder for something already done today is moved to tomorrow, and a night-call heads-up only speaks during a call */
+const pushDay=(at,done)=>done&&dayK(dayStart(at))===hk()?at+864e5:at;
+const inBedNow=()=>S.sleep.find(x=>!x.end&&x.start&&Date.now()-x.start<14*36e5);
+const afterBed=at=>{const o=inBedNow();return o&&at<o.start+14*36e5?at+864e5:at};
 let syncQ=Promise.resolve();
 function syncN(){syncQ=syncQ.then(syncNow).catch(e=>logErr('Reminders',(e&&e.message)||e));return syncQ}
 async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&NP.Speaker.schedule?NP.Speaker:null;if((!LN&&!SP)||QK)return;
@@ -923,9 +953,9 @@ async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&N
   const base=Math.max(Date.now(),S.set.mute||0),pf=S.fu.filter(f=>!f.done&&f.at>base).sort((a,b)=>a.at-b.at).slice(0,20);
   if(SP&&S.set.nspeak!==false){
    const hi=t=>/[\u0900-\u097F]/.test(t)?'hi-IN':'en-IN';
-   const items=[{id:1,at:nextAt(S.set.rev,base).getTime(),title:'Partner',body:'Time for your daily review. Shall we go through today?',text:'डेली रिव्यू का टाइम। आज का दिन देखें?',lang:'hi-IN',repeat:true}];
+   const items=[{id:1,at:pushDay(nextAt(S.set.rev,base).getTime(),!!RVK()[hk()]),title:'Partner',body:'Time for your daily review. Shall we go through today?',text:'डेली रिव्यू का टाइम। आज का दिन देखें?',lang:'hi-IN',repeat:true}];
    pf.forEach((f,i)=>items.push({id:100+i,at:f.at,title:'Partner',body:f.q,text:f.sp||f.q,lang:hi(f.sp||f.q)}));
-   S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>items.push({id:300+i,at:nextAt(h.anchor,base).getTime(),title:'Partner',body:habitMsg(h),text:habitMsg(h),lang:'en-IN',repeat:true}));
+   S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>items.push({id:300+i,at:pushDay(nextAt(h.anchor,base).getTime(),hl(h.id,hk())>1),title:'Partner',body:habitMsg(h),text:habitMsg(h),lang:'en-IN',repeat:true}));
    idSlots().forEach((x,i)=>items.push({id:700+i,at:nextAt(x.from,base).getTime(),title:'Partner',body:idLine(x),text:idLine(x),lang:'en-IN',repeat:true}));
    nudgeSlots(Date.now()).filter(z=>z.at>base).forEach((z,i)=>items.push({id:500+i,at:z.at,title:'Partner',body:z.body,text:z.text,lang:'hi-IN'}));
    items.push(...ntItems(base));
@@ -936,12 +966,12 @@ async function syncNow(){const LN=NP&&NP.LocalNotifications,SP=NP&&NP.Speaker&&N
    try{const c=await SP.canExact();if(!c.value){if(!S.set.exactAsked){S.set.exactAsked=true;put('set');await SP.requestExact()}else failOnce('exact','Exact alarms are off, so reminders and timers can ring late. Turn on Alarms and reminders for Partner in Settings > Permissions.','Reminders')}}catch(e){}
    return}
   if(!LN)return;
-  const list=[{id:1,title:'Partner',body:'Time for your daily review. Shall we go through today?',schedule:{at:nextAt(S.set.rev,base),repeats:true,every:'day',allowWhileIdle:true}}];
+  const list=[{id:1,title:'Partner',body:'Time for your daily review. Shall we go through today?',schedule:{at:new Date(pushDay(nextAt(S.set.rev,base).getTime(),!!RVK()[hk()])),repeats:true,every:'day',allowWhileIdle:true}}];
   pf.forEach((f,i)=>list.push({id:100+i,title:'Partner',body:f.q,schedule:{at:new Date(f.at),allowWhileIdle:true}}));
   S.habits.filter(h=>h.mode==='time'&&h.anchor).slice(0,20).forEach((h,i)=>list.push({id:300+i,title:'Partner',body:habitMsg(h),schedule:{at:nextAt(h.anchor,base),repeats:true,every:'day',allowWhileIdle:true}}));
   idSlots().forEach((x,i)=>list.push({id:700+i,title:'Partner',body:idLine(x),schedule:{at:nextAt(x.from,base),repeats:true,every:'day',allowWhileIdle:true}}));
   nudgeSlots(Date.now()).filter(z=>z.at>base).forEach((z,i)=>list.push({id:500+i,title:'Partner',body:z.body,schedule:{at:new Date(z.at),allowWhileIdle:true}}));
-  ntItems(base).concat(wkItems(base)).forEach(x=>list.push({id:x.id,title:x.title,body:x.body,schedule:{at:new Date(x.at),repeats:true,every:'day',allowWhileIdle:true}}));
+  ntItems(base).concat(wkItems(base)).filter(x=>!x.cond).forEach(x=>list.push({id:x.id,title:x.title,body:x.body,schedule:{at:new Date(x.at),repeats:true,every:'day',allowWhileIdle:true}}));
   await LN.schedule({notifications:list})}catch(e){fail('Could not schedule reminders: '+((e&&e.message)||e),{where:'Reminders',bg:true})}}
 
 /* ---------- voice ---------- */
@@ -998,15 +1028,15 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Da
 /* ---------- views ---------- */
 const greet=()=>{const h=new Date().getHours();return h<5?'It is very late.':h<12?'Good morning.':h<17?'Good afternoon.':h<22?'Good evening.':'Good night.'};
 const row=(a,b,v)=>`<button class="r" data-a="go" data-v="${v}"><span><b>${a}</b><small>${esc(b)}</small></span><i>›</i></button>`;
-const SUB={'s-us':'Screen time','s-night':'Night call rule','s-wake':'Wake-up and sleep','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-detox':'App detox','s-trans':'Transformation','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-idfade':'Identity fade','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
+const SUB={'s-us':'Screen time','s-night':'Night call rule','s-wake':'Wake-up and sleep','s-brk':'Break mode','s-medit':'Edit note','s-rt':'Routines','s-rtedit':'Edit routine','s-food':'Food databank','s-foodedit':'Edit food','s-mem':'Memory','s-tone':'Mentor','s-notif':'Notifications','s-key':'API key','s-ana':'Claude analysis','s-bak':'Backup','s-voice':'Voice','s-acc':'Phone access','s-lock':'Lockdown','s-detox':'App detox','s-adult':'Adult content block','s-acct':'Accountability messages','s-trans':'Transformation','s-nz':'Focus nudges','s-rule':'Rule','s-apps':'Choose an app','s-setup':'Permissions','s-goals':'Health goals','s-err':'Problems','s-wplan':'Workout plan','s-wday':'Workout day','s-wex':'Exercise','s-equip':'Equipment','s-wimp':'Import plan','s-ideal':'Ideal day','s-idfade':'Identity fade','s-cont':'Contingency plan','s-aud':'Audio tracks','g-mentor':'Mentor','g-health':'Health and food','g-daily':'Daily plan','g-self':'Self-control','g-phone':'Phone','g-data':'Data and app'};
 /* ---- Settings home: 6 groups, search, "needs you" (redesign approved 2026-10-29) ---- */
 const GRPS={'g-mentor':{t:'Mentor',d:'How Partner talks and listens.',k:['tone','voice','mtog','mem','key']},
  'g-health':{t:'Health and food',d:'Targets, workouts, photos and your food list.',k:['goals','trans','wplan','food','mtxt']},
  'g-daily':{t:'Daily plan',d:'Your routines, your ideal day and how identity votes fade.',k:['rt','ideal','idfade','cont','aud']},
- 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['wake','lock','detox','night','nz','us','brk']},
+ 'g-self':{t:'Self-control',d:'Tools that keep you on track, and the break switch.',k:['wake','lock','detox','adult','acct','night','nz','us','brk']},
  'g-phone':{t:'Phone',d:'What Partner may do on this phone.',k:['perm','notif','acc']},
  'g-data':{t:'Data and app',d:'Backups, reports and app behaviour.',k:['theme','bak','ana','err','swtog']}};
-const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-idfade':'g-daily','s-lock':'g-self','s-detox':'g-self','s-trans':'g-health','s-night':'g-self','s-wake':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
+const GP={'s-tone':'g-mentor','s-voice':'g-mentor','s-mem':'g-mentor','s-key':'g-mentor','s-goals':'g-health','s-food':'g-health','s-rt':'g-daily','s-idfade':'g-daily','s-lock':'g-self','s-detox':'g-self','s-adult':'g-self','s-acct':'g-self','s-trans':'g-health','s-night':'g-self','s-wake':'g-self','s-brk':'g-self','s-nz':'g-self','s-us':'g-self','s-setup':'g-phone','s-notif':'g-phone','s-acc':'g-phone','s-bak':'g-data','s-ana':'g-data','s-err':'g-data'};
 const RET={};let SQ='',HLG=false,WXALL=false,BKO='';
 const foodSum=()=>S.foods.length+(S.foods.length===1?' food':' foods')+(S.foods.some(f=>f.nw)?'  ·  '+S.foods.filter(f=>f.nw).length+' to check':'');
 const voiceSum=()=>natP()==='gg'?'Google voice':natP()==='el'?'ElevenLabs voice':natP()==='of'?'Offline voice':'Phone voice';
@@ -1035,6 +1065,8 @@ function SETR(k){const s=S.set;return({
  voice:['Voice','voice speech google elevenlabs offline','s-voice',()=>row('Voice',voiceSum(),'s-voice')],
  mtog:['Listen in Mentor tab','listen hey partner hands-free hotword mentor',null,()=>rw('Listen in Mentor tab','Hands-free \"Hey Partner\" while the Mentor tab is open',tgb('mtog',S.set.mentorAuto!==false,'Listen in Mentor tab'))],
  acc:['Alarms and calendar','phone access alarms calendar reminders clock events','g-phone',()=>PH?rw('Alarms','“Wake me at 7” sets the alarm in your Clock app',tgb('atog',paS().alarm,'Alarms'))+rw('Calendar and reminders','Add events and read what is planned today',tgb('ctog',paS().cal,'Calendar')):'<p class="g">Alarms and calendar need the APK. In a browser they do nothing.</p>'],
+ adult:['Adult content block','adult porn hentai webtoon block filter dns safe search urge nsfw sites','s-adult',()=>row('Adult content block',gdSum(),'s-adult')],
+ acct:['Accountability messages','whatsapp message contact friend girlfriend accountability alert awake good morning phone usage sms','s-acct',()=>row('Accountability messages',gcSum(),'s-acct')],
  detox:['App detox','app detox block apps social media snapchat instagram youtube facebook quit hours days','s-detox',()=>row('App detox',dxSum(),'s-detox')],
  trans:['Transformation','transformation progress photos future goal physique target weight quotes body','s-trans',()=>row('Transformation',trSum(),'s-trans')],
  lock:['Lockdown','lockdown lock apps limit uninstall','s-lock',()=>row('Lockdown',LK?(lkd().on?'On  ·  '+lkd().rules.length+(lkd().rules.length===1?' rule':' rules'):'Off'):'APK only','s-lock')],
@@ -1193,10 +1225,10 @@ function main(){
    const chk=nw.length?`<p class="lab">New from AI  \u00b7  check</p><small style="display:block;margin-bottom:6px">Partner saved these by itself with its best guess and already uses them. Keep, edit or remove each one.</small>`+nw.map(f=>`<div class="m"><div data-a="fedit" data-v="${f.id}">${fl(f)}</div><div class="two" style="margin-top:8px"><button class="chip" data-a="fkeep" data-v="${f.id}">Keep</button><button class="chip" data-a="fdel" data-v="${f.id}">Remove</button></div></div>`).join(''):'';
    const all=S.foods.filter(f=>!f.nw).sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<button class="m" data-a="fedit" data-v="${f.id}">${fl(f)}</button>`).join('');
    return `<p class="g" style="margin:0 0 14px">Every food you eat, with its macros. Partner only names the food and the amount; the app does all the maths from this list, so the numbers never change from one day to the next. New foods are added automatically the first time you mention them.</p>${chk}${all?'<p class="lab">Your foods</p>'+all:(chk?'':'<p class="g">Empty. Foods appear here as you tell Partner what you eat, or add one yourself.</p>')}<button class="pb" data-a="fnew">Add food</button>`}
-  if(V==='s-foodedit'){const f=S.foods.find(x=>x.id===ED)||{id:'',name:'',per:'g',k:'',p:'',c:'',f:'',al:[],u:{}};return `<p class="lab" style="margin-top:0">Name</p><input class="f" id="fdn" maxlength="60" value="${esc(f.name)}" placeholder="Soya bean (raw)"><p class="lab">Macros are for</p><select class="f" id="fdp">${[['g','100 g'],['ml','100 ml'],['pc','1 piece']].map(([k,n])=>`<option value="${k}" ${f.per===k?'selected':''}>${n}</option>`).join('')}</select><p class="lab">Calories (kcal)</p><input class="f" id="fdk" type="number" inputmode="decimal" value="${esc(f.k)}"><p class="lab">Protein (g)</p><input class="f" id="fdpr" type="number" inputmode="decimal" value="${esc(f.p)}"><p class="lab">Carbs (g)</p><input class="f" id="fdc" type="number" inputmode="decimal" value="${esc(f.c)}"><p class="lab">Fat (g)</p><input class="f" id="fdf" type="number" inputmode="decimal" value="${esc(f.f)}"><p class="lab">Other names (comma separated)</p><input class="f" id="fda" value="${esc((f.al||[]).join(', '))}" placeholder="soyabean, soya"><p class="lab">Unit weights (g or ml per unit)</p><input class="f" id="fdu" value="${esc(Object.entries(f.u||{}).map(([a,b])=>a+'='+b).join(', '))}" placeholder="pc=50, tbsp=21"><button class="pb" data-a="fsave">Save</button>${f.id?`<button class="pb" style="background:var(--s2);color:var(--tx)" data-a="fdel" data-v="${f.id}">Delete</button>`:''}`}
+  if(V==='s-foodedit'){const f=S.foods.find(x=>x.id===ED)||{id:'',name:'',per:'g',k:'',p:'',c:'',f:'',al:[],u:{}};return `<p class="lab" style="margin-top:0">Name</p><input class="f" id="fdn" maxlength="60" value="${esc(f.name)}" placeholder="Soya bean (raw)"><p class="lab">Macros are for</p><select class="f" id="fdp">${[['g','100 g'],['ml','100 ml'],['pc','1 piece']].map(([k,n])=>`<option value="${k}" ${f.per===k?'selected':''}>${n}</option>`).join('')}</select><p class="lab">Calories (kcal)</p><input class="f" id="fdk" type="number" inputmode="decimal" value="${esc(f.k)}"><p class="lab">Protein (g)</p><input class="f" id="fdpr" type="number" inputmode="decimal" value="${esc(f.p)}"><p class="lab">Carbs (g)</p><input class="f" id="fdc" type="number" inputmode="decimal" value="${esc(f.c)}"><p class="lab">Fat (g)</p><input class="f" id="fdf" type="number" inputmode="decimal" value="${esc(f.f)}"><p class="lab">Other names (comma separated)</p><input class="f" id="fda" value="${esc((f.al||[]).join(', '))}" placeholder="soyabean, soya"><p class="lab">Unit weights (g or ml per unit)</p><input class="f" id="fdu" value="${esc(Object.entries(f.u||{}).map(([a,b])=>a+'='+b).join(', '))}" placeholder="pc=50, tbsp=21"><button class="pb" data-a="fsave">Save</button>${f.id?`<button class="pb dng" style="background:var(--s2)" data-a="fdel" data-v="${f.id}">Delete</button>`:''}`}
   if(V==='s-rt'){const l=S.routines.map(r=>`<button class="m" data-a="rtedit" data-v="${r.id}">${esc(r.name)}<small>  \u00b7  ${r.steps.length} step${r.steps.length===1?'':'s'}${rtLive(r)?'  \u00b7  running now':''}</small></button>`).join('');return `<p class="g" style="margin:0 0 14px">A routine starts by itself when you wake up (or when you say so) and stays on until its steps are done, you say you are done, or its time ends. Partner reminds you of every step that is left.</p>${l||'<p class="g">No routines yet. Add one here, or just tell Partner what your morning routine includes.</p>'}<button class="pb" data-a="rtnew">Add routine</button>`}
-  if(V==='s-rtedit'){const r=S.routines.find(x=>x.id===ED)||{id:'',name:'',steps:[],cue:'wake',until:'12:00'};return `<p class="lab" style="margin-top:0">Name</p><input class="f" id="rtn" maxlength="40" value="${esc(r.name)}" placeholder="Morning routine"><p class="lab">Steps, one per line</p><textarea class="f" id="rts" rows="8" placeholder="Brush teeth&#10;Drink water&#10;Meditation">${esc(r.steps.join('\n'))}</textarea><p class="lab">Starts</p><select class="f" id="rtc"><option value="wake" ${r.cue!=='manual'?'selected':''}>When I wake up</option><option value="manual" ${r.cue==='manual'?'selected':''}>Only when I say so</option></select><p class="lab">Runs until (wake routines)</p><input class="f" id="rtu" type="time" value="${esc(r.until||'12:00')}"><button class="pb" data-a="rtsave">Save</button>${r.id?`<button class="pb" style="background:var(--s2);color:var(--tx)" data-a="rtdel" data-v="${r.id}">Delete</button>`:''}`}
- if(V==='s-medit'){const m=S.mem.find(x=>x.id===ED)||{t:'',sec:'Personal facts',id:''};return `<textarea class="f" id="met">${esc(m.t)}</textarea><p class="lab">Section</p><select class="f" id="mse">${SECS.map(k=>`<option ${k===(m.sec||'Personal facts')?'selected':''}>${k}</option>`).join('')}</select><button class="pb" data-a="msave">Save</button><button class="pb" style="background:var(--s2);color:var(--tx)" data-a="mdel" data-v="${m.id}">Delete</button>`}
+  if(V==='s-rtedit'){const r=S.routines.find(x=>x.id===ED)||{id:'',name:'',steps:[],cue:'wake',until:'12:00'};return `<p class="lab" style="margin-top:0">Name</p><input class="f" id="rtn" maxlength="40" value="${esc(r.name)}" placeholder="Morning routine"><p class="lab">Steps, one per line</p><textarea class="f" id="rts" rows="8" placeholder="Brush teeth&#10;Drink water&#10;Meditation">${esc(r.steps.join('\n'))}</textarea><p class="lab">Starts</p><select class="f" id="rtc"><option value="wake" ${r.cue!=='manual'?'selected':''}>When I wake up</option><option value="manual" ${r.cue==='manual'?'selected':''}>Only when I say so</option></select><p class="lab">Runs until (wake routines)</p><input class="f" id="rtu" type="time" value="${esc(r.until||'12:00')}"><button class="pb" data-a="rtsave">Save</button>${r.id?`<button class="pb dng" style="background:var(--s2)" data-a="rtdel" data-v="${r.id}">Delete</button>`:''}`}
+ if(V==='s-medit'){const m=S.mem.find(x=>x.id===ED)||{t:'',sec:'Personal facts',id:''};return `<textarea class="f" id="met">${esc(m.t)}</textarea><p class="lab">Section</p><select class="f" id="mse">${SECS.map(k=>`<option ${k===(m.sec||'Personal facts')?'selected':''}>${k}</option>`).join('')}</select><button class="pb" data-a="msave">Save</button><button class="pb dng" style="background:var(--s2)" data-a="mdel" data-v="${m.id}">Delete</button>`}
  if(V==='s-us')return `<p class="g" style="margin-top:0">Partner can see when, for how long and in which app you used your phone. The data stays on this phone. During analysis, app names and times are sent to Claude.</p><p id="usst" class="g"></p><button class="pb" id="usbtn" data-a="go" data-v="s-setup">Allow in Permissions</button><button class="pb" id="ussync" data-a="ussync" style="display:none">Sync last 7 days</button><small style="display:block;margin-top:14px">In Android settings, choose Partner and turn on usage access, then come back.</small><p class="lab">Calls</p><small style="display:block;margin-bottom:6px">Calls (normal, WhatsApp and other apps) count as screen time, from when the other person picks up until it ends, even with the screen off. They need notification access.</small>${rw('Calls in the study nudge','When on, the mentor can say \u201ctime went on the phone\u201d for call time too',tgb('cntog',!!S.set.callNudge,'Calls in the study nudge'))}`;
  if(V==='s-tone')return Object.entries({gentle:'Gentle',strict:'Strict',brutal:'Brutally honest'}).map(([k,v])=>`<button class="r" data-a="tone" data-v="${k}"><b>${v}</b><i>${s.tone===k?'●':''}</i></button>`).join('')+`<p class="lab">Your own instructions</p><textarea class="f" data-f="custom" placeholder="How should Partner act? e.g. Call me bhai, be strict about mornings, keep replies very short">${esc(s.custom||'')}</textarea><small style="display:block;margin-top:6px">Partner follows this in every chat.</small><p class="lab">Lock screen</p><div class="sw" style="margin-top:14px"><span>Lock screen button</span><button class="pill" data-a="lockbtn">${s.lockBtn?'On':'Off'}</button></div><small style="display:block">${NP?'A Tap to talk notification stays on the lock screen. Tapping it opens the full app without a password and starts listening. For the side button: Settings, Apps, Choose default apps, Digital assistant app, choose Partner.':'This works only in the APK.'}</small>${hwBlock(s)}`;
  if(V==='s-notif')return `<div class="sw"><span>Notifications</span><button class="pill" data-a="ntog">${s.notif?'On':'Off'}</button></div><div class="sw"><span>Speak reminders aloud</span><button class="pill" data-a="nsp">${s.nspeak===false?'Off':'On'}</button></div>
@@ -1206,7 +1238,7 @@ function main(){
  if(V==='s-key')return `<p class="lab" style="margin-top:0">Claude API key</p><input class="f" type="password" data-f="key" value="${esc(s.key)}" placeholder="sk-ant-..."><p class="lab">Chat model</p>${Object.entries(MN).map(([k,v])=>`<button class="r" data-a="model" data-v="${k}"><b>${v}</b><i>${CM()===k?'●':''}</i></button>`).join('')}<small style="display:block;margin-top:8px">Sonnet and Opus are smarter but cost more. Weekly analysis always uses Sonnet.</small><p class="lab">Thinking effort</p>${[['low','Low','Fastest. May miss things like the time of day or how long you slept.'],['medium','Medium','Balanced.'],['high','High','Thinks the most, a few seconds slower. Best for sleep, time and plans.']].map(([k,v,d])=>`<button class="r" data-a="effort" data-v="${k}"><span><b>${v}</b><small>${d}</small></span><i>${EFF()===k?'●':''}</i></button>`).join('')}<p class="lab">Reply length limit</p>${[[0,'No limit','Default. It thinks and writes for as long as it needs.'],[16000,'Long','Up to 16,000 tokens.'],[8000,'Medium','Up to 8,000 tokens.'],[4000,'Short','Up to 4,000 tokens. Long thinking can get cut off.']].map(([k,v,d])=>`<button class="r" data-a="maxtok" data-v="${k}"><span><b>${v}</b><small>${d}</small></span><i>${(+S.set.maxTok>0?+S.set.maxTok:0)===k?'●':''}</i></button>`).join('')}<small style="display:block;margin-top:8px">No limit still sends the biggest number that is safe (64,000 tokens on Haiku). You are only charged for what it actually writes.</small>${cacheNote()}<small style="display:block;margin-top:14px">The key stays only on this phone.</small>`;
  if(V==='s-acc'){const p=paS();return `<p class="g" style="margin-top:0">Let Partner act on your phone when you ask in chat. Reminders stay inside Partner (see Notifications).</p>${rw('Alarms','“Wake me at 7” sets the alarm in your Clock app',tgb('atog',p.alarm,'Alarms'))}${rw('Calendar and reminders','Add events and read what is planned today',tgb('ctog',p.cal,'Calendar'))}${PH?'':'<small style="display:block;margin-top:14px">These need the APK. In a browser they do nothing.</small>'}`}
  if(V==='s-lock'){const l=lkd(),v=lkView(),st=LKD.st||{};const pend=l.pend?`<div class="card"><div>Change pending<br><small>Applies ${new Date(l.pendAt).toLocaleString('en-IN',{weekday:'short',hour:'numeric',minute:'2-digit'})}</small></div><button class="pill" data-a="lkcancel">Cancel</button></div>`:'';
-  return `${LK?'':'<p class="g" style="margin-top:0">Lockdown needs the APK.</p>'}${st.locked?`<div class="card"><div>Lockdown active<br><small>until ${t12(st.until)}</small></div></div>`:''}${pend}${rw('Lockdown mode','Pauses the phone when a rule is hit',tgb('lkon',v.on,'Lockdown mode'))}<p class="lab">Rules</p>${v.rules.map(r=>`<button class="r" data-a="lkrule" data-v="${r.id}"><span><b>${esc(r.name)}: ${r.min} min a day</b><small>${lkToday(r.pkg)} min used so far today  ·  then locks for ${r.lock} min</small></span><i>›</i></button>`).join('')}<button class="r" data-a="lkadd"><span><b>Add rule</b></span><i>+</i></button><p class="lab">While locked</p>${rw('Always allowed','Calls and emergency calls','<i style="font-style:normal;color:var(--mu)">Fixed</i>')}${rw('Protection','Closes the power menu and keeps Partner installed',tgb('lkprot',v.protect,'Protection'))}${rw('Emergency exit','Unlocks after a 10 min wait',tgb('lkexit',v.exit,'Emergency exit'))}${rw('Changes apply after','24 hours, so you cannot undo it on impulse',tgb('lkdelay',v.delay,'Delay changes'))}<p class="lab">Setup</p>${rw('Accessibility service',st.accessibility?'On':'Needed to watch apps and cover the screen',st.accessibility?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')}${rw('Prevent uninstall',st.admin?'On':esc(LKD.adminErr||'Device admin keeps Partner installed'),st.admin?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')}<p class="lab">Banking and payment apps</p>${(()=>{const b=bkd(),k=LKS||{},on=!!(k.bankUntil&&k.bankUntil>Date.now());
+  return `${LK?'':'<p class="g" style="margin-top:0">Lockdown needs the APK.</p>'}${st.locked?`<div class="card"><div>Lockdown active<br><small>until ${t12(st.until)}</small></div></div>`:''}${pend}${rw('Lockdown mode','Pauses the phone when a rule is hit',tgb('lkon',v.on,'Lockdown mode'))}<p class="lab">Rules</p>${v.rules.map(r=>`<button class="r" data-a="lkrule" data-v="${r.id}"><span><b>${esc(r.name)}: ${r.min} min a day</b><small>${lkToday(r.pkg)} min used so far today  ·  then locks for ${r.lock} min</small></span><i>›</i></button>`).join('')}<button class="r" data-a="lkadd"><span><b>Add rule</b></span><i>+</i></button><p class="lab">While locked</p>${rw('Always allowed','Calls and emergency calls','<i style="font-style:normal;color:var(--mu)">Fixed</i>')}${rw('Protection','Closes the power menu and keeps Partner installed',tgb('lkprot',v.protect,'Protection'))}${rw('Emergency exit','Unlocks after a 10 min wait',tgb('lkexit',v.exit,'Emergency exit'))}${rw('Changes apply after','18 hours, so you cannot undo it on impulse',tgb('lkdelay',v.delay,'Delay changes'))}<p class="lab">Setup</p>${rw('Accessibility service',st.accessibility?'On':'Needed to watch apps and cover the screen',st.accessibility?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')}${rw('Prevent uninstall',st.admin?'On':esc(LKD.adminErr||'Device admin keeps Partner installed'),st.admin?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>')}<p class="lab">Banking and payment apps</p>${(()=>{const b=bkd(),k=LKS||{},on=!!(k.bankUntil&&k.bankUntil>Date.now());
  if(!LK)return'';
  if(!k.granted)return `<div class="card" style="display:block"><b>Make Paytm, YONO and other bank apps work</b><small style="display:block;margin:6px 0 10px">These apps often refuse to run while an accessibility service is on. Partner can switch its own service off for a few minutes and back on, but Android only lets a computer give it that right, once. On a computer with adb, with USB debugging on, run:</small><code style="display:block;word-break:break-all;font-size:12px;padding:10px;border-radius:10px;background:var(--s2);margin-bottom:10px">${ADBCMD}</code><div class="two"><button class="chip" data-a="bkcopy">Copy command</button><button class="chip" data-a="bkcheck">Check</button></div><small style="display:block;margin-top:10px">No computer? An on-device adb app (LADB) with Wireless debugging can run the same command. After it works you can turn USB debugging off again.</small></div>`;
  return (on?`<div class="card"><div>Accessibility paused<br><small>until ${t12(k.bankUntil)}, then it turns back on by itself</small></div><button class="pill" data-a="bkend">Turn on now</button></div>`:'')+rw('Smart banking mode','When you open a listed app, the service pauses for '+(+b.min||10)+' min. The first open may still be refused once, then open it again.',tgb('bksmart',b.smart,'Smart banking mode'))+`<p class="lab">Pause for</p><div class="two">${[5,10,20,30].map(m=>`<button class="chip${(+b.min||10)===m?' on':''}" data-a="bkmin" data-v="${m}">${m} min</button>`).join('')}</div><button class="pb" data-a="bkbank">Banking mode now (${+b.min||10} min)</button><p class="lab">Apps that trigger it (package names)</p><textarea class="f" id="bkpk" rows="6">${esc(b.pkgs)}</textarea><small style="display:block;margin-top:8px">Not available while a lockdown is running. While paused, app limits are not counted.</small>`})()}<p class="lab">Start now</p><div class="two">${[15,30,60,120].map(m=>`<button class="chip${(LKD.min||30)===m?' on':''}" data-a="lkmin" data-v="${m}">${m} min</button>`).join('')}</div><button class="pb" data-a="lkstart">Start lockdown</button><small style="display:block;margin-top:14px">Holding the phone’s buttons to force a restart cannot be blocked by any app. The lockdown continues after the phone starts again.</small>`}
@@ -1242,7 +1274,9 @@ const SUS=[['notif','Notifications','Reminders and the lock screen button',()=>N
  ['sms','Bank messages','Reads UPI and bank debit messages for the spending page',()=>SPN.requestSms()],
  ['cn','Contacts and calls','Choose who may be called at night, end calls',()=>SPN.requestCalls()],
  ['nl','Notification access','Payment notifications and WhatsApp call hang-up, opens an Android page',()=>SPN.openListener(),1],
- ['scr','Call screening','Rejects other callers at night, an Android prompt',()=>SPN.requestScreening(),1]];
+ ['scr','Call screening','Rejects other callers at night, an Android prompt',()=>SPN.requestScreening(),1],
+ ['steps','Step counter','Counts your steps for the wake-up walk',()=>GD.requestSteps()],
+ ['smsend','Send SMS','Texts the people you chose when WhatsApp cannot send',()=>GD.requestSms()]];
 async function suStatus(){const st={},LN=NP&&NP.LocalNotifications,SR=NP&&NP.SpeechRecognition;
  try{if(LN&&LN.checkPermissions)st.notif=(await LN.checkPermissions()).display==='granted'}catch(e){}
  try{if(SR&&SR.checkPermissions)st.mic=(await SR.checkPermissions()).speechRecognition==='granted'}catch(e){}
@@ -1251,6 +1285,7 @@ async function suStatus(){const st={},LN=NP&&NP.LocalNotifications,SR=NP&&NP.Spe
  try{if(NP&&NP.Wake&&NP.Wake.status)st.fsi=!!(await NP.Wake.status()).fsi}catch(e){}
  try{if(NP&&NP.Speaker&&NP.Speaker.canExact)st.exact=!!(await NP.Speaker.canExact()).value}catch(e){}
  try{if(LK){const o=await LK.status();LKD.st=o;st.acc=!!(o&&o.accessibility);st.adm=!!(o&&o.admin)}}catch(e){}
+ try{if(GD&&GD.status){const o=await GD.status();st.steps=!!o.steps;st.smsend=!!o.sms}}catch(e){}
  try{if(SPN){const o=await SPN.status();SPS=o;st.sms=!!o.sms;st.cn=!!o.calls;st.nl=!!o.listener;if(o.sdk>=29)st.scr=!!o.screening}}catch(e){}
  SU.st=st;return st}
 async function suOne(k){const x=SUS.find(y=>y[0]===k);if(!x)return;
@@ -2055,7 +2090,7 @@ function tfTick(){if(!TF)return;const t=S.timers.find(x=>x.id===TF);if(!t){TF=''
 function tfRelease(){try{TFW&&TFW.release()}catch(e){}TFW=null}
 A.tfull=id=>{TF=id;tfDraw()};A.tclose=()=>{TF='';tfRelease();$('#ring').innerHTML=''};
 A.tdone=id=>{const t=S.timers.find(x=>x.id===id);TF='';tfRelease();$('#ring').innerHTML='';if(!t)return;if(t.oid&&S.open.some(o=>o.id===t.oid))openDone(t.oid);else{S.timers=S.timers.filter(x=>x.id!==id);put('timers');syncN();render()}};
-function newMain2(){switch(V){case'reading':return readingView();case'looks':return looksView();case'reflect':return reflectView();case'wreview':return wreviewView();case's-idfade':return idfView();case's-detox':return detoxView();case's-trans':return transSetView();case'trans':return trView();case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-wake':return wakeView();case's-brk':return breakView();default:return null}}
+function newMain2(){switch(V){case'reading':return readingView();case'looks':return looksView();case'reflect':return reflectView();case'wreview':return wreviewView();case's-idfade':return idfView();case's-detox':return detoxView();case's-adult':return adultView();case's-acct':return acctView();case's-trans':return transSetView();case'trans':return trView();case's-ideal':return idealView();case's-cont':return contView();case's-aud':return audView();case's-night':return nightView();case's-wake':return wakeView();case's-brk':return breakView();default:return null}}
 
 /* ---------- failures, timers, backup, goals, navigation ---------- */
 const trimChat=()=>{const c=Date.now()-60*864e5;S.chat=S.chat.filter(m=>m.ts>c);if(S.chat.length>4000)S.chat=S.chat.slice(-4000)};
@@ -2105,7 +2140,7 @@ function mergeBackup(j,c){const by=(k,key)=>{const have=new Set(S[k].map(key));l
  Object.entries(j.hlog||{}).forEach(([id,m])=>{S.hlog[id]={...m,...(S.hlog[id]||{})}});{const L=lk(),J=(j.looks&&typeof j.looks==='object')?j.looks:{};['r','c'].forEach(q=>{const have=new Set(L[q].map(x=>x.id));(Array.isArray(J[q])?J[q]:[]).forEach(x=>{if(x&&x.id&&!have.has(x.id))L[q].push(x)})});Object.entries(J.log||{}).forEach(([k,m])=>{L.log[k]={...m,...(L.log[k]||{})}})}Object.entries(j.rrun||{}).forEach(([k,m])=>{S.rrun[k]={...m,...(S.rrun[k]||{})}});
  if(j.ana&&(!S.ana||j.ana.ts>S.ana.ts))S.ana=j.ana;
  S.usage.sort((a,b)=>a.s-b.s);S.chat.sort((a,b)=>a.ts-b.ts);
- if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync','brk','wk'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
+ if(j.set){const cur=S.set,ns={...cur,...j.set};['setupDone','usAccess','exactAsked','fsAsked','warned','mute','bkLast','bkWhere','bkName','bkErr','usSync','brk','wk','gd'].forEach(k=>{if(k in cur)ns[k]=cur[k];else delete ns[k]});
   if(cur.lk)ns.lk=cur.lk;['key','evKey','ggKey'].forEach(k=>{ns[k]=j.set[k]||cur[k]||''});S.set=ns}
  return c}
 async function importFiles(list){let ok=0;const bad=[],parsed=[],c={};
@@ -2251,6 +2286,8 @@ function cmShow(){const L=cmL();if(!L.length||QK)return;let d=$('#cmv');if(!d){d
  d.className='tfs';d.style.cssText='justify-content:flex-start;overflow:auto;padding-top:calc(64px + env(safe-area-inset-top,0px));z-index:80';
  d.innerHTML=`<button class="tfx ic" data-a="cmclose" aria-label="Close">\u00d7</button><div style="width:100%;max-width:560px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px">${L.map(m=>cmItem(m,true)).join('')}</div>`;cmFill(d)}
 Object.assign(A,{
+ htedit:()=>{HTE=!HTE;render()},
+ httog:id=>{const q=[...htSel()];const i=q.indexOf(id);if(i>=0)q.splice(i,1);else if(q.length<8)q.push(id);else{toast('Up to 8 tiles.');return}S.set.ht=q;put('set');render()},
  cmpick:()=>$('#cmfile').click(),
  cmrm:async id=>{const c=cnt();c.media=cmL().filter(m=>m.id!==id);try{await dbDel('cm_'+id)}catch(e){}if(CMU[id]){URL.revokeObjectURL(CMU[id]);delete CMU[id]}put('set');render()},
  cmclose:()=>{const d=$('#cmv');if(d){d.querySelectorAll('video').forEach(v=>{try{v.pause()}catch(e){}});d.remove()}}
@@ -2454,22 +2491,22 @@ const ntLast=n=>String(n||'').replace(/\D/g,'').slice(-10);
 const nt=()=>{const s=S.set;if(!s.night||typeof s.night!=='object')s.night={on:false};const n=s.night;if(!n.from)n.from='23:00';if(!n.to)n.to='07:00';if(!n.warn)n.warn='22:45';if(n.warn2===undefined)n.warn2=true;if(!Array.isArray(n.allow))n.allow=[];if(n.rep===undefined)n.rep=true;if(!(+n.repMin>0))n.repMin=15;if(!Array.isArray(n.never))n.never=[];return n};
 const ntCfg=n=>({on:!!n.on,warn:n.warn||'22:45',warn2:n.warn2!==false,from:n.from||'23:00',to:n.to||'07:00',allow:(n.allow||[]).map(a=>({n:String(a.n||''),num:String(a.num||'')})),rep:n.rep!==false,repMin:Math.max(1,Math.min(60,+n.repMin||15)),never:(n.never||[]).map(a=>({n:String(a.n||''),num:String(a.num||'')}))});
 const ntSpan=c=>({s:(ntm(c.from)-720+1440)%1440,e:(ntm(c.to)-720+1440)%1440});
-/* weaker = off, a later start, an earlier end, one more allowed contact, repeat callers switched on or for longer, or somebody taken off the never list. A weaker change waits 24 hours. While the rule is off nothing counts as weaker. */
+/* weaker = off, a later start, an earlier end, one more allowed contact, repeat callers switched on or for longer, or somebody taken off the never list. A weaker change waits 18 hours. While the rule is off nothing counts as weaker. */
 function ntWeaker(a,b){if(!a.on)return false;if(!b.on)return true;const x=ntSpan(a),y=ntSpan(b);if(y.s>x.s||y.e<x.e)return true;const had=new Set((a.allow||[]).map(z=>ntLast(z.num)));if((b.allow||[]).some(z=>!had.has(ntLast(z.num))))return true;
  if(a.rep===false&&b.rep!==false)return true;if(b.rep!==false&&(+b.repMin||15)>(+a.repMin||15))return true;const hn=new Set((b.never||[]).map(z=>ntLast(z.num)));return (a.never||[]).some(z=>!hn.has(ntLast(z.num)))}
 const ntLocked=()=>!!(LKD.st&&(LKD.st.locked||+LKD.st.nightUntil>Date.now()));
 async function ntPush(){if(!LK||!LK.setNight)return;const n=nt();try{await LK.setNight({cfg:JSON.stringify(ntCfg(n)),pend:n.pend?JSON.stringify(n.pend):'',pendAt:n.pendAt||0})}catch(e){const m=String((e&&e.message)||e);if(!/Lockdown is active/i.test(m))warn('Could not save the night rule: '+m)}}
 async function ntEdit(fn){if(ntLocked()){warn('The night rule or a lockdown is running. Settings are locked until it ends.');return false}
  const n=nt(),cur=ntCfg(n),base=n.pend||cur,nw=fn(JSON.parse(JSON.stringify(base)));let wait=false;
- if(ntWeaker(cur,nw)){n.pend=nw;n.pendAt=Date.now()+864e5;wait=true}else{Object.assign(n,nw);n.pend=null;n.pendAt=0}
+ if(ntWeaker(cur,nw)){n.pend=nw;n.pendAt=Date.now()+WAIT_MS;wait=true}else{Object.assign(n,nw);n.pend=null;n.pendAt=0}
  put('set');await ntPush();syncN();render();return wait}
 function ntFromStatus(o){NTD.st=o;if(!o)return;const n=nt();if(o.night){try{Object.assign(n,JSON.parse(o.night))}catch(e){}try{n.pend=o.nightPend?JSON.parse(o.nightPend):null}catch(e){n.pend=null}n.pendAt=+o.nightPendAt||0;put('set')}else if(n.on)ntPush()}
 const ntSum=()=>{const n=nt();return n.on?'On, '+t12(new Date('2000-01-01T'+n.from+':00'))+' to '+t12(new Date('2000-01-01T'+n.to+':00')):'Off'};
 /* spoken and written heads-up before the lock, and a last one two minutes before */
 function ntItems(base){const c=ntCfg(nt());if(!c.on)return [];const o=nt(),tf=t12(nextAt(c.from,base).getTime()),
   m1=o.m1||'कॉल कटने का समय पास आ रहा है। जिससे बात कर रहे हो उसे अभी बता दो और बात खत्म करने की तरफ बढ़ो।',m2=o.m2||'दो मिनट बचे हैं। अलविदा बोल दो।',
-  a=[{id:760,at:nextAt(c.warn,base).getTime(),title:'Partner',body:'Calls end at '+tf+'. Tell them now and start wrapping up.',text:m1,lang:'hi-IN',repeat:true}];
- if(c.warn2){const m=(ntm(c.from)-2+1440)%1440;a.push({id:761,at:nextAt(pad(Math.floor(m/60))+':'+pad(m%60),base).getTime(),title:'Partner',body:'Two minutes left. Say goodbye.',text:m2,lang:'hi-IN',repeat:true})}
+  a=[{id:760,at:nextAt(c.warn,base).getTime(),title:'Partner',body:'Calls end at '+tf+'. Tell them now and start wrapping up.',text:m1,lang:'hi-IN',repeat:true,cond:'call'}];
+ if(c.warn2){const m=(ntm(c.from)-2+1440)%1440;a.push({id:761,at:nextAt(pad(Math.floor(m/60))+':'+pad(m%60),base).getTime(),title:'Partner',body:'Two minutes left. Say goodbye.',text:m2,lang:'hi-IN',repeat:true,cond:'call'})}
  return a}
 function ntList(){const L=NTD.list||[],q=NTD.q.trim().toLowerCase(),dq=q.replace(/\D/g,''),have=new Set(((nt().pend||ntCfg(nt()))[NTD.mode==='never'?'never':'allow']||[]).map(a=>ntLast(a.num)));
  const rows=[];L.forEach((x,i)=>{if(rows.length>=60)return;if(q&&!x.n.toLowerCase().includes(q)&&!(dq&&ntLast(x.num).includes(dq)))return;rows.push(`<button class="sw" style="width:100%;background:none;border:0;text-align:left;color:var(--tx);font:inherit" data-a="nradd" data-v="${i}"><span style="min-width:0">${esc(x.n)}<small style="display:block">${esc(x.num)}</small></span>${have.has(ntLast(x.num))?'<span class="g">Added</span>':''}</button>`)});
@@ -2487,8 +2524,8 @@ ${lk?'<small style="display:block;margin:6px 0 10px;color:#ff9500">The night rul
 ${rw('Last warning','Two minutes before the lock',tgb('nrw2',v.warn2,'Last warning'))}
 ${rw('Repeat callers ring','If someone you blocked calls a second time within '+v.repMin+' minutes, the phone rings, like Samsung Do Not Disturb. It is for calls coming in, not for calls you make.',tgb('nrrep',v.rep,'Repeat callers ring'))}
 ${v.rep?`<div class="tgs" style="margin:2px 0 10px">${[5,10,15,30].map(m=>`<button class="chip${v.repMin===m?' on':''}" style="flex:none;padding:0 14px" data-a="nrmin" data-v="${m}"${dis}>${m} min</button>`).join('')}</div>`:''}
-<p class="lab">Who can be called</p>${v.allow.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick"${dis}>+ Add from contacts</button><small style="display:block;margin-top:6px">Adding someone later waits 24 hours, so you cannot add a name in the middle of a bad night.</small>
-${v.rep?`<p class="lab">Never ring through</p><small style="display:block;margin-bottom:6px">People who stay blocked even if they call twice, for example someone you are trying to stop talking to late at night. Taking someone off this list waits 24 hours.</small>${v.never.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrnrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick" data-v="never"${dis}>+ Add from contacts</button>`:''}
+<p class="lab">Who can be called</p>${v.allow.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick"${dis}>+ Add from contacts</button><small style="display:block;margin-top:6px">Adding someone later waits 18 hours, so you cannot add a name in the middle of a bad night.</small>
+${v.rep?`<p class="lab">Never ring through</p><small style="display:block;margin-bottom:6px">People who stay blocked even if they call twice, for example someone you are trying to stop talking to late at night. Taking someone off this list waits 18 hours.</small>${v.never.map((a,i)=>`<div class="sw" style="min-height:48px"><span style="min-width:0">${esc(a.n)}<small style="display:block">${esc(a.num)}</small></span><button class="g" style="font-size:22px;width:40px;height:40px" data-a="nrnrm" data-v="${i}" aria-label="Remove"${dis}>\u00d7</button></div>`).join('')}<button class="pb" data-a="nrpick" data-v="never"${dis}>+ Add from contacts</button>`:''}
 <p class="lab">What it needs</p>${step('acc','Accessibility','Locks the phone and counts the time')}${step('cn','Contacts and calls','Choose contacts and end calls')}${step('scr','Call screening','Rejects calls from and to other people')}${step('nl','Notification access','Hangs up WhatsApp calls')}${step('adm','Prevent uninstall','So the app cannot simply be removed at night')}
 ${st.nightLastRepeat?`<small style="display:block;margin-top:12px">Last repeat caller let through: ${new Date(+st.nightLastRepeat).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small>`:''}
 ${st.nightLastCut?`<small style="display:block;margin-top:12px">Last call ended by this rule: ${new Date(+st.nightLastCut).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}</small>`:''}
@@ -2504,7 +2541,7 @@ Object.assign(A,{
  nrpick:async m=>{NTD.mode=m==='never'?'never':'allow';if(!SPN){warn('Contacts need the APK.');return}let st=await spStatus();if(!(st&&st.calls)){try{await SPN.requestCalls()}catch(e){}st=await spStatus()}
   if(!(st&&st.calls)){warn('Allow Contacts and calls first.');return}try{NTD.list=((await SPN.contacts()).items)||[]}catch(e){warn('Could not read contacts: '+((e&&e.message)||e));return}NTD.pick=true;NTD.q='';render()},
  nradd:async i=>{const x=(NTD.list||[])[+i];if(!x)return;const k=ntLast(x.num),md=NTD.mode==='never'?'never':'allow',od=md==='never'?'allow':'never',cur=nt().pend||ntCfg(nt());if((cur[md]||[]).some(a=>ntLast(a.num)===k))return;
-  const wait=await ntEdit(c=>{c[md]=c[md]||[];if(!c[md].some(a=>ntLast(a.num)===k))c[md].push({n:x.n,num:x.num});c[od]=(c[od]||[]).filter(a=>ntLast(a.num)!==k);return c});if(wait)toast(x.n+' will be allowed in 24 hours.')},
+  const wait=await ntEdit(c=>{c[md]=c[md]||[];if(!c[md].some(a=>ntLast(a.num)===k))c[md].push({n:x.n,num:x.num});c[od]=(c[od]||[]).filter(a=>ntLast(a.num)!==k);return c});if(wait)toast(x.n+' will be allowed in 18 hours.')},
  nrdone:()=>{NTD.pick=false;render()}
 });
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.nt&&/^\d{2}:\d{2}$/.test(t.value)){const k=t.dataset.nt;ntEdit(c=>{c[k]=t.value;return c})}});
@@ -2534,7 +2571,7 @@ Object.assign(A,{
 
 /* ---- Wake-up and sleep schedule: one wake time, a bedtime worked out from the sleep he needs, an alarm that only stops with a task, and a guard against removing it ----
    The alarm itself lives in the phone (WakeAlarm.java); this block holds the schedule, the settings page and the task screen. */
-const WK=NP&&NP.Wake,QRP=NP&&NP.Qr,WKD={st:null},MISS=['math','type','shake','qr'];let QC=null;
+const WK=NP&&NP.Wake,QRP=NP&&NP.Qr,GD=NP&&NP.Guard,WKD={st:null},MISS=['math','type','shake','qr'];let QC=null;
 let WKS=null;
 const wkM=t=>{const [h,m]=String(t||'0:0').split(':');return(+h||0)*60+(+m||0)};
 const wkT=m=>{m=((Math.round(m)%1440)+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
@@ -2544,23 +2581,25 @@ const wk=()=>{const s=S.set;if(!s.wk||typeof s.wk!=='object')s.wk={on:false};con
  if(!w.time)w.time='07:00';if(!Array.isArray(w.days)||!w.days.length)w.days=[0,1,2,3,4,5,6];if(!MISS.includes(w.mission)||(w.mission==='qr'&&!w.qr))w.mission='math';
  if(!(+w.diff>0))w.diff=2;if(!(+w.count>0))w.count=w.mission==='shake'?30:3;if(!w.text)w.text='I wake up on time because I keep my word to myself.';
  if(!(+w.vol>0))w.vol=100;if(w.guard===undefined)w.guard=true;if(w.check===undefined)w.check=true;if(!(+w.checkMin>0))w.checkMin=8;
- if(!(+w.need>0))w.need=8;if(w.wind===undefined||!(+w.wind>=0))w.wind=45;if(w.windOn===undefined)w.windOn=true;return w};
+ if(!(+w.need>0))w.need=8;if(w.wind===undefined||!(+w.wind>=0))w.wind=45;if(w.windOn===undefined)w.windOn=true;
+ if(w.tone!=='system')w.tone='calm';if(![60,120,180,300].includes(+w.ramp))w.ramp=120;
+ if(!w.walk||typeof w.walk!=='object')w.walk={on:true,steps:100,min:20};if(w.walk.on===undefined)w.walk.on=true;if(!(+w.walk.steps>0))w.walk.steps=100;if(!(+w.walk.min>0))w.walk.min=20;return w};
 /* bedtime = wake time minus the sleep he needs minus 15 minutes to fall asleep; the wind-down starts before that */
 const wkBed=w=>wkT(wkM(w.time)-Math.round((+w.need||8)*60)-15);
 const wkWind=w=>wkT(wkM(wkBed(w))-(+w.wind>=0?+w.wind:45));
-const wkCfg=w=>({on:!!w.on,time:w.time||'07:00',days:(w.days&&w.days.length?w.days:[0,1,2,3,4,5,6]).slice().sort((a,b)=>a-b),mission:MISS.includes(w.mission)&&!(w.mission==='qr'&&!w.qr)?w.mission:'math',qr:String(w.qr||''),qrName:String(w.qrName||'').slice(0,30),diff:+w.diff||2,count:+w.count||3,text:String(w.text||''),vol:+w.vol||100,guard:w.guard!==false,guardFrom:wkWind(w),check:w.check!==false,checkMin:+w.checkMin||8,need:+w.need||8,wind:+w.wind>=0?+w.wind:45,windOn:w.windOn!==false});
-/* weaker = off, a later wake time, a day taken out, an easier task, fewer repeats, a shorter sentence, guard or check off, a longer wait for the check, a quieter alarm, or a later wind-down. A weaker change waits 24 hours. */
+const wkCfg=w=>({on:!!w.on,time:w.time||'07:00',days:(w.days&&w.days.length?w.days:[0,1,2,3,4,5,6]).slice().sort((a,b)=>a-b),mission:MISS.includes(w.mission)&&!(w.mission==='qr'&&!w.qr)?w.mission:'math',qr:String(w.qr||''),qrName:String(w.qrName||'').slice(0,30),diff:+w.diff||2,count:+w.count||3,text:String(w.text||''),vol:+w.vol||100,guard:w.guard!==false,guardFrom:wkWind(w),tone:w.tone==='system'?'system':'calm',ramp:[60,120,180,300].includes(+w.ramp)?+w.ramp:120,walk:{on:!(w.walk&&w.walk.on===false),steps:Math.max(20,Math.min(2000,+(w.walk&&w.walk.steps)||100)),min:Math.max(5,Math.min(60,+(w.walk&&w.walk.min)||20))},check:w.check!==false,checkMin:+w.checkMin||8,need:+w.need||8,wind:+w.wind>=0?+w.wind:45,windOn:w.windOn!==false});
+/* weaker = off, a later wake time, a day taken out, an easier task, fewer repeats, a shorter sentence, guard or check off, the walk off or fewer steps or a longer wait, a longer wait for the check, a quieter alarm, or a later wind-down. A weaker change waits 18 hours. */
 function wkWeaker(a,b){if(!a.on)return false;if(!b.on)return true;
  if(wkM(b.time)>wkM(a.time))return true;if((a.days||[]).some(d=>!(b.days||[]).includes(d)))return true;
- const rk={shake:1,math:2,type:3,qr:4};if((rk[b.mission]||0)<(rk[a.mission]||0))return true;if(a.mission==='qr'&&b.mission==='qr'&&String(a.qr||'')!==String(b.qr||''))return true;/* another code can be one next to the bed: it waits 24 hours */
+ const rk={shake:1,math:2,type:3,qr:4};if((rk[b.mission]||0)<(rk[a.mission]||0))return true;if(a.mission==='qr'&&b.mission==='qr'&&String(a.qr||'')!==String(b.qr||''))return true;/* another code can be one next to the bed: it waits 18 hours */
  if(b.mission===a.mission){if(b.mission==='math'&&+b.diff<+a.diff)return true;if(b.mission!=='type'&&+b.count<+a.count)return true;if(b.mission==='type'&&String(b.text||'').length<String(a.text||'').length)return true}
  if(a.guard!==false&&b.guard===false)return true;if(a.check!==false&&b.check===false)return true;if(b.check!==false&&+b.checkMin>+a.checkMin)return true;
- if(+b.vol<+a.vol)return true;return wkEv(wkM(b.guardFrom))>wkEv(wkM(a.guardFrom))}
+ if(+b.vol<+a.vol)return true;const wa=a.walk||{on:true,steps:100,min:20},wb=b.walk||wa;if(wa.on&&!wb.on)return true;if(wb.on&&(+wb.steps<+wa.steps||+wb.min>+wa.min))return true;return wkEv(wkM(b.guardFrom))>wkEv(wkM(a.guardFrom))}
 const wkLocked=()=>!!(WKD.st&&(WKD.st.guard||+WKD.st.ring>0));
 async function wkPush(){if(!WK)return;const w=wk();try{await WK.set({cfg:JSON.stringify(wkCfg(w)),pend:w.pend?JSON.stringify(w.pend):'',pendAt:w.pendAt||0})}catch(e){const m=String((e&&e.message)||e);if(!/Wake-up is active/i.test(m))warn('Could not save the wake-up alarm: '+m)}}
 async function wkEdit(fn){if(wkLocked()){warn('The wake-up guard is running (from your wind-down time until the task is done). Settings are locked until then.');return false}
  const w=wk(),cur=wkCfg(w),base=w.pend||cur,nw=wkCfg(fn(JSON.parse(JSON.stringify(base)))),wait=wkWeaker(cur,nw);
- if(wait){w.pend=nw;w.pendAt=Date.now()+864e5}else{Object.assign(w,nw);w.pend=null;w.pendAt=0}
+ if(wait){w.pend=nw;w.pendAt=Date.now()+WAIT_MS}else{Object.assign(w,nw);w.pend=null;w.pendAt=0}
  put('set');await wkPush();syncN();render();return wait}
 /* the phone keeps the real settings: take them back from it (a restored backup or a cleared page can never weaken the alarm) */
 function wkFromStatus(o){WKD.st=o;if(!o)return;const w=wk();if(o.cfg){try{Object.assign(w,JSON.parse(o.cfg))}catch(e){}try{w.pend=o.pend?JSON.parse(o.pend):null}catch(e){w.pend=null}w.pendAt=+o.pendAt||0;put('set')}else if(w.on)wkPush()}
@@ -2575,10 +2614,38 @@ function wkPrompt(){const w=wk();if(!w.on)return '';const st=wkStats(w);
  return 'SLEEP PLAN (he set it himself and you cannot change it): wake-up '+wkF(w.time)+' '+wkDays(w)+', bed by '+wkF(wkBed(w))+' for about '+w.need+' h of sleep, wind-down from '+wkF(wkWind(w))+'. The alarm only stops with a task ('+({math:'maths',type:'typing a sentence',shake:'shaking the phone',qr:'scanning his own QR code with the camera'}[w.mission])+') and has no snooze'+(w.check?'; a few minutes later it asks if he is really up':'')+'.'+(st.n?' Last '+st.n+' nights: average sleep '+st.avgH.toFixed(1)+' h, woke on time '+st.onTime+' of '+st.n+'.':'')+' Help him keep to it. Never offer to move, snooze or switch off the alarm; if he wants to skip, remind him it is his own plan. A planned Break (Settings, Self-control, at least 6 h ahead) is the only honest way to take a day off.'}
 /* spoken reminders: wind-down, then bedtime. Daily. */
 function wkItems(base){const w=wk();if(!w.on||!w.windOn)return [];const bed=wkBed(w),wd=wkWind(w),a=[];
- if(+w.wind>0)a.push({id:780,at:nextAt(wd,base).getTime(),title:'Partner',body:'Wind-down time. Bed at '+wkF(bed)+'. Phone away, lights low.',text:'सोने का समय पास आ रहा है। फोन रख दो और लाइट धीमी कर दो।',lang:'hi-IN',repeat:true});
- a.push({id:781,at:nextAt(bed,base).getTime(),title:'Partner',body:'Bedtime. Lie down now. Your wake-up task is at '+wkF(w.time)+'.',text:'सोने का समय हो गया। अभी लेट जाओ। सुबह का अलार्म लगा है।',lang:'hi-IN',repeat:true});return a}
+ if(+w.wind>0)a.push({id:780,at:afterBed(nextAt(wd,base).getTime()),title:'Partner',body:'Wind-down time. Bed at '+wkF(bed)+'. Phone away, lights low.',text:'सोने का समय पास आ रहा है। फोन रख दो और लाइट धीमी कर दो।',lang:'hi-IN',repeat:true});
+ a.push({id:781,at:afterBed(nextAt(bed,base).getTime()),title:'Partner',body:'Bedtime. Lie down now. Your wake-up task is at '+wkF(w.time)+'.',text:'सोने का समय हो गया। अभी लेट जाओ। सुबह का अलार्म लगा है।',lang:'hi-IN',repeat:true});return a}
+
 
 /* ---- the task screen (full screen, over everything) ---- */
+/* ---- wake-up screen: a calm picture and one line behind the task ---- */
+const WQ=['A calm start is still a start.','You said you would. Do it now.','Today needs the version of you that gets up.','One small step first: stand up.','Future you is proud of this morning.','Slow breath. Feet on the floor. Go.','The day is quiet and yours.','Win the first ten minutes.','Be the person you promised to be.','Gentle. Steady. Up.','Your goals are awake. Join them.','Discipline is choosing what you want most.'];
+const WSC=[['#1d2b64','#f8a5c2'],['#134e5e','#71b280'],['#2b1055','#7597de'],['#0f2027','#2c5364'],['#ff9966','#c04848'],['#3a1c71','#ffaf7b']];
+const WPU={};
+const wkWp=()=>{const q=S.set;if(!q.wkwp||typeof q.wkwp!=='object')q.wkwp={on:true,quote:true,ids:[]};if(!Array.isArray(q.wkwp.ids))q.wkwp.ids=[];if(q.wkwp.on===undefined)q.wkwp.on=true;if(q.wkwp.quote===undefined)q.wkwp.quote=true;return q.wkwp};
+async function wpUrl(id){if(WPU[id])return WPU[id];try{const b=await dbGet('wp_'+id);if(!b)return '';return WPU[id]=URL.createObjectURL(b)}catch(e){return ''}}
+const wkScrim=a=>`linear-gradient(rgba(0,0,0,${a}),rgba(0,0,0,${a+.18}))`;
+function wkBgStart(){if(!WKS||WKS.kind==='qrset')return;const q=wkWp();WKS.bg='';WKS.qt='';if(!q.on)return;
+ const g=WSC[Math.floor(Math.random()*WSC.length)];WKS.bg=`${wkScrim(.08)},linear-gradient(165deg,${g[0]},${g[1]})`;if(q.quote)WKS.qt=WQ[Math.floor(Math.random()*WQ.length)];
+ if(q.ids.length){const id=q.ids[Math.floor(Math.random()*q.ids.length)],S0=WKS;wpUrl(id).then(u=>{if(!u||WKS!==S0)return;WKS.bg=`${wkScrim(.38)},url("${u}") center/cover no-repeat`;const e=document.querySelector('.wks');if(e)e.style.background=WKS.bg})}}
+async function wpFill(){for(const el of document.querySelectorAll('[data-wp]')){if(el.dataset.ok)continue;const u=await wpUrl(el.dataset.wp);if(u){el.src=u;el.dataset.ok='1'}}}
+$('#wpfile').onchange=async e=>{const fs=[...e.target.files];e.target.value='';const q=wkWp();let n=0;
+ for(const f of fs){if(!/^image\//.test(f.type))continue;if(q.ids.length>=12){toast('Up to 12 pictures.');break}if(f.size>15*1048576){toast('A picture can be up to 15 MB. '+f.name.slice(0,24)+' is larger.');continue}
+  const id='w'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);try{await dbPut('wp_'+id,f)}catch(err){toast('Could not store the picture: '+((err&&err.message)||err));break}q.ids.push(id);n++}
+ if(n){put('set');render()}};
+/* ---- the walk after the alarm: live step count while he walks ---- */
+let WKW=null;
+function walkStop(){if(WKW){clearInterval(WKW.iv);WKW=null}}
+function walkClose(){walkStop();const e=$('#wk');if(e&&!WKS)e.innerHTML=''}
+function walkDraw(){if(!WKW)return;const m=Math.max(0,Math.ceil((WKW.until-Date.now())/6e4)),pc=Math.min(100,Math.round(WKW.steps/WKW.need*100));
+ $('#wk').innerHTML=`<div class="wks wkb" style="${WKW.bg?'background:'+WKW.bg:'background:#14213d'}"><div class="wkc" id="wkc">${wkClock()}</div><div class="wkh">Walk to stay up</div><div class="wkq" style="font-size:64px"><span id="wwn">${WKW.steps}</span><small style="font-size:22px;color:var(--mu)"> / ${WKW.need}</small></div><div class="wkw"><i id="wwb" style="width:${pc}%"></i></div><small id="wwt" style="display:block;text-align:center;max-width:300px">Walk ${WKW.need} steps in the next ${m} min, with the phone in your pocket or hand. If you do not, the alarm rings again.</small><button class="pill" style="margin-top:22px" data-a="wwclose">I am walking, close this</button><a class="wke" href="tel:112">Emergency call</a></div>`}
+async function walkPoll(){if(!WKW||!WK)return;try{const o=await WK.walk();if(!WKW)return;if(!o.active||o.ok){const ok=!!o.ok;walkClose();if(ok)toast('Good. '+o.need+' steps done. No second alarm.',0,4200);wkSync();return}
+  WKW.steps=Math.max(0,+o.steps||0);WKW.need=+o.need||WKW.need;WKW.until=+o.until||WKW.until;const n=$('#wwn');if(n)n.textContent=WKW.steps;const b=$('#wwb');if(b)b.style.width=Math.min(100,Math.round(WKW.steps/WKW.need*100))+'%';const t=$('#wwt');if(t){const m=Math.max(0,Math.ceil((WKW.until-Date.now())/6e4));t.textContent='Walk '+WKW.need+' steps in the next '+m+' min, with the phone in your pocket or hand. If you do not, the alarm rings again.'}}catch(e){}}
+async function walkAfter(){if(!WK)return;let o;try{o=await WK.status()}catch(e){return}WKD.st=o;const w=wk();
+ if(o.walkActive){walkStop();const q=wkWp();WKW={steps:0,need:+w.walk.steps||100,until:+o.checkAt||Date.now()+20*6e4,bg:q.on?wkScrim(.08)+',linear-gradient(165deg,#134e5e,#71b280)':'',iv:null};walkDraw();WKW.iv=setInterval(()=>{walkPoll();const c=$('#wkc');if(c)c.textContent=wkClock()},2000);walkPoll()}
+ else if(w.walk.on&&o.walkAvail===false)toast('The walk check is skipped because the step counter is not allowed. Allow Step counter in Settings, Permissions.',0,6500)}
+
 function wkProb(d){const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1));let q,a;
  if(d<=1){const x=r(12,59),y=r(11,49);if(Math.random()<.5){q=x+' + '+y;a=x+y}else{const p=Math.max(x,y),s=Math.min(x,y);q=p+' − '+s;a=p-s}}
  else if(d===2){const t=r(0,2);if(t===0){const x=r(120,899),y=r(120,899);q=x+' + '+y;a=x+y}else if(t===1){const x=r(12,39),y=r(3,9);q=x+' × '+y;a=x*y}else{const x=r(300,999),y=r(101,299);q=x+' − '+y;a=x-y}}
@@ -2603,10 +2670,10 @@ async function wkQrScan(){const S0=WKS;if(!S0||S0.m!=='qr'||S0.qb||!S0.stream)re
   if(h===S0.qh){S0.qb=2;wkFinish();return}
   const s=$('#wkqs');if(s)s.textContent='That is not your code. Try again.'}catch(e){}finally{if(WKS===S0&&S0.qb===1)S0.qb=0}}
 async function qrSave(h,t){const nm=(($('#qrn')||{}).value||'').trim().slice(0,30)||(/^[\x20-\x7e]{1,24}$/.test(t)?t:'My code');wkClose();
- const wait=await wkEdit(c=>({...c,mission:'qr',qr:h,qrName:nm}));if(wait)toast('The new code starts in 24 hours.',0,4500);else if(!wkLocked())toast('Code saved. The alarm now stops only when you scan it.',0,4500)}
+ const wait=await wkEdit(c=>({...c,mission:'qr',qr:h,qrName:nm}));if(wait)toast('The new code starts in 18 hours.',0,4500);else if(!wkLocked())toast('Code saved. The alarm now stops only when you scan it.',0,4500)}
 function wkOpen(kind,ring){const w=wk();wkStop();
  const chk=kind==='check';WKS={kind,ring:ring||0,qh:w.qr||'',m:chk?'math':kind==='qrset'?'qr':w.mission,diff:chk?1:(+w.diff||2),n:chk?1:(w.mission==='shake'?(+w.count||30):(+w.count||3)),i:0,ans:'',text:w.text,lt:0,seen:0,busy:false,pr:null};
- WKS.pr=wkProb(WKS.diff);WKS.iv=setInterval(wkTick,4000);if(WKS.m==='shake')wkMotionOn();
+ walkStop();WKS.pr=wkProb(WKS.diff);WKS.iv=setInterval(wkTick,4000);wkBgStart();if(WKS.m==='shake')wkMotionOn();
  if(WKS.m==='qr'&&!QRP){if(kind==='qrset'){wkClose();toast('Scanning needs the APK.');return}WKS.m='math';WKS.n=3;WKS.diff=2;WKS.pr=wkProb(2);WKS.note='This phone cannot scan codes here, so you get a maths task instead.'}
  wkDraw();if(WKS&&WKS.m==='qr')wkQrOn()}
 function wkStop(){if(!WKS)return;clearInterval(WKS.iv);clearTimeout(WKS.mt);wkQrOff();if(WKS.mh)window.removeEventListener('devicemotion',WKS.mh);WKS=null}
@@ -2622,7 +2689,7 @@ function wkDraw(){if(!WKS)return;const k=WKS.kind,chk=k==='check',tit=k==='qrset
  else if(WKS.m==='type')body=`<div class="wkq" style="font-size:20px;line-height:1.45">${esc(WKS.text)}</div><textarea id="wkt" class="f" rows="3" placeholder="Type it here exactly" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onpaste="return false" ondrop="return false" oncut="return false" style="margin-top:16px;width:100%"></textarea><div class="wkp" id="wkd" style="margin-top:10px"><small id="wkt2">Pasting is switched off.</small></div>`;
  else if(WKS.m==='qr')body=`<div class="wkv"><video id="wkv" playsinline muted autoplay></video><i></i></div><small id="wkqs" style="display:block;text-align:center;margin-top:12px">${k==='qrset'?'Looking for a code...':'Point the camera at your QR code.'}</small>${k==='qrset'?'<input class="f" id="qrn" placeholder="Name it, for example Bathroom shelf" maxlength="30" style="margin-top:12px;width:100%">':''}`;
  else body=`<div class="wkq" id="wkq" style="font-size:72px">${WKS.i}<small style="font-size:22px;color:var(--mu)"> / ${WKS.n}</small></div><div class="wkp" id="wkd">${wkDots()}</div><small style="margin-top:14px;display:block;text-align:center">Shake the phone hard, ${WKS.n} times.</small>`;
- $('#wk').innerHTML=`<div class="wks"><div class="wkc" id="wkc">${wkClock()}</div><div class="wkh">${tit}</div><small style="display:block;text-align:center;margin:4px 0 18px">${esc(WKS.note||sub)}</small>${body}${k==='qrset'?'<button class="pill" style="margin-top:18px" data-a="qrcancel">Cancel</button>':'<a class="wke" href="tel:112">Emergency call</a>'}</div>`;
+ $('#wk').innerHTML=`<div class="wks${WKS.bg?' wkb':''}"${WKS.bg?` style="background:${WKS.bg}"`:''}><div class="wkc" id="wkc">${wkClock()}</div>${WKS.qt?`<div class="wkqt">${esc(WKS.qt)}</div>`:''}<div class="wkh">${tit}</div><small style="display:block;text-align:center;margin:4px 0 18px">${esc(WKS.note||sub)}</small>${body}${k==='qrset'?'<button class="pill" style="margin-top:18px" data-a="qrcancel">Cancel</button>':'<a class="wke" href="tel:112">Emergency call</a>'}</div>`;
  if(WKS.m==='qr'&&WKS.stream){const v=$('#wkv');if(v){v.srcObject=WKS.stream;v.play().catch(()=>{})}}
  if(WKS.m==='type'){const t=$('#wkt');if(t)t.addEventListener('input',()=>{if(!WKS)return;const ok=wkNorm(t.value)===wkNorm(WKS.text);const s=$('#wkt2');if(s)s.textContent=ok?'Done':(wkNorm(WKS.text).startsWith(wkNorm(t.value))?'Good, keep going':'Not the same yet');if(ok)wkFinish()})}}
 function wkUpd(){const d=$('#wkd');if(d&&WKS.m!=='type')d.innerHTML=wkDots();const q=$('#wkq');if(q&&WKS.m==='shake')q.innerHTML=WKS.i+'<small style="font-size:22px;color:var(--mu)"> / '+WKS.n+'</small>'}
@@ -2632,9 +2699,9 @@ function wkKey(v){if(!WKS||WKS.m!=='math')return;if(v==='del')WKS.ans=WKS.ans.sl
 async function wkFinish(){if(!WKS||WKS.busy)return;WKS.busy=true;const k=WKS.kind;
  try{if(WK&&WKS.ring)await WK.done()}catch(e){if(WKS)WKS.busy=false;warn('Could not stop the alarm: '+((e&&e.message)||e));return}
  wkClose();
- if(k==='wake'){const r=wakeAt(Date.now(),0);put('sleep');if(r==='ok'||r==='stale'){resolveFu('wake');put('fu')}syncN();toast(r==='dup'?'Task done. Your wake-up was already logged.':'Task done. Woke up at '+wkClock()+', logged.'+(wk().check?' I will check on you in '+wk().checkMin+' min.':''),0,5200)}
+ if(k==='wake'){const r=wakeAt(Date.now(),0);put('sleep');if(r==='ok'||r==='stale'){resolveFu('wake');put('fu')}syncN();toast(r==='dup'?'Task done. Your wake-up was already logged.':'Task done. Woke up at '+wkClock()+', logged.'+(wk().walk.on&&WKD.st&&WKD.st.walkAvail?' Now walk '+wk().walk.steps+' steps within '+wk().walk.min+' min or the alarm rings again.':wk().check?' I will check on you in '+wk().checkMin+' min.':''),0,5200)}
  else if(k==='check')toast('Good. You are up.');else toast('Test done. No wake-up was logged.');
- wkSync();render()}
+ wkSync();render();if(k!=='test')walkAfter()}
 /* the phone says a ring is running: show the task. The phone says it stopped (done elsewhere, or the safety limit): close it. */
 async function wkCheck(){if(!WK)return;let o;try{o=await WK.status()}catch(e){return}WKD.st=o;
  if(+o.ring>0){if(!WKS||WKS.ring!==+o.ring)wkOpen(o.kind,+o.ring)}else if(WKS&&WKS.ring){wkClose();render()}
@@ -2642,7 +2709,7 @@ async function wkCheck(){if(!WK)return;let o;try{o=await WK.status()}catch(e){re
 /* ---- the settings page ---- */
 const wkStep=(k,t,d)=>{const ok=(SU&&SU.st||{})[k];return ok===undefined?'':rw(t,d,ok?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="go" data-v="s-setup">Permissions ›</button>`)};
 const wkChips=(a,list,cur,fmt,dis)=>`<div class="tgs" style="margin:6px 0 10px">${list.map(v=>`<button class="chip${String(cur)===String(v)?' on':''}" style="flex:none;padding:0 14px" data-a="${a}" data-v="${v}"${dis}>${fmt?fmt(v):v}</button>`).join('')}</div>`;
-function wakeView(){const w=wk(),c=wkCfg(w),v=w.pend||c,lk=wkLocked(),dis=lk?' disabled':'',bed=wkBed(v),wd=wkWind(v),st=wkStats(w),n=nt(),nc=ntCfg(n),su=(SU&&SU.st)||{},ls=WKD.st||{};
+function wakeView(){const w=wk(),c=wkCfg(w),v=Object.assign({tone:'calm',ramp:120,walk:{on:true,steps:100,min:20}},w.pend||c),lk=wkLocked(),dis=lk?' disabled':'',bed=wkBed(v),wd=wkWind(v),st=wkStats(w),n=nt(),nc=ntCfg(n),su=(SU&&SU.st)||{},ls=WKD.st||{};
  const mism=!nc.on||nc.from!==bed||nc.to!==v.time,adm=LKD.st?!!LKD.st.admin:undefined;
  const bars=st.rows.map(r=>`<div style="flex:1;text-align:center"><div style="height:64px;display:flex;align-items:flex-end;justify-content:center"><i style="width:60%;border-radius:4px;display:block;height:${Math.max(6,Math.min(100,r.h/10*100))}%;background:${r.on&&r.h>=v.need-.5?'#34c759':'#ff9500'}"></i></div><small style="font-size:10.5px">${['S','M','T','W','T','F','S'][new Date(r.end).getDay()]}</small></div>`).join('');
  const hasMis=!!(ls.miss&&+ls.miss>0);
@@ -2658,13 +2725,18 @@ ${hasMis?'<small style="display:block;margin:6px 0 10px;color:#ff9500">The last 
 ${rw('Wind-down reminders','Spoken at '+wkF(wd)+' and at bedtime '+wkF(bed),tgb('wkwind',v.windOn,'Wind-down reminders'))}
 ${v.windOn?`<small style="display:block;margin:6px 0 2px">Start winding down</small>${wkChips('wkwmin',[0,30,45,60],v.wind,x=>x?x+' min before':'No heads-up',dis)}`:''}
 <p class="lab">Wake-up task</p>${wkChips('wkmis',MISS,v.mission,x=>({math:'Maths',type:'Type a line',shake:'Shake',qr:'Scan QR'}[x]),dis)}
-${v.mission==='qr'?`<div class="r2" style="margin-top:8px"><span><b>${v.qr?'Saved code: '+esc(v.qrName||'My code'):'No code saved yet'}</b><small>Keep it far from your bed. Only its fingerprint is saved, not a photo. Another code waits 24 hours.</small></span><button class="pill" data-a="qrnew"${dis}>${v.qr?'Scan a new code':'Scan a code'}</button></div>`:''}
+${v.mission==='qr'?`<div class="r2" style="margin-top:8px"><span><b>${v.qr?'Saved code: '+esc(v.qrName||'My code'):'No code saved yet'}</b><small>Keep it far from your bed. Only its fingerprint is saved, not a photo. Another code waits 18 hours.</small></span><button class="pill" data-a="qrnew"${dis}>${v.qr?'Scan a new code':'Scan a code'}</button></div>`:''}
 ${v.mission==='math'?`<small style="display:block;margin:6px 0 2px">Difficulty</small>${wkChips('wkdiff',[1,2,3],v.diff,x=>['','Easy','Medium','Hard'][x],dis)}<small style="display:block;margin:6px 0 2px">Sums to solve</small>${wkChips('wkcount',[3,5,8],v.count,null,dis)}`:''}
 ${v.mission==='shake'?`<small style="display:block;margin:6px 0 2px">Shakes</small>${wkChips('wkcount',[20,30,50],v.count,null,dis)}`:''}
-${v.mission==='type'?`<small style="display:block;margin:6px 0 4px">The line you type</small><input class="f" data-wk="text" value="${esc(v.text)}" maxlength="140" style="margin:0 0 6px"${dis}><small style="display:block">A shorter line waits 24 hours. Pasting does not work on the task screen.</small>`:''}
-${rw('Check that I am up',v.check?'Rings again '+v.checkMin+' min after the task, with one quick sum, so you cannot go back to bed':'Off',tgb('wkchk',v.check,'Check that I am up'))}
+${v.mission==='type'?`<small style="display:block;margin:6px 0 4px">The line you type</small><input class="f" data-wk="text" value="${esc(v.text)}" maxlength="140" style="margin:0 0 6px"${dis}><small style="display:block">A shorter line waits 18 hours. Pasting does not work on the task screen.</small>`:''}
+${rw('Walk after the alarm',v.walk.on?'After the task, walk '+v.walk.steps+' steps within '+v.walk.min+' min. If you do not, the alarm rings again.':'Off',tgb('wkwalk',v.walk.on,'Walk after the alarm'))}
+${v.walk.on?`<small style="display:block;margin:6px 0 2px">Steps to walk</small>${wkChips('wkwsteps',[50,100,200,300],v.walk.steps,null,dis)}<small style="display:block;margin:6px 0 2px">Time to walk them</small>${wkChips('wkwmin2',[10,15,20,30],v.walk.min,x=>x+' min',dis)}${ls.walkAvail===false?'<small style="display:block;margin:2px 0 10px;color:#ff9500">'+(ls.walkSensor===false?'This phone has no step counter, so the quick-sum check below is used instead.':'Allow the Step counter in Settings, Permissions. Until then the quick-sum check below is used instead.')+'</small>':'<small style="display:block;margin:2px 0 10px">Counted by the phone\'s own step counter. Walking enough cancels the second ring.</small>'}`:''}
+${rw('Check that I am up',v.check?(v.walk.on&&ls.walkAvail!==false?'Replaced by the walk while the walk is on':'Rings again '+v.checkMin+' min after the task, with one quick sum, so you cannot go back to bed'):'Off',tgb('wkchk',v.check,'Check that I am up'))}
 ${v.check?wkChips('wkcmin',[5,8,10,15],v.checkMin,x=>x+' min',dis):''}
-<small style="display:block;margin:6px 0 2px">Alarm volume (the sound rises over 20 seconds)</small>${wkChips('wkvol',[70,85,100],v.vol,x=>x+'%',dis)}
+<small style="display:block;margin:10px 0 2px">Alarm sound</small>${wkChips('wktone',['calm','system'],v.tone,x=>x==='calm'?'Calm music':'Phone alarm tone',dis)}
+<small style="display:block;margin:6px 0 2px">Wake me slowly over</small>${wkChips('wkramp',[60,120,180,300],v.ramp,x=>x/60+' min',dis)}
+<small style="display:block;margin:6px 0 2px">Alarm volume (it starts almost silent and rises slowly)</small>${wkChips('wkvol',[70,85,100],v.vol,x=>x+'%',dis)}
+${(()=>{const q=wkWp();setTimeout(wpFill,0);return `<p class="lab">Wake-up screen</p>${rw('Picture and a motivating line','Behind the task you see a calm picture and one short line',tgb('wpon',q.on,'Wake-up picture'))}${q.on?`${rw('Motivating line','One short line on the screen',tgb('wpq',q.quote,'Motivating line'))}<small style="display:block;margin:6px 0 0">Your own pictures (a random one each morning)</small>${q.ids.length?`<div class="wpg">${q.ids.map(id=>`<div><img data-wp="${id}" alt="">`+`<button data-a="wprm" data-v="${id}" aria-label="Remove">\u00d7</button></div>`).join('')}</div>`:''}<button class="pb" style="margin-top:8px" data-a="wppick">+ Add pictures</button><small style="display:block;margin-top:6px">Without your own pictures you get calm sunrise colours. Pictures stay on this phone and are not part of the backup.</small>`:''}`})()}
 ${rw('Guard','From '+wkF(wd)+' until the task is done, the pages that could remove the alarm (device admin, accessibility, Partner\'s app page) and the power menu are closed',tgb('wkguard',v.guard,'Guard'))}
 <div style="display:flex;gap:8px;margin-top:14px"><button class="pill" style="flex:1" data-a="wktest">Try the task now</button></div>
 ${mism?`<p class="lab">Night rule</p><small style="display:block;margin-bottom:8px">${nc.on?'Your night lock runs '+wkF(nc.from)+' to '+wkF(nc.to)+'.':'The night lock is off.'} This schedule suggests ${wkF(bed)} to ${wkF(v.time)}.${nc.on&&wkEv(wkM(nc.to))>wkEv(wkM(v.time))?' When the alarm rings, the lock steps aside so you can do the task.':''}</small><button class="pill" data-a="wkalign"${dis}>Match the night rule</button>`:''}
@@ -2672,7 +2744,7 @@ ${mism?`<p class="lab">Night rule</p><small style="display:block;margin-bottom:8
 ${adm===false?'<small style="display:block;margin-top:8px;color:#ff9500">Prevent uninstall is off. Until you turn it on, Android lets you delete Partner and the alarm with it.</small>':''}
 <p class="lab">Last 7 nights</p>${st.n?`<div style="display:flex;gap:6px;margin:4px 0 8px">${bars}</div><small style="display:block">Average sleep ${st.avgH.toFixed(1)} h of ${v.need} h. Woke on time ${st.onTime} of ${st.n}. Average wake-up ${t12(new Date().setHours(Math.floor(st.avgW/60),st.avgW%60,0,0))}.</small>`:'<small style="display:block">No nights logged yet. Say when you go to bed and when you wake up, or let the alarm log your wake-up.</small>'}
 <small style="display:block;margin-top:14px">Honest limits: switching the phone off, a factory reset or safe mode can still stop an alarm, and no app can prevent that. If the task cannot be finished within an hour, the alarm stops by itself so a fault can never lock you out, and the miss is written down. Calls and emergency calls always work. For a real day off, plan a Break at least 6 hours ahead.</small>`}
-function wkWaitMsg(wait,txt){if(wait)toast((txt||'This change')+' starts in 24 hours.',0,4200)}
+function wkWaitMsg(wait,txt){if(wait)toast((txt||'This change')+' starts in 18 hours.',0,4200)}
 Object.assign(A,{
  wktog:async()=>{const w=wk();if(!w.on&&!WK)toast('The alarm rings on the APK. The schedule and reminders work here too.',0,4200);const wait=await wkEdit(c=>({...c,on:!c.on}));wkWaitMsg(wait,'Switching it off')},
  wkday:async i=>{const w=wk(),cur=w.pend||wkCfg(w);i=+i;if((cur.days||[]).includes(i)&&(cur.days||[]).length<=1){toast('Keep at least one day.');return}const wait=await wkEdit(c=>{c.days=c.days.includes(i)?c.days.filter(d=>d!==i):c.days.concat([i]);return c});wkWaitMsg(wait,'Taking a day out')},
@@ -2685,9 +2757,19 @@ Object.assign(A,{
  wkchk:async()=>{const wait=await wkEdit(c=>({...c,check:!c.check}));wkWaitMsg(wait,'Switching the check off')},
  wkcmin:async x=>{const wait=await wkEdit(c=>({...c,checkMin:+x}));wkWaitMsg(wait)},
  wkvol:async x=>{const wait=await wkEdit(c=>({...c,vol:+x}));wkWaitMsg(wait,'A quieter alarm')},
+ wkwalk:async()=>{const wait=await wkEdit(c=>({...c,walk:{...c.walk,on:!c.walk.on}}));wkWaitMsg(wait,'Switching the walk off');if(wk().walk.on&&GD&&GD.requestSteps){try{await GD.requestSteps()}catch(e){}suStatus().then(()=>wkSync()).then(()=>render())}},
+ wkwsteps:async x=>{const wait=await wkEdit(c=>({...c,walk:{...c.walk,steps:+x}}));wkWaitMsg(wait,'Fewer steps')},
+ wkwmin2:async x=>{const wait=await wkEdit(c=>({...c,walk:{...c.walk,min:+x}}));wkWaitMsg(wait,'A longer wait')},
+ wktone:x=>wkEdit(c=>({...c,tone:x==='system'?'system':'calm'})),
+ wkramp:x=>wkEdit(c=>({...c,ramp:+x})),
+ wpon:()=>{const q=wkWp();q.on=!q.on;put('set');render()},
+ wpq:()=>{const q=wkWp();q.quote=!q.quote;put('set');render()},
+ wppick:()=>$('#wpfile').click(),
+ wprm:async id=>{const q=wkWp();q.ids=q.ids.filter(x=>x!==id);try{await dbDel('wp_'+id)}catch(e){}if(WPU[id]){URL.revokeObjectURL(WPU[id]);delete WPU[id]}put('set');render()},
+ wwclose:()=>walkClose(),
  wkguard:async()=>{const wait=await wkEdit(c=>({...c,guard:!c.guard}));wkWaitMsg(wait,'Switching the guard off')},
  wktest:async()=>{if(WK){try{await WK.test()}catch(e){warn('Could not start the test: '+((e&&e.message)||e));return}setTimeout(wkCheck,400)}else wkOpen('test',0)},
- wkalign:async()=>{const w=wk(),v=w.pend||wkCfg(w),wait=await ntEdit(c=>({...c,on:true,from:wkBed(v),to:v.time}));if(wait)toast('The night rule change starts in 24 hours.',0,4200);render()},
+ wkalign:async()=>{const w=wk(),v=w.pend||wkCfg(w),wait=await ntEdit(c=>({...c,on:true,from:wkBed(v),to:v.time}));if(wait)toast('The night rule change starts in 18 hours.',0,4200);render()},
  wkkey:v=>wkKey(v)
 });
 document.addEventListener('change',e=>{const t=e.target,k=t&&t.dataset&&t.dataset.wk;if(!k)return;if(k==='time'&&/^\d{2}:\d{2}$/.test(t.value)){wkEdit(c=>{c.time=t.value;return c}).then(wait=>wkWaitMsg(wait,'A later wake-up time'))}
@@ -2696,7 +2778,8 @@ if(WK&&WK.addListener)WK.addListener('wake',wkCheck);
 {const _g2=A.go;A.go=v=>{_g2(v);if(v==='s-wake'){lkSync().then(()=>wkSync()).then(()=>suStatus()).then(()=>{if(V==='s-wake')render()})}}}
 
 /* ---- App detox: block apps for hours or days. The list lives in the phone service (Detox.java); this page only shows it and asks to add to it ---- */
-const DX={sel:[],len:864e5,cust:false,cn:'2',cu:'d',busy:false};
+const DX={sel:[],len:864e5,cust:false,cn:'2',cu:'d',busy:false,st:'now',stt:'21:00'};
+const dxFrom=()=>DX.st==='time'&&/^\d\d:\d\d$/.test(DX.stt)?nextAt(DX.stt,Date.now()).getTime():Date.now();
 const DXNEVER=/^(android|com\.android\.(settings|dialer|phone|contacts|incallui|emergency|systemui|server\.telecom|packageinstaller)|com\.google\.android\.(dialer|contacts|packageinstaller)|com\.samsung\.android\.(dialer|incallui|app\.contacts|settings)|com\.partner\.diary)$/;
 const DXLEN=[['3 hours',3*36e5],['6 hours',6*36e5],['12 hours',12*36e5],['1 day',864e5],['2 days',2*864e5],['3 days',3*864e5],['7 days',7*864e5]];
 const DXREG=10*6e4,DXMAX=30*864e5;
@@ -2708,21 +2791,24 @@ const dxSum=()=>!LK?'APK only':dxN()?dxN()+(dxN()===1?' app':' apps')+' blocked'
 const dxName=p=>LKD.map[p]||p;
 function dxLenMs(){if(!DX.cust)return DX.len;return Math.max(0,Math.round(+DX.cn||0))*(DX.cu==='h'?36e5:864e5)}
 function dxSumText(){const len=dxLenMs();if(!DX.sel.length)return 'Pick the apps you want to block.';if(len<36e5)return 'Pick how long. The shortest detox is 1 hour.';if(len>DXMAX)return 'A detox can be at most 30 days.';
- return esc(DX.sel.map(dxName).join(', '))+' will be blocked until <b>'+dxWhen(Date.now()+len)+'</b>. You will not be able to open '+(DX.sel.length>1?'them':'it')+' or end this early.'}
+ return esc(DX.sel.map(dxName).join(', '))+' will be blocked '+(DX.st==='time'?'from <b>'+dxWhen(dxFrom())+'</b> ':'')+'until <b>'+dxWhen(dxFrom()+len)+'</b>. You will not be able to open '+(DX.sel.length>1?'them':'it')+' or end this early.'}
 function dxPrompt(){const L=dxList();if(!LK||!L.length)return '';return 'APP DETOX: he blocked these apps himself and cannot open them until the time shown: '+L.map(x=>(x.name||dxName(x.pkg))+' until '+dxWhen(x.until)).join('; ')+'. Support it, never help him get around it, and do not treat the missing app time as a failure. You cannot start or change a detox.'}
 function detoxView(){
  if(!LK)return '<p class="g" style="margin-top:0">App detox needs the APK.</p>';
  const st=LKD.st||{},L=dxList(),n=Date.now(),su=(typeof SU!=='undefined'&&SU.st)||{},len=dxLenMs();
  const pre=(LKD.apps&&LKD.apps.length?PRESET.filter(([p])=>LKD.apps.some(a=>a.pkg===p)):PRESET),extra=DX.sel.filter(p=>!pre.some(x=>x[0]===p));
  const chips=[...pre,...extra.map(p=>[p,dxName(p)])].map(([p,nm])=>`<button class="chip${DX.sel.includes(p)?' on':''}" style="flex:none;padding:0 16px" data-a="dxtog" data-v="${esc(p)}">${esc(nm)}</button>`).join('');
- const act=L.map(x=>{const tot=Math.max(1,x.until-x.from),done=Math.min(100,Math.round((n-x.from)/tot*100)),reg=n-x.from<=DXREG;
-  return `<div class="card" style="display:block"><div class="sw" style="min-height:28px"><b style="font-weight:600">${esc(x.name||dxName(x.pkg))}</b><span class="g">${dxLeft(x.until-n)} left</span></div><small style="display:block">Blocked until ${dxWhen(x.until)}</small><div class="pbar" style="margin-top:10px"><i style="width:${done}%"></i></div>${reg?`<button class="ub" data-a="dxundo" data-v="${esc(x.id)}">Undo (${Math.max(1,Math.ceil((DXREG-(n-x.from))/6e4))} min left to undo)</button>`:''}</div>`}).join('');
+ const act=L.map(x=>{const tot=Math.max(1,x.until-x.from),done=Math.max(0,Math.min(100,Math.round((n-x.from)/tot*100))),t0=x.ts||x.from,reg=n-t0<=DXREG,wait=x.from>n;
+  return `<div class="card" style="display:block"><div class="sw" style="min-height:28px"><b style="font-weight:600">${esc(x.name||dxName(x.pkg))}</b><span class="g">${wait?'starts in '+dxLeft(x.from-n):dxLeft(x.until-n)+' left'}</span></div><small style="display:block">${wait?'Starts '+dxWhen(x.from)+', blocked until ':'Blocked until '}${dxWhen(x.until)}</small><div class="pbar" style="margin-top:10px"><i style="width:${done}%"></i></div>${reg?`<button class="ub" data-a="dxundo" data-v="${esc(x.id)}">Undo (${Math.max(1,Math.ceil((DXREG-(n-t0))/6e4))} min left to undo)</button>`:''}</div>`}).join('');
  const step=(t,d,ok,go)=>rw(t,d,ok?'<i style="font-style:normal;color:var(--mu)">On</i>':`<button class="pill" data-a="go" data-v="s-setup">Permissions \u203a</button>`);
  return `<small style="display:block;margin-bottom:6px">Pick apps like Snapchat or Instagram and a time, from 1 hour up to 30 days. Until it ends the apps cannot be opened: Partner sends them straight back to the home screen. There is no way to end it early, so choose a time you can keep.</small>
-${act?`<p class="lab">Running now</p>${act}`:''}
+${st.accessibility&&st.running===false?'<div class="card" style="display:block;border:1px solid #ff9500"><b style="font-weight:600;color:#ff9500">Blocking is not running</b><small style="display:block;margin-top:4px">The accessibility service is switched on in Android but not running, so nothing can be blocked. Open Settings, Accessibility, Partner, switch it off and on again. Then come back here.</small></div>':''}
+${act?`<p class="lab">Running and planned</p>${act}`:''}
 <p class="lab">Apps to block</p><div class="tgs">${chips}<button class="chip" style="flex:none;padding:0 16px" data-a="dxadd">+ Other app</button></div>
 <p class="lab">For how long</p><div class="tgs">${DXLEN.map(([l,ms])=>`<button class="chip${!DX.cust&&DX.len===ms?' on':''}" style="flex:none;padding:0 16px" data-a="dxlen" data-v="${ms}">${l}</button>`).join('')}<button class="chip${DX.cust?' on':''}" style="flex:none;padding:0 16px" data-a="dxcust">Custom</button></div>
 ${DX.cust?`<div style="display:flex;gap:8px;margin-top:10px;align-items:center"><input class="f" id="dxcn" type="number" inputmode="numeric" min="1" max="720" value="${esc(DX.cn)}" style="width:90px;margin:0;text-align:center"><div class="two" style="flex:1"><button class="chip${DX.cu==='h'?' on':''}" data-a="dxcu" data-v="h">hours</button><button class="chip${DX.cu==='d'?' on':''}" data-a="dxcu" data-v="d">days</button></div></div>`:''}
+<p class="lab">Starts</p><div class="tgs"><button class="chip${DX.st==='now'?' on':''}" style="flex:none;padding:0 16px" data-a="dxst" data-v="now">Now</button><button class="chip${DX.st==='time'?' on':''}" style="flex:none;padding:0 16px" data-a="dxst" data-v="time">At a time</button></div>
+${DX.st==='time'?`<div class="sw" style="min-height:48px;margin-top:6px"><span>Start time</span><input type="time" class="f" style="width:auto;margin:0" data-dxt="1" value="${esc(DX.stt)}"></div>`:''}
 <small id="dxsum" style="display:block;margin-top:14px">${dxSumText()}</small>
 <button class="pb" style="margin-top:14px" data-a="dxstart"${DX.sel.length&&len>=36e5&&len<=DXMAX?'':' disabled'}>Start detox</button>
 <p class="lab">What it needs</p>${step('Accessibility service','Watches which app is open and sends blocked apps home',st.accessibility)}${step('Prevent uninstall','So Partner cannot simply be removed during a detox',st.admin)}${su.nl===undefined?'':step('Notification access','Hides notifications of blocked apps',su.nl)}
@@ -2730,21 +2816,136 @@ ${DX.cust?`<div style="display:flex;gap:8px;margin-top:10px;align-items:center">
 Object.assign(A,{
  dxtog:p=>{if(DXNEVER.test(p)){toast('This app cannot be blocked.');return}DX.sel=DX.sel.includes(p)?DX.sel.filter(x=>x!==p):[...DX.sel,p];render()},
  dxlen:ms=>{DX.cust=false;DX.len=+ms;render()},
+ dxst:v=>{DX.st=v==='time'?'time':'now';render()},
  dxcust:()=>{DX.cust=true;render()},
  dxcu:u=>{DX.cu=u;render()},
  dxadd:()=>{LKD.q='';LKD.pm='dx';V='s-apps';render();loadApps()},
  dxpick:p=>{if(DXNEVER.test(p)){toast('This app cannot be blocked.');return}if(!DX.sel.includes(p))DX.sel.push(p);LKD.pm='';V='s-detox';render()},
  dxstart:async()=>{if(DX.busy)return;if(!LK||!LK.detoxAdd){warn('App detox needs the new APK. Build it from GitHub first.',{where:'Detox'});return}
   const len=dxLenMs();if(!DX.sel.length){toast('Pick at least one app.');return}if(len<36e5){toast('The shortest detox is 1 hour.');return}if(len>DXMAX){toast('A detox can be at most 30 days.');return}
-  const end=Date.now()+len,nm=DX.sel.map(dxName).join(', ');
-  if(!confirm('Block '+nm+' until '+dxWhen(end)+'?\n\nYou will not be able to open '+(DX.sel.length>1?'these apps':'this app')+' or end this early. You can undo only in the first 10 minutes.'))return;
+  const from=dxFrom(),end=from+len,nm=DX.sel.map(dxName).join(', ');
+  if(!confirm('Block '+nm+(from>Date.now()+6e4?' from '+dxWhen(from):'')+' until '+dxWhen(end)+'?\n\nYou will not be able to open '+(DX.sel.length>1?'these apps':'this app')+' or end this early. You can undo only in the first 10 minutes.'))return;
   DX.busy=true;
-  try{await lkSync();const r=await LK.detoxAdd({apps:DX.sel.map(p=>({pkg:p,name:dxName(p)})),until:end});if(r&&r.detox!==undefined){LKD.st=LKD.st||{};LKD.st.detox=r.detox}DX.sel=[];toast('Detox started. '+nm+' blocked until '+dxWhen(end)+'.',0,4500)}
+  try{await lkSync();const r=await LK.detoxAdd({apps:DX.sel.map(p=>({pkg:p,name:dxName(p)})),from,until:end});if(r&&r.detox!==undefined){LKD.st=LKD.st||{};LKD.st.detox=r.detox}DX.sel=[];toast((from>Date.now()+6e4?'Detox planned. '+nm+' blocked from '+dxWhen(from)+' until ':'Detox started. '+nm+' blocked until ')+dxWhen(end)+'.',0,4500);await lkSync();if(LKD.st&&LKD.st.accessibility&&LKD.st.running===false)warn('The detox is saved but nothing is blocked yet: the accessibility service is switched on but not running. Switch it off and on again in Settings, Accessibility, Partner.',{where:'Detox'})}
   catch(e){warn('Could not start the detox: '+((e&&e.message)||e),{where:'Detox'})}
   DX.busy=false;await lkSync();render()},
  dxundo:async id=>{if(!LK||!LK.detoxCancel)return;try{const r=await LK.detoxCancel({id});if(r&&r.detox!==undefined){LKD.st=LKD.st||{};LKD.st.detox=r.detox}toast('Removed from the detox.')}catch(e){warn('Could not undo: '+((e&&e.message)||e),{where:'Detox'})}await lkSync();render()}
 });
-document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='dxcn'){DX.cn=t.value;const el=$('#dxsum');if(el)el.innerHTML=dxSumText();const b=document.querySelector('[data-a="dxstart"]'),len=dxLenMs();if(b)b.disabled=!(DX.sel.length&&len>=36e5&&len<=DXMAX)}});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.dxt){DX.stt=t.value;const el=$('#dxsum');if(el)el.innerHTML=dxSumText();return}if(t&&t.id==='dxcn'){DX.cn=t.value;const el=$('#dxsum');if(el)el.innerHTML=dxSumText();const b=document.querySelector('[data-a="dxstart"]'),len=dxLenMs();if(b)b.disabled=!(DX.sel.length&&len>=36e5&&len<=DXMAX)}});
+
+/* ---- Adult content block and accountability messages (2026-11-14) ----
+   Two pages in Settings, Self-control. The phone does the work (see Guard.java); this is the setup. Anything that makes it weaker waits 18 hours. */
+const GDS={st:null,pick:false,list:null,q:'',busy:false};
+const GDEV=[['awake','I am awake','Sent when your wake-up is confirmed (task done, and the walk done if it is on).'],['adult','I tried an adult site','Sent when Partner stops an adult address or search. At most once every 20 minutes.'],['usage','Too long on my phone','Sent when the apps you pick pass the time you set, up to 4 times a day.'],['filter','The adult filter was turned off','Sent if the filter stays off for 10 minutes.']];
+const GDDNS=[['strict','Strict','CleanBrowsing Family: adult sites, proxies and VPN sites, and mixed sites like Reddit. Forces safe search on Google, Bing and YouTube.','family-filter-dns.cleanbrowsing.org'],['standard','Standard','CleanBrowsing Adult: adult sites only. Reddit and VPN sites still open.','adult-filter-dns.cleanbrowsing.org'],['cf','Cloudflare','Cloudflare Family: adult sites and malware. Safe search is not forced.','family.cloudflare-dns.com']];
+const gdLast=n=>String(n||'').replace(/\D/g,'').slice(-10);
+function gd(){const s=S.set;if(!s.gd||typeof s.gd!=='object')s.gd={};const g=s.gd;
+ if(!g.adult||typeof g.adult!=='object')g.adult={};const a=g.adult;a.on=!!a.on;if(!GDDNS.some(x=>x[0]===a.dns))a.dns='strict';if(a.keep===undefined)a.keep=true;if(a.scan===undefined)a.scan=true;if(!Array.isArray(a.apps))a.apps=[];
+ if(!g.msg||typeof g.msg!=='object')g.msg={};const m=g.msg;m.on=!!m.on;if(!m.name)m.name='Rohit';if(!Array.isArray(m.contacts))m.contacts=[];if(!m.usage||typeof m.usage!=='object')m.usage={};if(m.usage.on===undefined)m.usage.on=false;if(!(+m.usage.min>0))m.usage.min=60;if(!Array.isArray(m.usage.apps))m.usage.apps=[];
+ m.contacts.forEach(c=>{if(!c.ev||typeof c.ev!=='object')c.ev={};c.via=c.via==='sms'?'sms':'wa';if(c.fb===undefined)c.fb=true});return g}
+const gdCfg=g=>({adult:{on:!!g.adult.on,dns:g.adult.dns,keep:g.adult.keep!==false,scan:g.adult.scan!==false,apps:(g.adult.apps||[]).map(x=>({pkg:x.pkg,name:x.name}))},
+ msg:{on:!!g.msg.on,name:g.msg.name,usage:{on:!!g.msg.usage.on,min:+g.msg.usage.min||60,apps:(g.msg.usage.apps||[]).map(x=>({pkg:x.pkg,name:x.name}))},
+  contacts:(g.msg.contacts||[]).map(c=>({n:c.n,num:c.num,via:c.via==='sms'?'sms':'wa',fb:c.fb!==false,ev:{...(c.ev||{})}}))}});
+function gdWeaker(a,b){const rank={strict:3,cf:2,standard:1};
+ if(a.adult.on){if(!b.adult.on)return true;if(a.adult.keep&&!b.adult.keep)return true;if(a.adult.scan&&!b.adult.scan)return true;if((rank[b.adult.dns]||0)<(rank[a.adult.dns]||0))return true;const hb=new Set(b.adult.apps.map(x=>x.pkg));if(a.adult.apps.some(x=>!hb.has(x.pkg)))return true}
+ if(a.msg.on){if(!b.msg.on)return true;if(a.msg.usage.on){if(!b.msg.usage.on||+b.msg.usage.min>+a.msg.usage.min)return true;const hu=new Set(b.msg.usage.apps.map(x=>x.pkg));if(a.msg.usage.apps.some(x=>!hu.has(x.pkg)))return true}
+  for(const ca of a.msg.contacts){const cb=b.msg.contacts.find(c=>gdLast(c.num)===gdLast(ca.num));if(!cb)return true;for(const k in ca.ev)if(ca.ev[k]&&!cb.ev[k])return true}}
+ return false}
+async function gdPush(){if(!GD||!GD.set)return;const g=gd();try{await GD.set({cfg:JSON.stringify(gdCfg(g)),pend:g.pend?JSON.stringify(g.pend):'',pendAt:g.pendAt||0})}catch(e){warn('Could not save: '+((e&&e.message)||e),{where:'Adult block'})}}
+async function gdEdit(fn){const g=gd(),cur=gdCfg(g),base=g.pend||cur,nw=fn(JSON.parse(JSON.stringify(base)));let wait=false;
+ if(gdWeaker(cur,nw)){g.pend=nw;g.pendAt=Date.now()+WAIT_MS;wait=true}else{g.adult=nw.adult;g.msg=nw.msg;g.pend=null;g.pendAt=0}
+ put('set');await gdPush();render();return wait}
+async function gdSync(){if(!GD||!GD.status)return;try{const o=await GD.status();GDS.st=o;const g=gd();
+ if(o.cfg){try{const c=JSON.parse(o.cfg);if(c.adult)g.adult={...g.adult,...c.adult};if(c.msg)g.msg={...g.msg,...c.msg}}catch(e){}try{g.pend=o.pend?JSON.parse(o.pend):null}catch(e){g.pend=null}g.pendAt=+o.pendAt||0;put('set')}
+ else if(g.adult.on||g.msg.on||g.msg.contacts.length)gdPush()}catch(e){}}
+const gdv=()=>{const g=gd();return g.pend||gdCfg(g)};
+const gdWaitMsg=(w,what)=>{if(w)toast(what+' takes effect in '+WAIT_H+' hours.',0,4200)};
+const gdSum=()=>{const v=gdv();return v.adult.on?'On  ·  '+(GDS.st?(GDS.st.dnsOk?'filter set':'filter not set'):'filter')+(v.adult.apps.length?'  ·  '+v.adult.apps.length+(v.adult.apps.length===1?' app':' apps'):''):'Off'};
+const gcSum=()=>{const v=gdv();return v.msg.on?'On  ·  '+v.msg.contacts.length+(v.msg.contacts.length===1?' person':' people'):'Off'};
+function gdPrompt(){const v=gdv();const p=[];if(v.adult.on)p.push('he switched on an adult-content block (Private DNS filter, address and search check, closed apps)');if(v.msg.on&&v.msg.contacts.length)p.push('Partner texts '+v.msg.contacts.map(c=>c.n).join(', ')+' when he wakes, tries an adult site, or overuses chosen apps');
+ return p.length?'SELF-CONTROL SETUP: '+p.join('; ')+'. He set this up himself. Support it kindly, never help him get around it, never shame him for an urge, and you cannot change it.':''}
+const gdPend=()=>{const g=gd();return g.pend?`<small style="display:block;margin:6px 0 10px;color:#ff9500">A weaker change is waiting. It starts on ${new Date(g.pendAt).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}.</small>`:''};
+const gdAppChips=(list,rm)=>list.length?`<div class="tgs">${list.map(x=>`<button class="chip on" style="flex:none;padding:0 16px" data-a="${rm}" data-v="${esc(x.pkg)}">${esc(x.name||x.pkg)} \u00d7</button>`).join('')}</div>`:'';
+function adultView(){if(!LK||!GD)return '<p class="g" style="margin-top:0">The adult content block needs the APK.</p>';
+ const v=gdv(),a=v.adult,st=GDS.st||{},hits=(()=>{try{return JSON.parse(st.hits||'[]')}catch(e){return[]}})(),t0=dayStart(Date.now()),today=hits.filter(x=>x>=t0).length,week=hits.filter(x=>x>Date.now()-7*864e5).length,
+  dn=GDDNS.find(x=>x[0]===a.dns)||GDDNS[0],lk=LKD.st||{};
+ return `<small style="display:block;margin-bottom:6px">Blocks adult sites, hentai and adult webtoon sites on this whole phone. It has three layers, and turning any of them off waits ${WAIT_H} hours, so you cannot undo it in the moment of an urge.</small>
+${rw('Adult content block','Switch the whole block on',tgb('gdon',a.on,'Adult content block'))}
+${gdPend()}
+<p class="lab">1. Filter for the whole phone</p>
+<small style="display:block;margin-bottom:8px">Android has a setting called Private DNS. With a family filter there, every browser and app on this phone loses access to adult sites, also on mobile data. This is the strong layer.</small>
+<div class="tgs">${GDDNS.map(x=>`<button class="chip${a.dns===x[0]?' on':''}" style="flex:none;padding:0 16px" data-a="gddns" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>
+<small style="display:block;margin:2px 0 8px">${esc(dn[2])}</small>
+<div class="card" style="display:block"><div class="sw" style="min-height:28px"><b style="font-weight:600">${st.dnsOk?'Filter is ON':'Filter is not set'}</b><span class="g">${st.dnsOk?'working':'not working yet'}</span></div><small style="display:block;word-break:break-all">Name to use: <b>${dn[3]}</b></small>
+${st.dnsOk?'':st.secure?`<button class="pb" style="margin-top:12px" data-a="gdapply">Set it for me</button>`:`<button class="pb" style="margin-top:12px" data-a="gdopen">Open the Android page</button><small style="display:block;margin-top:8px">Settings, Connections, More connection settings, Private DNS. Choose "Private DNS provider hostname", paste the name above and save. Come back here: this page turns to ON by itself.</small><button class="pill" style="margin-top:10px" data-a="gdcopy">Copy the name</button>`}</div>
+${st.secure?'':`<small style="display:block;margin-top:8px">Optional, one time: if you give Partner the adb permission, it sets the filter itself and puts it back whenever it is changed. Command on a computer: <b>${ADBCMD}</b></small>`}
+${rw('Keep the filter on','While the block is on, the Android Private DNS pages stay closed, and Partner tells you (and your people, if you chose that) when it is off',tgb('gdkeep',a.keep,'Keep the filter on'))}
+<p class="lab">2. Address bars and searches</p>
+${rw('Check what you open and type','In browsers, Google, YouTube, Reddit and X: an adult address or search sends you straight to the home screen. Partner reads only the address bar and search box, never page text or messages.',tgb('gdscan',a.scan,'Check what you open and type'))}
+${lk.accessibility===false?'<small style="display:block;margin-bottom:8px;color:#ff9500">Needs the accessibility service. Turn it on in Settings, Lockdown.</small>':lk.running===false&&lk.accessibility?'<small style="display:block;margin-bottom:8px;color:#ff9500">The accessibility service is on but not running. Switch it off and on again in Android Settings, Accessibility, Partner.</small>':''}
+<p class="lab">3. Apps that stay closed</p>
+<small style="display:block;margin-bottom:8px">These apps cannot be opened while the block is on. Adult webtoon apps are the main use. The Webtoon app itself has a mature section that no filter can separate, so you may want it here.</small>
+${gdAppChips(a.apps,'gdarm')}
+<div class="tgs"><button class="chip" style="flex:none;padding:0 16px" data-a="gdapre" data-v="com.naver.linewebtoon|Webtoon">+ Webtoon</button><button class="chip" style="flex:none;padding:0 16px" data-a="gdaadd">+ Other app</button></div>
+<p class="lab">Stopped so far</p><div class="card" style="display:block"><div class="sw" style="min-height:28px"><span>Today</span><b>${today}</b></div><div class="sw" style="min-height:28px"><span>Last 7 days</span><b>${week}</b></div></div>
+<small style="display:block;margin-top:14px">Honest limits: a VPN app or a browser with its own secure DNS (Chrome's "Use secure DNS" set to a provider, Firefox, Brave) can go around the filter, so keep those on the default. Adult pictures inside apps like Instagram, X or Telegram cannot be filtered by any app. Partner stores only the time of a stop, never what it was.</small>`}
+function acctView(){if(!LK||!GD)return '<p class="g" style="margin-top:0">Accountability messages need the APK.</p>';if(GDS.pick)return gdPickView();
+ const v=gdv(),m=v.msg,st=GDS.st||{},su=(typeof SU!=='undefined'&&SU.st)||{},lk=LKD.st||{},ago=t=>t?new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'never';
+ const people=m.contacts.map((c,i)=>`<div class="card" style="display:block"><div class="sw" style="min-height:30px"><b style="font-weight:600">${esc(c.n)}</b><span class="g">${esc(c.num)}</span></div>
+  <div class="tgs" style="margin:6px 0"><button class="chip${c.via==='wa'?' on':''}" style="flex:none;padding:0 14px" data-a="gcvia" data-v="${i}:wa">WhatsApp</button><button class="chip${c.via==='sms'?' on':''}" style="flex:none;padding:0 14px" data-a="gcvia" data-v="${i}:sms">SMS</button></div>
+  ${GDEV.map(([k,l])=>`<div class="r2" style="padding:6px 0"><span><b style="font-weight:500">${l}</b></span>${tgb('gcev',!!c.ev[k],l)}</div>`.replace('data-a="gcev"','data-a="gcev" data-v="'+i+':'+k+'"')+(c.ev[k]?`<textarea class="f" rows="2" style="margin:2px 0 6px" data-gct="${i}:${k}">${esc(c.ev[k])}</textarea>`:'')).join('')}
+  <div class="two" style="margin-top:10px"><button class="pill" data-a="gctest" data-v="${i}">Send a test</button><button class="pill dng" data-a="gcdel" data-v="${i}">Remove</button></div></div>`).join('');
+ return `<small style="display:block;margin-bottom:6px">Partner can message people you choose, from your own WhatsApp (or by SMS), when something happens: you are awake, you tried an adult site, you were on chosen apps for too long. Only the people and events you pick. It is a good idea to tell them first. Removing a person or an event waits ${WAIT_H} hours.</small>
+${rw('Accountability messages','Switch the messages on',tgb('gmon',m.on,'Accountability messages'))}
+${gdPend()}
+<p class="lab">Your name in the texts</p><input class="f" id="gdname" value="${esc(m.name)}" placeholder="Your name" style="margin-top:0">
+<p class="lab">People</p>${people||'<small style="display:block;margin-bottom:8px">Nobody yet.</small>'}<button class="pb" data-a="gcpick">+ Add a person</button>
+<p class="lab">Too long on my phone</p>
+${rw('Message after long use','When you use the apps below for more than the time you set in one day',tgb('gcuse',m.usage.on,'Message after long use'))}
+${m.usage.on?`<small style="display:block;margin:6px 0 2px">Time that triggers it</small><div class="tgs">${[30,45,60,90,120].map(x=>`<button class="chip${+m.usage.min===x?' on':''}" style="flex:none;padding:0 14px" data-a="gcmin" data-v="${x}">${x<60?x+' min':x/60+' h'}</button>`).join('')}</div>
+<small style="display:block;margin:6px 0 6px">Apps counted (today so far: ${dur(Math.round((+st.used||0)/6e4))})</small>${gdAppChips(m.usage.apps,'gcurm')}<div class="tgs"><button class="chip" style="flex:none;padding:0 16px" data-a="gcuadd">+ Add app</button></div>`:''}
+<p class="lab">What it needs</p>
+${rw('Accessibility service','WhatsApp messages are sent by opening the chat and tapping Send',lk.accessibility&&lk.running!==false?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="go" data-v="s-lock">Set up \u203a</button>')}
+${rw('Send SMS','Used for SMS contacts, and when WhatsApp cannot send',st.sms?'<i style="font-style:normal;color:var(--mu)">On</i>':'<button class="pill" data-a="gcsms">Allow</button>')}
+<small style="display:block;margin-top:12px">Last sent: ${ago(st.lastOk)}. Last failure: ${ago(st.lastFail)}. Waiting to send: ${+st.queue||0}.</small>
+<small style="display:block;margin-top:10px">How WhatsApp sending works: when the phone is unlocked, Partner opens the chat with the text filled in, taps Send and goes back. It cannot send while the phone is locked or if WhatsApp changes its screen, so press "Send a test" first. If WhatsApp fails twice, the message goes by SMS (when the SMS permission is on).</small>`}
+function gdPickRows(){const L=GDS.list||[],q=GDS.q.trim().toLowerCase(),dq=q.replace(/\D/g,''),have=new Set(gdv().msg.contacts.map(c=>gdLast(c.num)));const rows=[];
+ L.forEach((x,i)=>{if(rows.length>=60)return;if(q&&!x.n.toLowerCase().includes(q)&&!(dq&&gdLast(x.num).includes(dq)))return;rows.push(`<button class="sw" style="width:100%;background:none;border:0;text-align:left;color:var(--tx);font:inherit" data-a="gcadd" data-v="${i}"><span style="min-width:0">${esc(x.n)}<small style="display:block">${esc(x.num)}</small></span>${have.has(gdLast(x.num))?'<span class="g">Added</span>':''}</button>`)});
+ return L.length?(rows.join('')||'<p class="g">No contact found.</p>'):'<p class="g">Loading...</p>'}
+function gdPickView(){return `<h1 class="h">Add a person</h1><small style="display:block;margin-bottom:10px">Pick someone from your contacts. New people start with no events: tick the ones they should hear about.</small><input class="f" id="gdq" placeholder="Search name or number" value="${esc(GDS.q)}"><div id="gdl">${gdPickRows()}</div><button class="pb" data-a="gcdone">Done</button>`}
+Object.assign(A,{
+ gdon:async()=>{const g=gdv();const wait=await gdEdit(c=>{c.adult.on=!g.adult.on;return c});gdWaitMsg(wait,'Switching the block off');gdSync().then(()=>render())},
+ gddns:async k=>{const wait=await gdEdit(c=>{c.adult.dns=k;return c});gdWaitMsg(wait,'A weaker filter');gdSync().then(()=>render())},
+ gdkeep:async()=>{const g=gdv();const wait=await gdEdit(c=>{c.adult.keep=!g.adult.keep;return c});gdWaitMsg(wait,'Switching this off')},
+ gdscan:async()=>{const g=gdv();const wait=await gdEdit(c=>{c.adult.scan=!g.adult.scan;return c});gdWaitMsg(wait,'Switching this off')},
+ gdapply:async()=>{try{const r=await GD.applyDns();toast(r&&r.dnsOk?'Filter is on.':'Could not set it. Use the Android page instead.')}catch(e){warn('Could not set the filter: '+((e&&e.message)||e),{where:'Adult block'})}await gdSync();render()},
+ gdopen:async()=>{try{await GD.openDns()}catch(e){warn('Could not open Android Settings.',{where:'Adult block'})}},
+ gdcopy:async()=>{const dn=GDDNS.find(x=>x[0]===gdv().adult.dns)||GDDNS[0];try{await navigator.clipboard.writeText(dn[3]);toast('Copied: '+dn[3])}catch(e){toast(dn[3])}},
+ gdarm:async p=>{const wait=await gdEdit(c=>{c.adult.apps=c.adult.apps.filter(x=>x.pkg!==p);return c});gdWaitMsg(wait,'Opening this app again')},
+ gdapre:async v=>{const [p,n]=v.split('|');await gdEdit(c=>{if(!c.adult.apps.some(x=>x.pkg===p))c.adult.apps.push({pkg:p,name:n});return c});toast(n+' is closed while the block is on.')},
+ gdaadd:()=>{LKD.q='';LKD.pm='ga';V='s-apps';render();loadApps()},
+ gapick:async p=>{await gdEdit(c=>{if(!c.adult.apps.some(x=>x.pkg===p))c.adult.apps.push({pkg:p,name:dxName(p)});return c});LKD.pm='';V='s-adult';render()},
+ gmon:async()=>{const g=gdv();const wait=await gdEdit(c=>{c.msg.on=!g.msg.on;return c});gdWaitMsg(wait,'Switching the messages off');if(!wait)gdSync().then(()=>render())},
+ gcpick:async()=>{if(!SPN){warn('Contacts need the APK.');return}let st=await spStatus();if(!(st&&st.calls)){try{await SPN.requestCalls()}catch(e){}st=await spStatus()}
+  if(!(st&&st.calls)){warn('Allow Contacts and calls first.');return}try{GDS.list=((await SPN.contacts()).items)||[]}catch(e){warn('Could not read contacts: '+((e&&e.message)||e));return}GDS.pick=true;GDS.q='';render()},
+ gcadd:async i=>{const x=(GDS.list||[])[+i];if(!x)return;if(gdv().msg.contacts.some(c=>gdLast(c.num)===gdLast(x.num)))return;await gdEdit(c=>{c.msg.contacts.push({n:x.n,num:x.num,via:'wa',fb:true,ev:{}});return c});toast(x.n+' added. Tick what they should hear about.')},
+ gcdone:()=>{GDS.pick=false;render()},
+ gcdel:async i=>{const c0=gdv().msg.contacts[+i];if(!c0)return;if(!confirm('Remove '+c0.n+'? It takes effect in '+WAIT_H+' hours.'))return;const wait=await gdEdit(c=>{c.msg.contacts=c.msg.contacts.filter(z=>gdLast(z.num)!==gdLast(c0.num));return c});gdWaitMsg(wait,'Removing '+c0.n)},
+ gcvia:async v=>{const [i,k]=v.split(':');await gdEdit(c=>{if(c.msg.contacts[+i])c.msg.contacts[+i].via=k;return c});if(k==='sms'&&GD&&GD.requestSms&&!(GDS.st&&GDS.st.sms)){try{await GD.requestSms()}catch(e){}gdSync().then(()=>render())}},
+ gcev:async v=>{const [i,k]=v.split(':');const cur=gdv().msg.contacts[+i];if(!cur)return;const on=!!cur.ev[k];const wait=await gdEdit(c=>{const z=c.msg.contacts[+i];if(!z)return c;if(on)delete z.ev[k];else z.ev[k]=gdDefText(k);return c});gdWaitMsg(wait,'Turning this off')},
+ gctest:async i=>{const c=gdv().msg.contacts[+i];if(!c)return;try{await GD.test({n:c.n,num:c.num,via:c.via,fb:c.fb!==false,text:'Test message from Partner. Please ignore it.'});toast('Test queued. Keep the phone unlocked for a few seconds.',0,4500)}catch(e){warn('Could not send the test: '+((e&&e.message)||e),{where:'Accountability'})}setTimeout(()=>gdSync().then(()=>{if(V==='s-acct')render()}),9000)},
+ gcsms:async()=>{try{await GD.requestSms()}catch(e){}await gdSync();render()},
+ gcuse:async()=>{const g=gdv();const wait=await gdEdit(c=>{c.msg.usage.on=!g.msg.usage.on;return c});gdWaitMsg(wait,'Switching this off')},
+ gcmin:async x=>{const wait=await gdEdit(c=>{c.msg.usage.min=+x;return c});gdWaitMsg(wait,'A longer limit')},
+ gcuadd:()=>{LKD.q='';LKD.pm='gu';V='s-apps';render();loadApps()},
+ gupick:async p=>{await gdEdit(c=>{if(!c.msg.usage.apps.some(x=>x.pkg===p))c.msg.usage.apps.push({pkg:p,name:dxName(p)});return c});LKD.pm='';V='s-acct';render()},
+ gcurm:async p=>{const wait=await gdEdit(c=>{c.msg.usage.apps=c.msg.usage.apps.filter(x=>x.pkg!==p);return c});gdWaitMsg(wait,'Not counting this app')}
+});
+const gdDefText=k=>{const n=gdv().msg.name||'Rohit';return({awake:n+' is awake.',adult:n+' just tried to open an adult site. Please check in with him.',usage:n+' has been on his phone for {m} minutes today in the apps he picked. Please check in with him.',filter:n+' turned off his adult-site filter.'})[k]||''};
+document.addEventListener('change',e=>{const t=e.target;if(!t)return;if(t.id==='gdname'){const nm=t.value.trim().slice(0,30)||'Rohit';gdEdit(c=>{c.msg.name=nm;return c})}
+ else if(t.dataset&&t.dataset.gct){const [i,k]=t.dataset.gct.split(':'),tx=t.value.trim().slice(0,300);gdEdit(c=>{const z=c.msg.contacts[+i];if(!z)return c;if(tx)z.ev[k]=tx;else z.ev[k]=gdDefText(k);return c})}});
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.id==='gdq'){GDS.q=t.value;const l=$('#gdl');if(l)l.innerHTML=gdPickRows()}});
+{const _g3=A.go;A.go=v=>{_g3(v);if(v==='s-adult'||v==='s-acct'){lkSync().then(()=>gdSync()).then(()=>suStatus()).then(()=>{if(V==='s-adult'||V==='s-acct')render()})}}}
 
 /* ---- Transformation: photos of now, a picture of the future self, and weight progress. Pictures stay on this phone (never sent to the AI) ---- */
 const TR_Q=['Discipline today, the physique you imagine tomorrow.','Same person. Stronger habits. Better version.',"You don't need to be perfect. You just need to be consistent.",'Small steps still count. Keep going.','Show up today. The mirror will catch up.','Your future self is watching what you do today.'];
@@ -2982,7 +3183,7 @@ Object.assign(A,{
 const ORDER=['home','chat','diary','habits','health','growth','patterns','identity','spend'];let IS='growth';
 const insSeg=()=>`<div class="seg"><button class="${V==='growth'?'on':''}" data-a="go" data-v="growth">Growth</button><button class="${V==='patterns'?'on':''}" data-a="go" data-v="patterns">Patterns</button><button class="${V==='identity'?'on':''}" data-a="go" data-v="identity">Identity</button><button class="${V==='spend'?'on':''}" data-a="go" data-v="spend">Spending</button></div>`;
 const inSet=v=>v==='settings'||!!SUB[v]||!!NEWP[v];
-const parentOf=v=>v==='settings'?null:(RET[v]&&V===v)?RET[v]:NEWP[v]?NEWP[v]:((v==='s-setup'&&!S.set.setupDone)||(v==='s-goals'&&GF))?null:v==='s-medit'?'s-mem':v==='s-rtedit'?'s-rt':v==='s-foodedit'?'s-food':v==='s-apps'&&LKD.pm==='nz'?'s-nz':v==='s-apps'&&LKD.pm==='dx'?'s-detox':(v==='s-rule'||v==='s-apps')?'s-lock':(GP[v]||'settings');
+const parentOf=v=>v==='settings'?null:(RET[v]&&V===v)?RET[v]:NEWP[v]?NEWP[v]:((v==='s-setup'&&!S.set.setupDone)||(v==='s-goals'&&GF))?null:v==='s-medit'?'s-mem':v==='s-rtedit'?'s-rt':v==='s-foodedit'?'s-food':v==='s-apps'&&LKD.pm==='nz'?'s-nz':v==='s-apps'&&LKD.pm==='dx'?'s-detox':v==='s-apps'&&LKD.pm==='ga'?'s-adult':v==='s-apps'&&LKD.pm==='gu'?'s-acct':(v==='s-rule'||v==='s-apps')?'s-lock':(GP[v]||'settings');
 let G=false,IGN=false;
 function guard(){if(QK||G)return;try{history.pushState({g:1},'');G=true}catch(e){}}
 function unguard(){if(!G)return;G=false;IGN=true;setTimeout(()=>{IGN=false},700);try{history.back()}catch(e){IGN=false}}
@@ -3007,10 +3208,25 @@ function sleepCard(){const now=Date.now(),st=dayStart(now),op=S.sleep.find(x=>!x
  const pl=plan&&ln.m?(Math.abs(df)<10?'About your '+dur(plan)+' plan.':dur(Math.abs(df))+(df<0?' less':' more')+' than your '+dur(plan)+' plan.'):'';
  return `<div class="hmc sl"><p class="hl">Last night</p><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div class="hbig">${ln.m?dur(ln.m):'—'}</div><div class="hm" style="margin-top:6px;color:var(--tx)">${line}</div></div><div class="hmb" aria-hidden="true">${bars}</div></div>${pl?`<div class="hm" style="margin-top:10px;color:var(--tx)">${pl} Last ${nights.length} ${nights.length===1?'night':'nights'} on the right.</div>`:''}</div>`}
 /* numbers for the Home tiles: same rules as the Today tiles */
-function dayNums(){const now=Date.now(),st=dayStart(now),es=S.entries.filter(e=>e.ts>=st),ub=usageIn(st,now);let cal=0,mN=0,mK=0;es.forEach(e=>{if(e.kind==='meal'){mN++;if(e.cal>0)mK++;cal+=e.cal||0}});
+function dayNums(){const now=Date.now(),st=dayStart(now),es=S.entries.filter(e=>e.ts>=st),ub=usageIn(st,now);let cal=0,mN=0,mK=0,pr=0,cb=0,ft=0;es.forEach(e=>{if(e.kind==='meal'){mN++;if(e.cal>0)mK++;cal+=e.cal||0;pr+=e.p||0;cb+=e.c||0;ft+=e.f||0}});
  const MS=es.filter(e=>tagOf(e)==='Study'&&e.dur>0),SI=MS.map(e=>[e.ts-e.dur*6e4,e.ts]);ub.forEach(b=>{if(isSt(b))SI.push([b.s,b.e])});SI.sort((a,b)=>a[0]-b[0]);let ms=0,ce=0;SI.forEach(([a,b])=>{a=Math.max(a,ce);if(b>a){ms+=b-a;ce=b}});
  const sp=spAll().filter(x=>spDayK(x)===dayK(st)).reduce((a,x)=>a+x.amt,0);
- return{cal,mN,mK,study:Math.round(ms/6e4),hasU:ub.length>0,spent:sp}}
+ return{cal,mN,mK,pro:Math.round(pr),carb:Math.round(cb),fat:Math.round(ft),phone:ub.length?usageSum(ub).t:0,study:Math.round(ms/6e4),hasU:ub.length>0,spent:sp}}
+/* ---- home tiles: he chooses which numbers sit on the home screen ---- */
+const HT_CAT=[['cal','Calories'],['pro','Protein'],['carb','Carbs'],['fat','Fats'],['study','Study time'],['phone','Phone time'],['spent','Spent today'],['sleep','Sleep (last night)'],['sleepc','Sleep card, 7 nights'],['habits','Habits done'],['tasks','Targets left']];
+const htSel=()=>{const q=S.set.ht;return Array.isArray(q)?q.filter(x=>HT_CAT.some(c=>c[0]===x)).slice(0,8):['cal','pro','study','spent']};
+let HTE=false;
+function htTile(id,n,H,hd,tp){const s=S.set,bar=(v,t,col)=>t&&n.mN&&n.mK?`<div class="pbar"><i style="width:${Math.min(100,Math.round(v/t*100))}%;background:${col}"></i></div>`:'';
+ const mac=(v,key,unit,col)=>`<div class="hmc"><b>${n.mN?(n.mK?v+(n.mK<n.mN?'+':''):'?'):'\u2014'}</b><span class="hm">${s[key]?'of '+s[key]+' '+unit:unit}</span>${bar(v,s[key],col)}</div>`;
+ if(id==='cal')return mac(n.cal,'cal','kcal','#F5A524');if(id==='pro')return mac(n.pro,'pro','g protein','#2F4BFF');if(id==='carb')return mac(n.carb,'carb','g carbs','#16A34A');if(id==='fat')return mac(n.fat,'fat','g fat','#E5645F');
+ if(id==='study')return `<div class="hmc"><b>${n.study?dur(n.study):n.hasU?'0m':'\u2014'}</b><span class="hm">study</span></div>`;
+ if(id==='phone')return `<div class="hmc"><b>${n.hasU?dur(n.phone):'\u2014'}</b><span class="hm">on the phone</span></div>`;
+ if(id==='spent')return `<div class="hmc"><b>${n.spent?spMoney(n.spent):'\u2014'}</b><span class="hm">spent today</span></div>`;
+ if(id==='sleep'){const op=S.sleep.find(x=>!x.end&&x.start&&Date.now()-x.start<14*36e5),ln=op?null:lastNight(dayStart(Date.now()));return `<div class="hmc"><b>${op?'Asleep':ln&&ln.m?dur(ln.m):'\u2014'}</b><span class="hm">${op?'since '+t12(op.start):'slept last night'}</span></div>`}
+ if(id==='habits')return `<div class="hmc"><b>${H.length?hd+'/'+H.length:'\u2014'}</b><span class="hm">habits done</span></div>`;
+ if(id==='tasks')return `<div class="hmc"><b>${tp}</b><span class="hm">targets left</span></div>`;
+ return ''}
+const htPanel=()=>HTE?`<div class="hmc" style="margin-bottom:10px"><small style="display:block;margin-bottom:8px">Tap to add or remove. The numbers show in the order you tap, up to 8.</small><div style="display:flex;flex-wrap:wrap;gap:8px">${HT_CAT.map(([id,l])=>{const i=htSel().indexOf(id);return `<button class="chip${i>=0?' on':''}" style="flex:none" data-a="httog" data-v="${id}">${i>=0?(i+1)+'  ':''}${l}</button>`}).join('')}</div></div>`:'';
 let HSP=false,HTM=false;
 function homeView(){const k=hk(),n=dayNums(),s=S.set,lab=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'}),asleep=S.sleep.some(x=>!x.end&&x.start&&Date.now()-x.start<14*36e5);
  const H=[...S.habits].sort((a,b)=>(a.mode==='time'&&a.anchor?a.anchor:'99:99')<(b.mode==='time'&&b.anchor?b.anchor:'99:99')?-1:1),hd=H.filter(h=>hl(h.id,k)>1).length;
@@ -3019,9 +3235,9 @@ function homeView(){const k=hk(),n=dayNums(),s=S.set,lab=new Date().toLocaleDate
  const hsp=HSP?`<div class="hmf"><input class="f" id="hsa" type="number" inputmode="decimal" placeholder="Amount" style="flex:0 0 96px"><input class="f" id="hsn" placeholder="What for"><button class="mn" data-a="hspadd">Add</button></div>`:'';
  const htm=HTM?`<div class="hmf">${[15,25,45,60].map(m=>`<button class="chip" data-a="htm" data-v="${m}">${m} min</button>`).join('')}</div>`:'';
  return `<h1 class="h">${greet().replace(/\.$/,'')}</h1><small style="font-size:14px;display:block;margin-bottom:14px">${lab}</small>
-${sleepCard()}${run}
+${htSel().includes('sleepc')?sleepCard():''}${run}
 <p class="lab">Do it now</p><div class="hmq"><button data-a="hstudy"><i style="background:#2F4BFF"></i>Start study</button><button data-a="hfood"><i style="background:#F5A524"></i>Log food</button><button data-a="hwork"><i style="background:#16A34A"></i>Workout</button><button data-a="hbed"><i style="background:#7C5CFF"></i>${asleep?'I woke up':'Going to bed'}</button><button data-a="hsp"><i style="background:#E5645F"></i>Add spend</button><button data-a="htmr"><i style="background:#0EA5A4"></i>Timer</button></div>${hsp}${htm}
-<div class="hms"><div class="hmc"><b>${n.mN?(n.mK?n.cal+(n.mK<n.mN?'+':''):'?'):'—'}</b><span class="hm">${s.cal?'of '+s.cal+' kcal':'kcal'}</span>${n.mN&&n.mK&&s.cal?`<div class="pbar"><i style="width:${Math.min(100,Math.round(n.cal/s.cal*100))}%;background:#F5A524"></i></div>`:''}</div><div class="hmc"><b>${n.study?dur(n.study):n.hasU?'0m':'—'}</b><span class="hm">study</span></div><div class="hmc"><b>${n.spent?spMoney(n.spent):'—'}</b><span class="hm">spent today</span></div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px"><p class="lab" style="margin:0">Today</p><button class="ub" style="display:inline;font-size:13px" data-a="htedit">${HTE?'Done':'Edit tiles'}</button></div>${htPanel()}${(()=>{const t=htSel().filter(x=>x!=='sleepc');return t.length?`<div class="hms${t.length===2||t.length===4?' c2':''}">${t.map(x=>htTile(x,n,H,hd,tp)).join('')}</div>`:''})()}
 <div class="hmc"><div style="display:flex;justify-content:space-between;align-items:baseline"><p class="hl" style="margin:0">Habits</p><span class="hm">${H.length?hd+' of '+H.length+' today':''}</span></div>${H.length?`<div class="hmh">${H.map(h=>{const lv=hl(h.id,k),off=lv>1?0:lv===1?60:119.4;return `<div><button class="hr ${lv>1?'done':''}" ${lv>1?'':`data-hold="${h.id}"`} data-a="hhint" data-v="${h.id}" aria-label="${esc(h.name)}. Hold to complete"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="none" stroke="var(--s2)" stroke-width="3.5"/><circle class="arc" cx="22" cy="22" r="19" fill="none" stroke="${h.c}" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="${off}" transform="rotate(-90 22 22)"/></svg>${lv>1?`<svg style="position:relative;color:${h.c}" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>`:''}</button><div class="hn2">${esc(h.name)}</div></div>`}).join('')}</div><div class="hm" style="margin-top:8px">Hold a circle for 3 seconds to finish it.</div>`:`<button class="hmk" data-a="tab" data-v="habits"><span class="hm">No habits yet. Add a tiny one</span></button>`}</div>
 <div class="hmc"><div style="display:flex;justify-content:space-between;align-items:baseline"><p class="hl" style="margin:0">Tasks</p><span class="hm">${tp} pending</span></div>${T.slice(0,5).map(t=>`<button class="hmk" data-a="ttog" data-v="${t.id}"><span class="tc ${t.status==='done'?'on':''}" style="display:inline-grid;place-items:center">${t.status==='done'?CK:''}</span><span class="${t.status==='done'?'dn':''}" style="flex:1;min-width:0;${t.status==='done'?'color:var(--mu)':''}">${esc(t.text)}${t.date<k&&t.status==='open'?`<small style="display:block">Pending since ${fdd(t.date)}</small>`:''}</span></button>`).join('')||'<p class="g" style="margin:10px 0 0">No tasks for today.</p>'}${T.length>5?`<button class="hmk" data-a="go" data-v="diary"><span class="hm">${T.length-5} more in Diary ›</span></button>`:`<button class="hmk" data-a="go" data-v="diary"><span class="hm">Add or manage tasks in Diary ›</span></button>`}</div>
 <button class="r" data-a="tab" data-v="insights"><span><b>Insights</b><small>Growth, patterns, identity and spending</small></span><i>›</i></button>`}

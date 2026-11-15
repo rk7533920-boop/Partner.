@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/wk_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:padding="14dp" android:background="@drawable/widget_bg_dark">
+  <ImageView android:layout_width="44dp" android:layout_height="44dp" android:padding="11dp" android:background="@drawable/widget_circle_blue" android:src="@drawable/ic_w_mic" android:contentDescription="Talk"/>
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:text="Talk to Partner" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold"/>
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="or say Hey Partner" android:textColor="#B9BDC6" android:textSize="12sp"/>
+</LinearLayout>

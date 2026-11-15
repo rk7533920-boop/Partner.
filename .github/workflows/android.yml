@@ -163,12 +163,18 @@ jobs:
           set -e
           D=android/app/src/main/java/com/partner/diary
           cp PartnerWidgets.java PartnerWidgetProvider.java QuickWidget.java TodayWidget.java TalkWidget.java MealWidget.java WidgetActReceiver.java WidgetPlugin.java $D/
-          cp -r widget_res/. android/app/src/main/res/
+          R=android/app/src/main/res
+          mkdir -p $R/layout $R/drawable $R/xml
+          cp widget_quick.xml widget_today.xml widget_talk.xml widget_meal.xml $R/layout/
+          cp widget_quick_info.xml widget_today_info.xml widget_talk_info.xml widget_meal_info.xml $R/xml/
+          cp widget_bg_light.xml widget_bg_dark.xml widget_pill_dark.xml widget_run_bg.xml widget_circle_dark.xml widget_circle_blue.xml widget_circle_soft.xml widget_bar.xml ic_w_mic.xml ic_w_meal.xml ic_w_play.xml ic_w_check.xml ic_w_gym.xml ic_w_plus.xml $R/drawable/
           M=android/app/src/main/AndroidManifest.xml
           sed -i 's#</application>#<receiver android:name="com.partner.diary.QuickWidget" android:exported="false" android:label="Partner quick actions"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info"/></receiver><receiver android:name="com.partner.diary.TodayWidget" android:exported="false" android:label="Partner today"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_today_info"/></receiver><receiver android:name="com.partner.diary.TalkWidget" android:exported="false" android:label="Partner talk"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_talk_info"/></receiver><receiver android:name="com.partner.diary.MealWidget" android:exported="false" android:label="Partner log meal"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_meal_info"/></receiver><receiver android:name="com.partner.diary.WidgetActReceiver" android:exported="false"/></application>#' $M
           grep -q "QuickWidget" $M
           grep -q "WidgetActReceiver" $M
-          test -f android/app/src/main/res/layout/widget_today.xml
+          test -f $R/layout/widget_today.xml
+          test -f $R/drawable/ic_w_gym.xml
+          test -f $R/xml/widget_meal_info.xml
       - name: Allow speech engines on Android 11+
         run: |
           sed -i 's#</manifest>#<queries><intent><action android:name="android.intent.action.TTS_SERVICE"/></intent><intent><action android:name="android.speech.RecognitionService"/></intent></queries></manifest>#' android/app/src/main/AndroidManifest.xml

@@ -267,7 +267,7 @@ t3('break: reminders, chat nudges and error notifications are held back; mentor 
 
 {const g=[...src.matchAll(/'g-(?:mentor|health|daily|self|phone|data)':\{t:'[^']*',d:'[^']*',k:\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(x=>x.replace(/'/g,'').trim()));
 const rows=[...src.matchAll(/^ (\w+):\['[^']*','[^']*',(?:'[^']*'|null),\(\)=>/gm)].map(m=>m[1]).filter(k=>k!=='nz'); // Focus nudges lives inside Lockdown and is found by search
-q2('settings: 6 groups, 33 rows, each row in exactly one group (Focus nudges nested in Lockdown)',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[33,33,33,true]);
+q2('settings: 6 groups, 34 rows, each row in exactly one group (Focus nudges nested in Lockdown)',[g.length,new Set(g).size,rows.length,g.slice().sort().join()===rows.slice().sort().join()],[34,34,34,true]);
 q2('settings: pages open from their group and back out to it',[/const GP=\{[^}]*'s-lock':'g-self'/.test(src),/\(GP\[v\]\|\|'settings'\)/.test(src),/'s-wplan':'g-health'/.test(src),/\(RET\[v\]&&V===v\)\?RET\[v\]/.test(src)],[true,true,true,true]);
 q2('permissions are asked in one place (the Permissions page)',[!/data-a=\\?"(spallow|nrallow|lkacc|lkadmin|usopen)\\?"/.test(src)],[true]);
 q2('workout tab: one Start button, no separate Log workout button or text box',[!/data-a="wlog">Log workout</.test(src),!/id="gi"/.test(src),/Did something else\? Log it/.test(src)],[true,true,true]);
@@ -344,7 +344,7 @@ q2('contingency plan is still reachable from the Mentor tab',[/notfeel/.test(src
  const NL2=fs.readFileSync('PartnerNotifListener.java','utf8'),LS2=fs.readFileSync('LockdownService.java','utf8');
  t5('page: a payment is deleted from its editor menu (no visible delete button), asks once, and has an undo',[/dqItem\('spd'\+x\.id,'spdel'/.test(src)&&!/>Delete this payment</.test(src),/spdel:id=>\{[^}]*x\.del=1/.test(src),/UNDO\.a==='__sp'/.test(src)],[true,true,true]);
  t5('page: adding or editing an ingredient has minus and plus steps and the quantity can still be typed',[(src.match(/data-a="mqs"/g)||[]).length===2,/A\.mqs=d=>/.test(src),/id="mq" type="number"/.test(src)],[true,true,true]);
- t5('page: a running routine shows as a checklist in the Mentor, steps can be ticked and unticked',[/\$\{rtCards\(\)\}<div class="ms">/.test(src),/function rtCards\(\)/.test(src),/A\.rttick=v=>/.test(src)],[true,true,true]);
+ t5('page: a running routine shows as a checklist in the Mentor, steps can be ticked and unticked',[/\$\{rtCards\(RTA\(\)\)\}<div class="ms">/.test(src),/function rtCards\(att\)/.test(src),/A\.rttick=v=>/.test(src)],[true,true,true]);
  t5('page: theme colours are variables with a dark twin, Inter is bundled, settings home is a list with icons',[/--ac:#1D4ED8/.test(html),/prefers-color-scheme:dark\)\{:root:not\(\[data-theme=light\]\)\{color-scheme:dark;--bg:#0E0F12/.test(html)&&/:root\[data-theme=dark\]\{color-scheme:dark;--bg:#0E0F12/.test(html),/font-family:Inter;font-weight:700/.test(html),/class="gi"/.test(src)],[true,true,true,true]);
  t5('native: during a lock notifications are snoozed until it ends, not deleted; calls, alarms, ongoing ones, the dialer and Partner stay',[/snoozeNotification\(sbn\.getKey\(\)/.test(NL2),/CATEGORY_CALL/.test(NL2)&&/CATEGORY_ALARM/.test(NL2)&&/isOngoing\(\)/.test(NL2),/PartnerNotifListener\.lockSweep\(\)/.test(LS2),/SDK_INT < 26/.test(NL2)],[true,true,true,true]);
 }
@@ -444,5 +444,50 @@ t5('alarm: picture painted from script, scan timer apart from the quote, camera 
 t5('lockdown: pool, warning and timer are in the config and a looser pool waits like any weaker change',[/pool:lkPool\(l\),warn:l\.warn!==false,timer:l\.timer!==false/.test(src),/function lkPoolHtml\(v\)/.test(src),/pa\.on&&!pb\.on/.test(src),/plpick/.test(src)],[true,true,true,true]);
 t5('widgets: page snapshot, merge of taps, plugin registered, workflow step',[/function wgSnap\(\)/.test(src),/async function wgMerge\(\)/.test(src),/NP\.Widget/.test(src),fs.readFileSync('MainActivity.java','utf8').includes('registerPlugin(WidgetPlugin.class)'),fs.readFileSync('.github/workflows/android.yml','utf8').includes('Add home screen widgets')],[true,true,true,true,true]);
 t5('what is new: shown once per update id, reopened from Settings',[/const WNEW_ID=/.test(src),/function wnCheck\(\)/.test(src),/data-a="wnopen"/.test(src)],[true,true,true]);
+}
+{const t5=(n,a,b)=>{if(JSON.stringify(a)===JSON.stringify(b)){ok++;console.log('PASS',n)}else{bad++;console.log('FAIL',n,'got',JSON.stringify(a),'want',JSON.stringify(b))}};
+ // ---- 2026-11-16 update: Mentor listening, time facts, audio queue, stop words, daily detox, diary order ----
+ const t12=ts=>{const d=new Date(ts);let h=d.getHours(),m=d.getMinutes();return ((h%12)||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')};
+ const core=between('/* ---- mentor core','/* ---- end mentor core');
+ const M=new Function('t12',core+';return {isStopSay,mNow,mTag,mStrip,mAgo,auMatch,dvOrd,MSTOP}')(t12);
+ const at=(h,m=0,s2=0)=>new Date(2026,10,16,h,m,s2).getTime();
+ // stop words: only the whole sentence ends the conversation
+ t5('stop words: whole sentence only, commands still reach the AI',[['alarm band karo','meditation band karo','timer stop karo','अलार्म बंद करो','bas 5 min aur','music stop karo'].map(x=>M.isStopSay(x)),['bas','bas karo','ok bye','बंद करो','Bye!','ruko','बस'].map(x=>M.isStopSay(x))],[[false,false,false,false,false,false],[true,true,true,true,true,true,true]]);
+ t5('stop words: his own list replaces the default, empty list never stops',[M.isStopSay('bahut hua',['bahut hua','ruk ja']),M.isStopSay('ruk ja',['bahut hua','ruk ja']),M.isStopSay('band',['bahut hua']),M.isStopSay('bye',[])],[true,true,false,false]);
+ // time facts
+ const w=at(6,8),n=at(6,9),a1=M.mNow(n,'morning',w,at(5));const a2=M.mNow(n,'morning',0,at(5));
+ t5('time: exact clock with AM/PM, ready-made minutes ago, the 5 AM day counter is never a wake-up',[/Time now: 6:09 AM, Monday, 16 November 2026 \(morning\)/.test(a1),/He woke up at 6:08 AM \(1 min ago\)/.test(a1),/No wake-up is logged for today yet/.test(a2),/that is NOT when he woke up/.test(a2),/5:00 AM/.test(a2)],[true,true,true,true,true]);
+ t5('time: message tags are plain times, other days get a weekday, the AI cannot copy a tag back',[M.mTag(at(6,8),n),M.mTag(new Date(2026,10,15,23,40).getTime(),n),M.mStrip('[6:08 AM] hello'),M.mStrip('[Sun 11:40 PM] bye'),M.mStrip('hello [6:08 AM]'),M.mAgo(95*6e4)],['6:08 AM','Sun 11:40 PM','hello','bye','hello [6:08 AM]','1 h 35 min ago']);
+ t5('time: history carries a time tag, the clock block replaces the raw date string, voice flag is sent',[/content:'\['\+mTag\(m\.ts,t0\)\+'\] '\+String\(m\.c\)/.test(src),!/Now: \$\{new Date\(\)\.toString\(\)\.slice\(0,24\)\}/.test(src),/SYSVIA=via==='voice'/.test(src),/How he sent this message: \$\{SYSVIA/.test(src),/out\.reply=mStrip\(out\.reply\)/.test(src)],[true,true,true,true,true]);
+ // the AI rules
+ t5('prompt: English words in Devanagari go back to English, speak only for voice, time and audio rules',[/आई वोक अप = I woke up/.test(src),/but ONLY when "How he sent this message"/.test(src),/Never say you cannot play audio/.test(src),/Never work out or guess a clock time yourself/.test(src),/call show_checklist/.test(src)],[true,true,true,true,true]);
+ t5('tools: play_audio, stop_audio, show_checklist exist and are read',[/mkT\('play_audio'/.test(src),/mkT\('stop_audio'/.test(src),/mkT\('show_checklist'/.test(src),/case'play_audio':o\.aplay\.push\(i\)/.test(src),/aplay:\[\],astop:0,rshow:\[\]/.test(src)],[true,true,true,true,true]);
+ // audio: pick by name or phrase, queue until the reply is spoken
+ const tr=[{id:'a1',name:'Morning meditation',ph:'meditation, dhyan'},{id:'a2',name:'NSDR',ph:'nsdr, yoga nidra'}];
+ t5('audio: track found by name, part of the name or trigger phrase; one track needs no name',[(M.auMatch(tr,'NSDR')||{}).id,(M.auMatch(tr,'meditation')||{}).id,(M.auMatch(tr,'yoga nidra please')||{}).id,M.auMatch(tr,'jazz'),(M.auMatch([tr[1]],'')||{}).id,M.auMatch(tr,'')],['a2','a1','a2',null,'a2',null]);
+ t5('audio: nothing starts before the reply is spoken, a running track pauses while Partner talks',[/function auDecide\(text,out\)/.test(src),/function auQueue\(d\)/.test(src),/auQueue\(AUD\);\n  if\(via==='voice'\)\{const fin=\(\)=>\{if\(AUQ\.id\)\{auFlush\(\);stopC\(\)\}/.test(src),/IDL\.spk\+\+;idleAbort\(\);auHold\(\)/.test(src),!/try\{auTrig\(text,out\)\}/.test(src)],[true,true,true,true,true]);
+ // mic: the offline listener, no recogniser loop
+ const idle=between("let IDL={on:false","document.addEventListener('visibilitychange'");
+ t5('mic: Mentor tab uses the offline Hey Partner listener, no speech recogniser restarts, quiet while audio or voice plays',[!/SpeechRecognition/.test(idle),/setInApp/.test(idle),/HW\.addListener\('hey'/.test(idle),/!AU\.id&&!AUQ\.id/.test(idle),/!IDL\.spk/.test(idle)],[true,true,true,true,true]);
+ const hs=fs.readFileSync('HotwordService.java','utf8'),hp=fs.readFileSync('HotwordPlugin.java','utf8');
+ t5('mic native: in-app mode keeps the listener while the app is open and tells the page instead of reopening the app',[/static volatile boolean inApp/.test(hs),/\(appVisible && !inApp\)/.test(hs),/HotwordPlugin\.hey\(\)/.test(hs),/public void setInApp\(PluginCall call\)/.test(hp),/notifyListeners\("hey"/.test(hp),/inApp = false;/.test(hs)],[true,true,true,true,true,true]);
+ // Mentor layout and checklist
+ t5('mentor: fixed header, chat in its own tile, routine list under the reply, chip when a routine runs',[/<div class="mhd"><h1 class="h">\$\{greet\(\)\}/.test(src),/<div class="mtile" id="mtile">/.test(src),/\$\{rtMsg\(m,mi\)\}/.test(src),/rt:rtAttach\(out\)/.test(src),/\$\{rtChip\(\)\}/.test(src),/#main\.mchat\{display:flex/.test(html),/\$\('#main'\)\.className=V==='chat'\?'mchat':''/.test(src)],[true,true,true,true,true,true,true]);
+ t5('space: the top bar and page start closer to the status bar',[/#top\{padding:4px 20px 0\}/.test(html),/#main\{padding-top:4px\}/.test(html)],[true,true]);
+ // diary order
+ const E=(t,d)=>({t,d}),ord=[E(at(6,59,50),41),E(at(6,59,55),0),E(at(6,9),6),E(at(6,8),0)].sort(M.dvOrd);
+ t5('diary: same start minute, the one that ended first goes first (Study before Work), different minutes keep time order',[ord.map(x=>x.d)],[[0,6,0,41]]);
+ t5('diary: same start and same end, the shorter first; exact time last',[[E(at(7,0,10),30),E(at(7,0,20),30),E(at(7,0,5),45)].sort(M.dvOrd).map(x=>x.t-at(7))],[[10000,20000,5000]]);
+ t5('diary: the timeline uses the new order',[/it\.sort\(dvOrd\)/.test(src),!/a\.t-b\.t\|\|\(a\.d\|\|0\)-\(b\.d\|\|0\)/.test(src)],[true,true]);
+ // stop words page
+ t5('settings: stop words page, row, back path and handlers',[/case's-stopw':return stopView\(\)/.test(src),/'s-stopw':'g-mentor'/.test(src),/'s-stopw':'Stop words'/.test(src),/A\.stopadd=/.test(src),/A\.stopdel=/.test(src),/A\.stopreset=/.test(src),/const isEnd=t=>isStopSay\(t,stopList\(\)\)/.test(src)],[true,true,true,true,true,true,true]);
+ // daily detox
+ const dxc=between('const DXD=','function dxsText');const DXT=new Function('t12','LKD','DX',dxc+';return {dxsDays,dxsHM,dxsMin,dxsLen,dxsList}');
+ const DXo={sf:'05:00',su:'09:00',sd:127,sel:[]},dd=DXT(t12,{st:{dxs:JSON.stringify([{id:'s1'},{x:1}])}},DXo);
+ t5('detox schedule: days, times, window length (also over midnight), list from the phone',[dd.dxsDays(127),dd.dxsDays(2|4),dd.dxsHM(300),dd.dxsMin('05:30'),dd.dxsLen(),(()=>{DXo.sf='22:00';DXo.su='06:00';return dd.dxsLen()})(),(()=>{DXo.su='22:00';return dd.dxsLen()})(),dd.dxsList().length],['Every day','Mon, Tue','5:00 AM',330,240,480,0,1]);
+ const dj=fs.readFileSync('Detox.java','utf8'),lp=fs.readFileSync('LockdownPlugin.java','utf8');
+ t5('detox schedule native: window maths, 18 hour removal, 10 minute regret, shown to the guard, no switch for the rule',[/private static long winEnd\(JSONObject o, long now\)/.test(dj),/static final long WAIT = 18L \* 3600000L/.test(dj),/now - o\.optLong\("ts", 0\) <= REGRET/.test(dj),/return Math\.max\(best, schedEnd\(c, pkg\)\)/.test(dj),/list\(c\)\.length\(\) > 0 \|\| schedSoon\(c\)/.test(dj),/detoxSchedAdd/.test(lp)&&/detoxSchedRemove/.test(lp)&&/detoxSchedKeep/.test(lp),/o\.put\("dxs"/.test(lp),!/delay|toggle|switch/i.test(dj.slice(dj.indexOf('static String schedAdd'),dj.indexOf('static String schedKeep')))],[true,true,true,true,true,true,true,true]);
+ t5('detox schedule page: switch between one time and every day, same apps, confirm, remove waits 18 hours',[/data-a=\\"dxmode\\"|data-a="dxmode"/.test(src),/dxssave:async/.test(src),/dxsrm:async/.test(src),/dxskeep:async/.test(src),/DAILY APP DETOX/.test(src),/data-dxs="sf"/.test(src),/Remove \(takes 18 hours\)/.test(src)],[true,true,true,true,true,true,true]);
+ t5('what is new: this update is announced',[/const WNEW_ID='2026-11-16'/.test(src),/Daily app detox/.test(src)],[true,true]);
 }
 console.log(ok,'passed',bad,'failed');

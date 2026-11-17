@@ -19,6 +19,38 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "Hotword")
 public class HotwordPlugin extends Plugin {
 
+    private static HotwordPlugin inst;
+
+    @Override
+    public void load() {
+        inst = this;
+    }
+
+    /** "Hey Partner" was heard while the Mentor tab is open: the page starts the conversation. */
+    static void hey() {
+        if (inst != null) {
+            try {
+                inst.notifyListeners("hey", new JSObject());
+            } catch (Exception e) {
+                // the page asks again the next time it is idle
+            }
+        }
+    }
+
+    /** The page says whether the Mentor tab is open and waiting for "Hey Partner". */
+    @PluginMethod
+    public void setInApp(PluginCall call) {
+        Context c = getContext();
+        boolean on = Boolean.TRUE.equals(call.getBoolean("on"));
+        HotwordService.inApp = on;
+        if (on) HotwordService.restore(c);
+        JSObject r = new JSObject();
+        r.put("wanted", HotwordService.wanted(c));
+        r.put("running", HotwordService.running);
+        r.put("state", HotwordService.state);
+        call.resolve(r);
+    }
+
     @PluginMethod
     public void setEnabled(PluginCall call) {
         Context c = getContext();
@@ -59,6 +91,7 @@ public class HotwordPlugin extends Plugin {
         r.put("heard", HotwordService.heard);
         r.put("models", HotwordService.modelCount);
         r.put("sens", HotwordService.sensitivity(c));
+        r.put("inApp", HotwordService.inApp);
         r.put("overlay", Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(c));
         boolean battery = true;
         try {

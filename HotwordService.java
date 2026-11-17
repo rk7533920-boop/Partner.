@@ -62,6 +62,9 @@ public class HotwordService extends Service {
 
     static volatile boolean running = false;
     static volatile boolean appVisible = false;
+    // The Mentor tab is open and waiting for "Hey Partner" (set by the page). The listener then keeps the
+    // microphone while the app is visible and tells the page instead of reopening the app. No restarts, no beeps.
+    static volatile boolean inApp = false;
     static volatile String state = "";
     static volatile String err = "";
     static volatile String heard = "";
@@ -95,6 +98,7 @@ public class HotwordService extends Service {
 
     /** Called when the app goes to the background: wait a moment so Partner's own voice is not heard. */
     static void afterApp() {
+        inApp = false; // the page is gone from the screen, it asks again when the Mentor tab is shown
         pauseUntil = Math.max(pauseUntil, SystemClock.elapsedRealtime() + 3000);
     }
 
@@ -388,7 +392,7 @@ public class HotwordService extends Service {
                         mediaOn = false;
                     }
                 }
-                boolean appBusy = appVisible || now < pauseUntil || onBreak;
+                boolean appBusy = (appVisible && !inApp) || now < pauseUntil || onBreak;
                 // On "careful" it also stays quiet while a video or music is playing
                 if (appBusy || (level == 0 && mediaOn)) {
                     if (ar != null) {
@@ -632,8 +636,18 @@ public class HotwordService extends Service {
 
     private boolean fire() {
         long now = SystemClock.elapsedRealtime();
-        if (now - lastFire < 6000) return false;
+        boolean here = appVisible && inApp;
+        if (now - lastFire < (here ? 2500 : 6000)) return false;
         lastFire = now;
+        if (here) {
+            // Partner is already open on the Mentor tab: tell the page, it starts the conversation itself
+            pauseUntil = now + 2500; // let go of the microphone so the speech engine can use it
+            h.post(() -> {
+                buzz(this);
+                HotwordPlugin.hey();
+            });
+            return true;
+        }
         pauseUntil = now + 6000; // let go of the microphone so the app can use it
         h.post(() -> {
             buzz(this);

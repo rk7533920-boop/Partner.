@@ -72,6 +72,7 @@ public class LockdownPlugin extends Plugin {
     o.put("nightLastBlock", p.getLong("nightLastBlock", 0));
     o.put("nightLastRepeat", p.getLong("nightLastRepeat", 0));
     o.put("detox", Detox.list(getContext()).toString());
+    o.put("dxs", Detox.schedList(getContext()).toString());
     o.put("running", LockdownService.inst != null);
     o.put("brkFrom", p.getLong("brkFrom", 0));
     o.put("brkTo", p.getLong("brkTo", 0));
@@ -191,6 +192,60 @@ public class LockdownPlugin extends Plugin {
     JSObject o = new JSObject();
     o.put("detox", Detox.list(getContext()).toString());
     call.resolve(o);
+  }
+
+  /** Makes sure the accessibility service is on and running, as a detox needs. Returns false (and rejects the call) when it cannot be. */
+  private boolean detoxReady(PluginCall call) {
+    if (!accOn()) {
+      if (LockdownAcc.granted(getContext())) {
+        LockdownAcc.endBank(getContext());
+      } else {
+        call.reject("Turn on the accessibility service first");
+        return false;
+      }
+    } else if (LockdownService.inst == null && LockdownAcc.granted(getContext())) {
+      LockdownAcc.setOn(getContext(), false);
+      LockdownAcc.setOn(getContext(), true);
+    }
+    return true;
+  }
+
+  private void detoxSchedDone(PluginCall call, String err) {
+    if (!err.isEmpty()) {
+      call.reject(err);
+      return;
+    }
+    if (LockdownService.inst != null) LockdownService.inst.poke();
+    JSObject o = new JSObject();
+    o.put("dxs", Detox.schedList(getContext()).toString());
+    call.resolve(o);
+  }
+
+  /** Daily app detox: the apps are blocked from one time to another every day (or on chosen days). */
+  @PluginMethod
+  public void detoxSchedAdd(PluginCall call) {
+    JSArray apps = call.getArray("apps");
+    Integer f = call.getInt("from");
+    Integer t = call.getInt("to");
+    Integer d = call.getInt("days");
+    if (apps == null || apps.length() == 0 || f == null || t == null) {
+      call.reject("Pick the apps and the times");
+      return;
+    }
+    if (!detoxReady(call)) return;
+    detoxSchedDone(call, Detox.schedAdd(getContext(), apps, f, t, d == null ? 127 : d));
+  }
+
+  /** Removes a daily schedule: at once in the first 10 minutes, otherwise it stops after 18 hours. */
+  @PluginMethod
+  public void detoxSchedRemove(PluginCall call) {
+    detoxSchedDone(call, Detox.schedRemove(getContext(), call.getString("id", "")));
+  }
+
+  /** Cancels a removal that is waiting. */
+  @PluginMethod
+  public void detoxSchedKeep(PluginCall call) {
+    detoxSchedDone(call, Detox.schedKeep(getContext(), call.getString("id", "")));
   }
 
   /** Takes an app off the detox. Only works in the first 10 minutes after it was added. */
